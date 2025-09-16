@@ -59,4 +59,5 @@ export const STORAGE_KEYS = {
   SELECTED_TUTOR: 'selectedTutor',
   USER_PREFERENCES: 'userPreferences',
   THEME: 'theme',
+  LANGUAGE: 'language',
 } as const;
