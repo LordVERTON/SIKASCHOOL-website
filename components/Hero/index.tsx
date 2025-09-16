@@ -1,12 +1,39 @@
 "use client";
 import Image from "next/image";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import TutorSelectionModal from "../Booking/TutorSelectionModal";
+import { validateEmail, sanitizeString } from "@/lib/validation";
+import { setStorageItem, STORAGE_KEYS } from "@/lib/storage";
+import { useLanguage } from "@/context/LanguageContext";
 
 const Hero = () => {
   const [email, setEmail] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const router = useRouter();
+  const { t } = useLanguage();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    // Validate email
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      console.error('Email validation failed:', emailValidation.error);
+      return;
+    }
+    
+    setIsModalOpen(true);
+  };
+
+  const handleSelectTutor = (tutorId: string) => {
+    // Store selected tutor securely
+    const success = setStorageItem(STORAGE_KEYS.SELECTED_TUTOR, tutorId);
+    if (success) {
+      router.push('/booking');
+    } else {
+      console.error('Failed to store tutor selection');
+    }
   };
 
   return (
@@ -16,16 +43,13 @@ const Hero = () => {
           <div className="flex lg:items-center lg:gap-8 xl:gap-32.5">
             <div className=" md:w-1/2">
               <h4 className="mb-4.5 text-lg font-medium text-black dark:text-white">
-                Séance d'essai gratuite
+                {t.hero.subtitle}
               </h4>
               <h1 className="mb-5 pr-16 text-3xl font-bold text-black dark:text-white xl:text-hero ">
-                Comprendre, Progresser, {" "}
-                <span className="relative inline-block before:absolute before:bottom-2.5 before:left-0 before:-z-1 before:h-3 before:w-full before:bg-titlebg dark:before:bg-titlebgdark ">
-                  Réussir
-                </span>
+                {t.hero.title}
               </h1>
               <p>
-                Professeurs certifiés et étudiants des meilleures universités. Programmez votre première séance GRATUITE avec un tuteur pédagogique.
+                {t.hero.description}
               </p>
 
               <div className="mt-10">
@@ -33,22 +57,25 @@ const Hero = () => {
                   <div className="flex flex-wrap gap-5">
                     <input
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      type="text"
-                      placeholder="Votre e-mail"
+                      onChange={(e) => setEmail(sanitizeString(e.target.value))}
+                      type="email"
+                      placeholder={t.hero.emailPlaceholder}
+                      required
+                      autoComplete="email"
+                      maxLength={254}
                       className="rounded-full border border-stroke px-6 py-2.5 shadow-solid-2 focus:border-primary focus:outline-hidden dark:border-strokedark dark:bg-black dark:shadow-none dark:focus:border-primary"
                     />
                     <button
                       aria-label="get started button"
                       className="flex rounded-full bg-black px-7.5 py-2.5 text-white duration-300 ease-in-out hover:bg-blackho dark:bg-btndark dark:hover:bg-blackho"
                     >
-                      Réserver
+                      {t.hero.reserveButton}
                     </button>
                   </div>
                 </form>
 
                 <p className="mt-5 text-black dark:text-white">
-                  Essayez gratuitement, sans carte bancaire.
+                  {t.hero.freeTrial}
                 </p>
               </div>
             </div>
@@ -95,6 +122,13 @@ const Hero = () => {
           </div>
         </div>
       </section>
+
+      {/* Tutor Selection Modal */}
+      <TutorSelectionModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSelectTutor={handleSelectTutor}
+      />
     </>
   );
 };

@@ -1,8 +1,11 @@
 "use client";
 import Image from "next/image";
 import SectionHeader from "../Common/SectionHeader";
+import { useLanguage } from "@/context/LanguageContext";
 
 const Pricing = () => {
+  const { t } = useLanguage();
+
   return (
     <>
       {/* <!-- ===== Pricing Table Start ===== --> */}
@@ -12,9 +15,9 @@ const Pricing = () => {
           <div className="animate_top mx-auto text-center">
             <SectionHeader
               headerInfo={{
-                title: `Packs de séances`,
-                subtitle: `Promo d'Été`,
-                description: `Choisissez le pack adapté : Collège, Lycée, ou Supérieur.`,
+                title: t.pricing.title,
+                subtitle: t.pricing.subtitle,
+                description: t.pricing.description,
               }}
             />
           </div>
@@ -33,13 +36,24 @@ const Pricing = () => {
           <div className="flex flex-wrap justify-center gap-7.5 lg:flex-nowrap xl:gap-12.5">
             {/* <!-- Pricing Item --> */}
             <div className="animate_top group relative rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection dark:shadow-none md:w-[45%] lg:w-1/3 xl:p-12.5">
-              <h3 className="mb-2 text-3xl font-bold text-black dark:text-white xl:text-sectiontitle3">
-                18 <span className="text-regular text-waterloo dark:text-manatee">€/cours</span>
-              </h3>
-              <h4 className="mb-2.5 text-para2 font-medium text-black dark:text-white">
-                Collège
-              </h4>
-              <p>8 cours/mois. Méthodologies simples et efficaces pour le bien-être scolaire.</p>
+              {/* Discount Badge */}
+              <div className="absolute -right-3.5 top-7.5 -rotate-90 rounded-bl-full rounded-tl-full bg-red-500 px-4.5 py-1.5 text-metatitle font-medium uppercase text-white">
+                -30%
+              </div>
+              
+              <div className="mb-2 flex items-center gap-2">
+                <span className="relative text-lg text-black dark:text-white">
+                  23.5€
+                  <span className="absolute left-0 top-1/2 h-0.5 w-full -translate-y-1/2 -rotate-12 bg-red-500"></span>
+                </span>
+                <h3 className="text-3xl font-bold text-black dark:text-white xl:text-sectiontitle3">
+                  18 <span className="text-regular text-waterloo dark:text-manatee">€/cours</span>
+                </h3>
+              </div>
+          <h4 className="mb-2.5 text-para2 font-medium text-black dark:text-white">
+            {t.pricing.college}
+          </h4>
+          <p>8 cours/mois. Méthodologies simples et efficaces pour le bien-être scolaire.</p>
 
               <div className="mt-9 border-t border-stroke pb-12.5 pt-9 dark:border-strokedark">
                 <ul>
@@ -49,13 +63,13 @@ const Pricing = () => {
                 </ul>
               </div>
 
-              <button
-                aria-label="Get the Plan button"
+              <a
+                href="/packs"
                 className="group/btn inline-flex items-center gap-2.5 font-medium text-primary transition-all duration-300 dark:text-white dark:hover:text-primary"
               >
-                <span className="duration-300 group-hover/btn:pr-2">
-                  Get the Plan
-                </span>
+            <span className="duration-300 group-hover/btn:pr-2">
+              {t.pricing.discoverPack}
+            </span>
                 <svg
                   width="14"
                   height="14"
@@ -67,21 +81,28 @@ const Pricing = () => {
                     fill="currentColor"
                   />
                 </svg>
-              </button>
+              </a>
             </div>
 
             {/* <!-- Pricing Item --> */}
             <div className="animate_top group relative rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection dark:shadow-none md:w-[45%] lg:w-1/3 xl:p-12.5">
-              <div className="absolute -right-3.5 top-7.5 -rotate-90 rounded-bl-full rounded-tl-full bg-primary px-4.5 py-1.5 text-metatitle font-medium uppercase text-white">
-                popular
+              {/* Discount Badge */}
+              <div className="absolute -right-3.5 top-7.5 -rotate-90 rounded-bl-full rounded-tl-full bg-red-500 px-4.5 py-1.5 text-metatitle font-medium uppercase text-white">
+                -25%
               </div>
 
-              <h3 className="mb-7.5 text-3xl font-bold text-black dark:text-white xl:text-sectiontitle3">
-                22 <span className="text-regular text-waterloo dark:text-manatee">€/cours</span>
-              </h3>
-              <h4 className="mb-2.5 text-para2 font-medium text-black dark:text-white">
-                Lycée
-              </h4>
+              <div className="mb-2 flex items-center gap-2">
+                <span className="relative text-lg text-black dark:text-white">
+                  27.5€
+                  <span className="absolute left-0 top-1/2 h-0.5 w-full -translate-y-1/2 -rotate-12 bg-red-500"></span>
+                </span>
+                <h3 className="text-3xl font-bold text-black dark:text-white xl:text-sectiontitle3">
+                  22 <span className="text-regular text-waterloo dark:text-manatee">€/cours</span>
+                </h3>
+              </div>
+          <h4 className="mb-2.5 text-para2 font-medium text-black dark:text-white">
+            {t.pricing.highSchool}
+          </h4>
               <p>8 cours/mois. Consolider les savoirs et préparer l'avenir.</p>
 
               <div className="mt-9 border-t border-stroke pb-12.5 pt-9 dark:border-strokedark">
@@ -92,13 +113,13 @@ const Pricing = () => {
                 </ul>
               </div>
 
-              <button
-                aria-label="Get the Plan button"
+              <a
+                href="/packs"
                 className="group/btn inline-flex items-center gap-2.5 font-medium text-primary transition-all duration-300 dark:text-white dark:hover:text-primary"
               >
-                <span className="duration-300 group-hover/btn:pr-2">
-                  Get the Plan
-                </span>
+            <span className="duration-300 group-hover/btn:pr-2">
+              {t.pricing.discoverPack}
+            </span>
                 <svg
                   width="14"
                   height="14"
@@ -110,16 +131,27 @@ const Pricing = () => {
                     fill="currentColor"
                   />
                 </svg>
-              </button>
+              </a>
             </div>
 
             {/* <!-- Pricing Item --> */}
             <div className="animate_top group relative rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection dark:shadow-none md:w-[45%] lg:w-1/3 xl:p-12.5">
-              <h3 className="mb-7.5 text-3xl font-bold text-black dark:text-white xl:text-sectiontitle3">
-                28 <span className="text-regular text-waterloo dark:text-manatee">€/cours</span>
-              </h3>
+              {/* Discount Badge */}
+              <div className="absolute -right-3.5 top-7.5 -rotate-90 rounded-bl-full rounded-tl-full bg-red-500 px-4.5 py-1.5 text-metatitle font-medium uppercase text-white">
+                -20%
+              </div>
+
+              <div className="mb-2 flex items-center gap-2">
+                <span className="relative text-lg text-black dark:text-white">
+                  33.5€
+                  <span className="absolute left-0 top-1/2 h-0.5 w-full -translate-y-1/2 -rotate-12 bg-red-500"></span>
+                </span>
+                <h3 className="text-3xl font-bold text-black dark:text-white xl:text-sectiontitle3">
+                  28 <span className="text-regular text-waterloo dark:text-manatee">€/cours</span>
+                </h3>
+              </div>
               <h4 className="mb-2.5 text-para2 font-medium text-black dark:text-white">
-                Enseignement Supérieur
+                {t.pricing.university}
               </h4>
               <p>8 cours/mois. Développer expertise et autonomie intellectuelle.</p>
 
@@ -131,8 +163,8 @@ const Pricing = () => {
                 </ul>
               </div>
 
-              <button
-                aria-label="Get the Plan button"
+              <a
+                href="/packs"
                 className="group/btn inline-flex items-center gap-2.5 font-medium text-primary transition-all duration-300 dark:text-white dark:hover:text-primary"
               >
                 <span className="duration-300 group-hover/btn:pr-2">Découvrir le pack</span>
@@ -147,8 +179,15 @@ const Pricing = () => {
                     fill="currentColor"
                   />
                 </svg>
-              </button>
+              </a>
             </div>
+          </div>
+          
+          {/* Legal Notice */}
+          <div className="mt-8 text-center">
+            <p className="text-sm text-waterloo dark:text-manatee">
+              {t.pricing.legalNotice}
+            </p>
           </div>
         </div>
       </section>

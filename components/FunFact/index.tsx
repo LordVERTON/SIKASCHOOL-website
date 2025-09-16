@@ -2,8 +2,11 @@
 import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { useLanguage } from "@/context/LanguageContext";
 
 const FunFact = () => {
+  const { t } = useLanguage();
+
   return (
     <>
       {/* <!-- ===== Funfact Start ===== --> */}
@@ -56,10 +59,10 @@ const FunFact = () => {
             className="animate_top mx-auto mb-12.5 px-4 text-center md:w-4/5 md:px-0 lg:mb-17.5 lg:w-2/3 xl:w-1/2"
           >
             <h2 className="mb-4 text-3xl font-bold text-black dark:text-white xl:text-sectiontitle3">
-              Quelques Chiffres
+              {t.funFacts.title}
             </h2>
             <p className="mx-auto lg:w-11/12">
-              5+ ans d'expérience, 200+ familles accompagnées, 95% de mentions au bac.
+              {t.funFacts.years}, {t.funFacts.families}, {t.funFacts.success}.
             </p>
           </motion.div>
 
@@ -85,7 +88,7 @@ const FunFact = () => {
               <h3 className="mb-2.5 text-3xl font-bold text-black dark:text-white xl:text-sectiontitle3">
                 5+
               </h3>
-              <p className="text-lg lg:text-para2">années d'expérience</p>
+              <p className="text-lg lg:text-para2">{t.funFacts.years}</p>
             </motion.div>
             <motion.div
               variants={{
@@ -108,7 +111,7 @@ const FunFact = () => {
               <h3 className="mb-2.5 text-3xl font-bold text-black dark:text-white xl:text-sectiontitle3">
                 200+
               </h3>
-              <p className="text-lg lg:text-para2">familles accompagnées</p>
+              <p className="text-lg lg:text-para2">{t.funFacts.families}</p>
             </motion.div>
             <motion.div
               variants={{
@@ -131,7 +134,7 @@ const FunFact = () => {
               <h3 className="mb-2.5 text-3xl font-bold text-black dark:text-white xl:text-sectiontitle3">
                 95%
               </h3>
-              <p className="text-lg lg:text-para2">mentions au bac</p>
+              <p className="text-lg lg:text-para2">{t.funFacts.success}</p>
             </motion.div>
           </div>
         </div>

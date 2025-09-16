@@ -1,42 +1,37 @@
 import { Menu } from "@/types/menu";
 
-const menuData: Menu[] = [
+// This will be updated to use translations dynamically
+const getMenuData = (t: any): Menu[] => [
   {
     id: 1,
-    title: "Accueil",
+    title: t.nav.home,
     newTab: false,
     path: "/",
   },
   {
     id: 2,
-    title: "Comment ça marche",
+    title: t.nav.howItWorks,
     newTab: false,
-    path: "/#how-it-works",
+    path: "/how-to",
   },
   {
     id: 3,
-    title: "Qui sommes nous ?",
+    title: t.nav.aboutUs,
     newTab: false,
-    path: "/#about",
+    path: "/about",
   },
   {
     id: 4,
-    title: "Packs de séances",
+    title: t.nav.sessionPacks,
     newTab: false,
-    path: "/#pricing",
+    path: "/packs",
   },
   {
     id: 5,
-    title: "A la séance",
+    title: t.nav.perSession,
     newTab: false,
-    path: "/#contact",
-  },
-  {
-    id: 6,
-    title: "Se connecter",
-    newTab: false,
-    path: "/auth/signin",
+    path: "/book-online",
   },
 ];
 
-export default menuData;
+export default getMenuData;

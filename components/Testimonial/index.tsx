@@ -9,9 +9,12 @@ import { Swiper, SwiperSlide } from "swiper/react";
 
 import { motion } from "framer-motion";
 import SingleTestimonial from "./SingleTestimonial";
-import { testimonialData } from "./testimonialData";
+import { getTestimonialData } from "./testimonialData";
+import { useLanguage } from "@/context/LanguageContext";
 
 const Testimonial = () => {
+  const { t } = useLanguage();
+
   return (
     <>
       <section>
@@ -20,8 +23,8 @@ const Testimonial = () => {
           <div className="animate_top mx-auto text-center">
             <SectionHeader
               headerInfo={{
-                title: `TÉMOIGNAGES`,
-                subtitle: `Ce que disent les familles`,
+                title: t.testimonials.title,
+                subtitle: t.testimonials.subtitle,
                 description: `Des retours positifs et des familles satisfaites`,
               }}
             />
@@ -72,7 +75,7 @@ const Testimonial = () => {
                 },
               }}
             >
-              {testimonialData.map((review) => (
+              {getTestimonialData(t).map((review) => (
                 <SwiperSlide key={review?.id}>
                   <SingleTestimonial review={review} />
                 </SwiperSlide>

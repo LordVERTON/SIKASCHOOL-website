@@ -2,8 +2,11 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { useLanguage } from "@/context/LanguageContext";
 
 const About = () => {
+  const { t } = useLanguage();
+
   return (
     <>
       {/* <!-- ===== About Start ===== --> */}
@@ -60,16 +63,16 @@ const About = () => {
               className="animate_right md:w-1/2"
             >
               <span className="font-medium uppercase text-black dark:text-white">
-                Nos méthodes
+                {t.about.title}
               </span>
               <h2 className="relative mb-6 text-3xl font-bold text-black dark:text-white xl:text-hero">
-                Comprendre, Progresser,
+                {t.about.methods.understand.title}, {t.about.methods.progress.title},
                 <span className="relative inline-block before:absolute before:bottom-2.5 before:left-0 before:-z-1 before:h-3 before:w-full before:bg-titlebg dark:before:bg-titlebgdark">
-                  Réussir
+                  {t.about.methods.succeed.title}
                 </span>
               </h2>
               <p>
-                Professeurs certifiés et étudiants issus des meilleures universités (Stanford, Polytechnique, INSA...).
+                {t.about.qualifications}
               </p>
 
               <div className="mt-7.5 flex items-center gap-5">
@@ -80,9 +83,9 @@ const About = () => {
                 </div>
                 <div className="w-3/4">
                   <h3 className="mb-0.5 text-metatitle2 text-black dark:text-white">
-                    Comprendre
+                    {t.about.methods.understand.title}
                   </h3>
-                  <p>Évaluer le niveau, identifier les besoins et clarifier les objectifs.</p>
+                  <p>{t.about.methods.understand.description}</p>
                 </div>
               </div>
               <div className="mt-7.5 flex items-center gap-5">
@@ -93,9 +96,9 @@ const About = () => {
                 </div>
                 <div className="w-3/4">
                   <h3 className="mb-0.5 text-metatitle2 text-black dark:text-white">
-                    Progresser
+                    {t.about.methods.progress.title}
                   </h3>
-                  <p>Mettre en place une pédagogie efficace et un suivi régulier.</p>
+                  <p>{t.about.methods.progress.description}</p>
                 </div>
               </div>
               <div className="mt-7.5 flex items-center gap-5">
@@ -106,9 +109,9 @@ const About = () => {
                 </div>
                 <div className="w-3/4">
                   <h3 className="mb-0.5 text-metatitle2 text-black dark:text-white">
-                    Réussir
+                    {t.about.methods.succeed.title}
                   </h3>
-                  <p>Atteindre les objectifs scolaires et renforcer l'autonomie.</p>
+                  <p>{t.about.methods.succeed.description}</p>
                 </div>
               </div>
             </motion.div>

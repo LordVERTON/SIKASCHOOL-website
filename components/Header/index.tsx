@@ -5,14 +5,22 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import ThemeToggler from "./ThemeToggler";
-import menuData from "./menuData";
+import getMenuData from "./menuData";
+import { useLanguage } from "@/context/LanguageContext";
 
 const Header = () => {
   const [navigationOpen, setNavigationOpen] = useState(false);
   const [dropdownToggler, setDropdownToggler] = useState(false);
   const [stickyMenu, setStickyMenu] = useState(false);
+  const { t } = useLanguage();
 
   const pathUrl = usePathname();
+
+  // Function to close mobile menu when a link is clicked
+  const handleMenuClose = () => {
+    setNavigationOpen(false);
+    setDropdownToggler(false);
+  };
 
   // Sticky menu
   const handleStickyMenu = () => {
@@ -25,7 +33,32 @@ const Header = () => {
 
   useEffect(() => {
     window.addEventListener("scroll", handleStickyMenu);
-  });
+    
+    // Close menu when clicking outside
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (navigationOpen && !target.closest('.navbar') && !target.closest('button[aria-label="hamburger Toggler"]')) {
+        handleMenuClose();
+      }
+    };
+
+    // Close menu on scroll
+    const handleScroll = () => {
+      if (navigationOpen) {
+        handleMenuClose();
+      }
+    };
+
+    if (navigationOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      window.addEventListener('scroll', handleScroll);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [navigationOpen]);
 
   return (
     <header
@@ -104,7 +137,7 @@ const Header = () => {
         >
           <nav>
             <ul className="flex flex-col gap-5 xl:flex-row xl:items-center xl:gap-10">
-              {menuData.map((menuItem, key) => (
+              {getMenuData(t).map((menuItem, key) => (
                 <li key={key} className={menuItem.submenu && "group relative"}>
                   {menuItem.submenu ? (
                     <>
@@ -129,7 +162,9 @@ const Header = () => {
                       >
                         {menuItem.submenu.map((item, key) => (
                           <li key={key} className="hover:text-primary">
-                            <Link href={item.path || "#"}>{item.title}</Link>
+                            <Link href={item.path || "#"} onClick={handleMenuClose}>
+                              {item.title}
+                            </Link>
                           </li>
                         ))}
                       </ul>
@@ -142,6 +177,7 @@ const Header = () => {
                           ? "text-primary hover:text-primary"
                           : "hover:text-primary"
                       }
+                      onClick={handleMenuClose}
                     >
                       {menuItem.title}
                     </Link>
@@ -157,15 +193,17 @@ const Header = () => {
             <Link
               href="/auth/signin"
               className="text-regular font-medium text-waterloo hover:text-primary"
+              onClick={handleMenuClose}
             >
-              Se connecter
+              {t.nav.signIn}
             </Link>
 
             <Link
               href="#pricing"
               className="flex items-center justify-center rounded-full bg-primary px-7.5 py-2.5 text-regular text-white duration-300 ease-in-out hover:bg-primaryho"
+              onClick={handleMenuClose}
             >
-              Réserver
+              {t.hero.reserveButton}
             </Link>
           </div>
         </div>
