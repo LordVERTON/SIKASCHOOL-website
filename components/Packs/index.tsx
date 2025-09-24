@@ -12,8 +12,9 @@ const Packs = () => {
       originalPrice: "144€",
       sessions: "8 séances",
       level: "Collège",
-      description: "Soutien scolaire Collège",
-      type: "eco"
+      description: "Maths, Français, Physique-Chimie. Méthode et confiance.",
+      type: "eco",
+      color: "bg-yellow-100 text-yellow-800",
     },
     {
       id: 2,
@@ -22,8 +23,9 @@ const Packs = () => {
       originalPrice: "176€",
       sessions: "8 séances",
       level: "Lycée",
-      description: "Soutien scolaire Lycée",
-      type: "eco"
+      description: "Maths, Physique, SVT, Spécialités. Préparation examens.",
+      type: "eco",
+      color: "bg-sky-100 text-sky-800",
     },
     {
       id: 3,
@@ -32,8 +34,9 @@ const Packs = () => {
       originalPrice: "224€",
       sessions: "8 séances",
       level: "Enseignement Supérieur",
-      description: "Soutien scolaire Enseignement Supérieur",
-      type: "eco"
+      description: "Maths, Physique, Info, Méthodes et projets.",
+      type: "eco",
+      color: "bg-green-100 text-green-800",
     },
     // Basic Plans (4 séances)
     {
@@ -43,8 +46,9 @@ const Packs = () => {
       originalPrice: "88€", 
       sessions: "4 séances",
       level: "Collège",
-      description: "Soutien scolaire Collège",
-      type: "basic"
+      description: "Maths, Français, Physique-Chimie. Méthode et confiance.",
+      type: "basic",
+      color: "bg-yellow-100 text-yellow-800",
     },
     {
       id: 5,
@@ -53,8 +57,9 @@ const Packs = () => {
       originalPrice: "108€",
       sessions: "4 séances", 
       level: "Lycée",
-      description: "Soutien scolaire Lycée",
-      type: "basic"
+      description: "Maths, Physique, SVT, Spécialités. Préparation examens.",
+      type: "basic",
+      color: "bg-sky-100 text-sky-800",
     },
     {
       id: 6,
@@ -63,8 +68,9 @@ const Packs = () => {
       originalPrice: "128€",
       sessions: "4 séances",
       level: "Enseignement Supérieur", 
-      description: "Soutien scolaire Enseignement Supérieur",
-      type: "basic"
+      description: "Maths, Physique, Info, Méthodes et projets.",
+      type: "basic",
+      color: "bg-green-100 text-green-800",
     }
   ];
 
@@ -104,7 +110,10 @@ const Packs = () => {
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {pricingPlans.filter(plan => plan.type === 'eco').map((plan) => (
                 <div key={plan.id} className="animate_top group relative rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection dark:shadow-none xl:p-12.5">
-                  <h4 className="mb-4 text-xl font-bold text-black dark:text-white">
+                  <div className={`mb-3 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${plan.color || ''}`}>
+                    {plan.level}
+                  </div>
+                  <h4 className="mb-1 text-lg font-semibold text-waterloo dark:text-manatee">
                     {plan.name}
                   </h4>
                   <div className="mb-4">
@@ -113,7 +122,7 @@ const Packs = () => {
                       {plan.originalPrice}
                     </span>
                   </div>
-                  <p className="mb-4 text-sm font-medium text-black dark:text-white">
+                  <p className="mb-2 text-sm font-medium text-black dark:text-white">
                     {plan.sessions} (Sans Engagement)
                   </p>
                   <p className="mb-6 text-sm text-waterloo dark:text-manatee">
@@ -139,7 +148,10 @@ const Packs = () => {
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {pricingPlans.filter(plan => plan.type === 'basic').map((plan) => (
                 <div key={plan.id} className="animate_top group relative rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection dark:shadow-none xl:p-12.5">
-                  <h4 className="mb-4 text-xl font-bold text-black dark:text-white">
+                  <div className={`mb-3 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${plan.color || ''}`}>
+                    {plan.level}
+                  </div>
+                  <h4 className="mb-1 text-lg font-semibold text-waterloo dark:text-manatee">
                     {plan.name}
                   </h4>
                   <div className="mb-4">
@@ -148,7 +160,7 @@ const Packs = () => {
                       {plan.originalPrice}
                     </span>
                   </div>
-                  <p className="mb-4 text-sm font-medium text-black dark:text-white">
+                  <p className="mb-2 text-sm font-medium text-black dark:text-white">
                     {plan.sessions} (Sans Engagement)
                   </p>
                   <p className="mb-6 text-sm text-waterloo dark:text-manatee">
@@ -164,6 +176,12 @@ const Packs = () => {
                 </div>
               ))}
             </div>
+          </div>
+          {/* Explainer */}
+          <div className="mx-auto mt-10 max-w-[900px] text-center text-sm text-waterloo dark:text-manatee">
+            <p>
+              Pack = carnet de séances à tarif avantageux. À la séance = paiement à l'unité. Choisissez selon votre besoin et votre régularité.
+            </p>
           </div>
         </div>
       </section>

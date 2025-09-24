@@ -7,50 +7,50 @@ const BookOnline = () => {
     {
       id: 1,
       title: "Séance d'essai gratuite",
-      description: "Programmer votre première séance GRATUITE avec l'un de nos tuteurs pédagogiques.",
+      description: "Programmez votre première séance GRATUITE avec un tuteur pédagogique.",
       duration: "1 h",
       price: "Gratuit",
       originalPrice: null,
       level: "Tous niveaux",
-      features: ["Disponible en ligne"],
+      features: ["Maths, Physique, Français"],
       buttonText: "Programmer un appel",
       buttonLink: "#contact",
       isFree: true
     },
     {
       id: 2,
-      title: "Niveau Nota (à la séance)",
-      description: "Collège : De la 6ème à la 3ème. (Séance unique)",
+      title: "Collège (à la séance)",
+      description: "De la 6ème à la 3ème. (Séance unique)",
       duration: "1 h",
       price: "23 €",
       originalPrice: null,
       level: "Collège",
-      features: ["Disponible en ligne"],
+      features: ["Maths", "Français", "Physique-Chimie"],
       buttonText: "Programmer un appel",
       buttonLink: "#contact"
     },
     {
       id: 3,
-      title: "Niveau Ava (à la séance)",
-      description: "Lycée : De la 2nde à la Terminale. (Séance unique)",
+      title: "Lycée (à la séance)",
+      description: "De la 2nde à la Terminale. (Séance unique)",
       duration: "1 h",
       price: "27 €",
       originalPrice: null,
       level: "Lycée",
-      features: ["Disponible en ligne"],
+      features: ["Maths", "Physique", "SVT", "Spécialités"],
       buttonText: "Programmer un appel",
       buttonLink: "#contact"
     },
     {
       id: 4,
-      title: "Niveau Toda (à la séance)",
-      description: "Enseignement Supérieur : Classes préparatoires, Fac, IUT, BTS... (Séance unique)",
+      title: "Supérieur (à la séance)",
+      description: "Prépas, Fac, IUT, BTS... (Séance unique)",
       duration: "1 h",
       price: "33 €",
       originalPrice: null,
       level: "Enseignement Supérieur",
-      features: ["Disponible en ligne"],
-      buttonText: "Réserver",
+      features: ["Maths", "Physique", "Informatique"],
+      buttonText: "Programmer un appel",
       buttonLink: "#contact"
     }
   ];
@@ -76,22 +76,32 @@ const BookOnline = () => {
         <div className="mx-auto mt-15 max-w-[1200px] px-4 md:px-8 xl:mt-20 xl:px-0">
           {/* Hero Image */}
           <div className="mb-12 text-center">
-            <div className="relative mx-auto h-64 w-full max-w-md overflow-hidden rounded-lg">
-              <div className="flex h-full w-full items-center justify-center bg-gray-200 dark:bg-gray-700">
-                <span className="text-gray-500 dark:text-gray-400">Image placeholder</span>
-              </div>
+            <div className="relative mx-auto h-64 w-full max-w-2xl overflow-hidden rounded-lg">
+              <Image
+                src="/images/hero/hero-light.svg"
+                alt="Hero"
+                fill
+                className="object-cover dark:hidden"
+              />
+              <Image
+                src="/images/hero/hero-dark.svg"
+                alt="Hero"
+                fill
+                className="hidden object-cover dark:block"
+              />
             </div>
           </div>
 
           {/* Services Grid */}
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-2">
+          <div className="grid gap-8 sm:grid-cols-2 xl:grid-cols-3">
             {services.map((service) => (
               <div key={service.id} className="animate_top group relative rounded-lg border border-stroke bg-white p-8 shadow-solid-10 dark:border-strokedark dark:bg-blacksection dark:shadow-none">
                 {/* Service Header */}
                 <div className="mb-6">
-                  <h3 className="mb-2 text-xl font-bold text-black dark:text-white">
-                    {service.title}
-                  </h3>
+                  <div className="mb-2 inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                    {service.level}
+                  </div>
+                  <h3 className="mb-1 text-lg font-semibold text-black dark:text-white">{service.title}</h3>
                   <p className="text-sm text-waterloo dark:text-manatee">
                     {service.description}
                   </p>
@@ -101,7 +111,7 @@ const BookOnline = () => {
                 <div className="mb-6">
                   {service.features.map((feature, index) => (
                     <div key={index} className="mb-2 flex items-center text-sm text-waterloo dark:text-manatee">
-                      <span className="mr-2 text-primary">•</span>
+                      <span className="mr-2 h-2 w-2 rounded-full bg-primary"></span>
                       {feature}
                     </div>
                   ))}

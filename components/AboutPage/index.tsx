@@ -21,7 +21,19 @@ const AboutPage = () => {
       name: "Daniel",
       image: "/images/team/daniel.jpg",
       role: "Tuteur"
-    }
+    },
+    {
+      id: 4,
+      name: "Alix",
+      image: "/images/team/alix.jpg",
+      role: "Tutrice"
+    },
+    {
+      id: 5,
+      name: "Nolwen",
+      image: "/images/team/nolwen.jpg",
+      role: "Tutrice"
+    },
   ];
 
   const pedagogy = [
@@ -37,6 +49,13 @@ const AboutPage = () => {
       description: "Développer une compréhension approfondie des concepts scientifiques, tout en s'appuyant sur des exercices d'application rigoureux pour ancrer solidement les connaissances.",
       author: "Dan"
     }
+  ];
+
+  const schoolLogos = [
+    { id: 'polytechnique', name: 'Polytechnique', src: '/images/logo/École_polytechnique_logo.png' },
+    { id: 'sorbonne', name: 'Sorbonne', src: '/images/logo/Sorbonne_logo.png' },
+    { id: 'stanford', name: 'Stanford', src: '/images/logo/Stanford Logo_0.png' },
+    { id: 'insa', name: 'INSA', src: '/images/logo/insa-logo.png' },
   ];
 
   return (
@@ -61,22 +80,35 @@ const AboutPage = () => {
           {/* Introduction */}
           <div className="mb-16 text-center">
             <p className="text-lg text-waterloo dark:text-manatee">
-              Le projet est initié par des passionnés de l'enseignement diplômés des plus grandes écoles françaises et internationales : Stanford, Polytechnique, Arts et Métiers, Sorbonne, Université Paris-Saclay...
+              Ingénieurs passionnés par l'enseignement et soucieux de transmettre, nous mettons les nouvelles technologies au service d'une pédagogie humaine, moderne et efficace.
             </p>
           </div>
 
           {/* School Logos */}
           <div className="mb-16 flex flex-wrap justify-center gap-8">
-            <div className="flex items-center justify-center rounded-lg border border-stroke bg-white p-6 shadow-sm dark:border-strokedark dark:bg-blacksection">
-              <div className="h-16 w-32 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
-                <span className="text-xs text-gray-500 dark:text-gray-400">Stanford</span>
+            {schoolLogos.map((logo) => (
+              <div key={logo.id} className="flex items-center justify-center rounded-lg border border-stroke bg-white p-6 shadow-sm dark:border-strokedark dark:bg-blacksection">
+                <div className="h-16 w-32 rounded flex items-center justify-center bg-gray-50 dark:bg-gray-800">
+                  <Image
+                    src={logo.src}
+                    alt={logo.name}
+                    width={128}
+                    height={64}
+                    className="max-h-16 max-w-[128px] object-contain"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      const parent = e.currentTarget.parentElement;
+                      if (parent && !parent.querySelector('span')) {
+                        const span = document.createElement('span');
+                        span.className = 'text-xs text-gray-500 dark:text-gray-400';
+                        span.textContent = logo.name;
+                        parent.appendChild(span);
+                      }
+                    }}
+                  />
+                </div>
               </div>
-            </div>
-            <div className="flex items-center justify-center rounded-lg border border-stroke bg-white p-6 shadow-sm dark:border-strokedark dark:bg-blacksection">
-              <div className="h-16 w-32 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
-                <span className="text-xs text-gray-500 dark:text-gray-400">Polytechnique</span>
-              </div>
-            </div>
+            ))}
           </div>
 
           {/* Pedagogy Section */}
@@ -109,10 +141,10 @@ const AboutPage = () => {
                 Séance d'essai Gratuite
               </h3>
               <a
-                href="#contact"
+                href="/packs"
                 className="inline-flex items-center justify-center rounded-lg bg-primary px-8 py-3 text-white transition-all duration-300 hover:bg-primaryho"
               >
-                Réserver maintenant
+                Voir les formules
               </a>
             </div>
           </div>

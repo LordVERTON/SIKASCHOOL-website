@@ -83,11 +83,11 @@ const Footer = () => {
                   viewport={{ once: true }}
                   className="animate_top"
                 >
-                  <h4 className="mb-9 text-itemtitle2 font-medium text-black dark:text-white">
+                  <h4 className="mb-3 text-sm font-medium text-black dark:text-white">
                     {t.footer.quickLinks}
                   </h4>
 
-                  <ul>
+                  <ul className="text-sm">
                     <li>
                       <a
                         href="/"
@@ -141,11 +141,11 @@ const Footer = () => {
                   viewport={{ once: true }}
                   className="animate_top"
                 >
-                  <h4 className="mb-9 text-itemtitle2 font-medium text-black dark:text-white">
+                  <h4 className="mb-3 text-sm font-medium text-black dark:text-white">
                     {t.footer.support}
                   </h4>
 
-                  <ul>
+                  <ul className="text-sm">
                     <li>
                       <a
                         href="/about"
@@ -199,10 +199,10 @@ const Footer = () => {
                   viewport={{ once: true }}
                   className="animate_top"
                 >
-                  <h4 className="mb-9 text-itemtitle2 font-medium text-black dark:text-white">
+                  <h4 className="mb-3 text-sm font-medium text-black dark:text-white">
                     {t.footer.newsletter}
                   </h4>
-                  <p className="mb-4 w-[90%]">
+                  <p className="mb-3 w-[90%] text-sm">
                     {t.footer.newsletterDescription}
                   </p>
 
@@ -211,12 +211,12 @@ const Footer = () => {
                       <input
                         type="email"
                         placeholder={t.footer.newsletterPlaceholder}
-                        className="w-full rounded-full border border-stroke px-6 py-3 shadow-solid-11 focus:border-primary focus:outline-hidden dark:border-strokedark dark:bg-black dark:shadow-none dark:focus:border-primary"
+                        className="w-full rounded-full border border-stroke px-5 py-2.5 text-sm shadow-solid-11 focus:border-primary focus:outline-hidden dark:border-strokedark dark:bg-black dark:shadow-none dark:focus:border-primary"
                       />
 
                       <button
                         aria-label="signup to newsletter"
-                        className="absolute right-0 p-4"
+                        className="absolute right-0 p-3"
                       >
                         <svg
                           className="fill-[#757693] hover:fill-primary dark:fill-white"

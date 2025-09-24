@@ -45,10 +45,26 @@ const Hero = () => {
               <h4 className="mb-4.5 text-lg font-medium text-black dark:text-white">
                 {t.hero.subtitle}
               </h4>
-              <h1 className="mb-5 pr-16 text-3xl font-bold text-black dark:text-white xl:text-hero ">
+              <h1 className="mb-5 pr-16 text-4xl font-extrabold leading-tight text-black dark:text-white md:text-5xl xl:text-7xl">
                 {t.hero.title}
               </h1>
-              <p>
+              <p className="mt-3 text-lg">
+                <span className="font-handwritten relative inline-block text-2xl md:text-3xl">
+                  <span className="relative z-10">Comprendre</span>
+                  <span className="absolute -bottom-1 left-0 right-0 z-0 h-2 rounded bg-yellow-300/70"></span>
+                </span>
+                <span className="mx-2">,</span>
+                <span className="font-handwritten relative inline-block text-2xl md:text-3xl">
+                  <span className="relative z-10">Progresser</span>
+                  <span className="absolute -bottom-1 left-0 right-0 z-0 h-2 rounded bg-sky-300/70"></span>
+                </span>
+                <span className="mx-2">,</span>
+                <span className="font-handwritten relative inline-block text-2xl md:text-3xl">
+                  <span className="relative z-10">Réussir</span>
+                  <span className="absolute -bottom-1 left-0 right-0 z-0 h-2 rounded bg-green-300/70"></span>
+                </span>
+              </p>
+              <p className="mt-4">
                 {t.hero.description}
               </p>
 
@@ -67,7 +83,7 @@ const Hero = () => {
                     />
                     <button
                       aria-label="get started button"
-                      className="flex rounded-full bg-black px-7.5 py-2.5 text-white duration-300 ease-in-out hover:bg-blackho dark:bg-btndark dark:hover:bg-blackho"
+                    className="flex rounded-full bg-black px-7.5 py-2.5 text-white duration-300 ease-in-out hover:bg-blackho dark:bg-btndark dark:hover:bg-blackho"
                     >
                       {t.hero.reserveButton}
                     </button>

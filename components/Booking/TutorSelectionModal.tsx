@@ -28,21 +28,39 @@ const TutorSelectionModal = ({ isOpen, onClose, onSelectTutor }: TutorSelectionM
       available: true
     },
     {
+      id: "alix",
+      name: "Alix",
+      avatar: "/images/team/alix.jpg",
+      available: true
+    },
+    {
+      id: "nolwen",
+      name: "Nolwen",
+      avatar: "/images/team/nolwen.jpg",
+      available: true
+    },
+    {
       id: "daniel",
-      name: "Daniel VERTON",
-      avatar: "/images/tutors/daniel.jpg",
+      name: "Daniel",
+      avatar: "/images/team/daniel.jpg",
       available: true
     },
     {
       id: "distel",
-      name: "Distel NOUEMBISSI",
-      avatar: "/images/tutors/distel.jpg",
+      name: "Distel",
+      avatar: "/images/team/distel.jpg",
       available: true
     },
     {
       id: "walid",
-      name: "Walid Lakas",
-      avatar: "/images/tutors/walid.jpg",
+      name: "Walid",
+      avatar: "/images/team/walid.jpg",
+      available: true
+    },
+    {
+      id: "ruudy",
+      name: "Ruudy",
+      avatar: "/images/team/ruudy.jpg",
       available: true
     }
   ];

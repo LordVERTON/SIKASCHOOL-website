@@ -103,6 +103,22 @@ export interface Translations {
     next: string;
     close: string;
   };
+
+  // Contact
+  contact: {
+    formTitle: string;
+    fullNamePlaceholder: string;
+    emailPlaceholder: string;
+    subjectPlaceholder: string;
+    phonePlaceholder: string;
+    messagePlaceholder: string;
+    consentText: string;
+    sendButton: string;
+    sidebarTitle: string;
+    locationTitle: string;
+    emailTitle: string;
+    phoneTitle: string;
+  };
 }
 
 export const translations: Record<Language, Translations> = {
@@ -116,11 +132,11 @@ export const translations: Record<Language, Translations> = {
       signIn: 'Se connecter',
     },
     hero: {
-      title: 'Comprendre, Progresser, Réussir',
+      title: 'Atteignez vos objectifs académiques',
       subtitle: 'Séance d\'essai gratuite',
-      description: 'Professeurs certifiés et étudiants des meilleures universités. Programmez votre première séance GRATUITE avec un tuteur pédagogique.',
+      description: 'Comprendre, Progresser, Réussir. Professeurs certifiés et étudiants des meilleures écoles. Programmez votre première séance GRATUITE avec un tuteur pédagogique.',
       emailPlaceholder: 'Votre e-mail',
-      reserveButton: 'Réserver',
+      reserveButton: 'Commencer',
       freeTrial: 'Essayez gratuitement, sans carte bancaire.',
     },
     about: {
@@ -189,6 +205,20 @@ export const translations: Record<Language, Translations> = {
       back: 'Retour',
       next: 'Suivant',
       close: 'Fermer',
+    },
+    contact: {
+      formTitle: 'Envoyer un message',
+      fullNamePlaceholder: 'Nom complet',
+      emailPlaceholder: 'Adresse e-mail',
+      subjectPlaceholder: 'Objet',
+      phonePlaceholder: 'Numéro de téléphone',
+      messagePlaceholder: 'Message',
+      consentText: 'En cliquant, vous acceptez nos conditions d’utilisation du formulaire et l’utilisation des cookies dans votre navigateur.',
+      sendButton: 'Envoyer',
+      sidebarTitle: 'Nous trouver',
+      locationTitle: 'Notre adresse',
+      emailTitle: 'Adresse e-mail',
+      phoneTitle: 'Numéro de téléphone',
     },
   },
   en: {
@@ -274,6 +304,20 @@ export const translations: Record<Language, Translations> = {
       back: 'Back',
       next: 'Next',
       close: 'Close',
+    },
+    contact: {
+      formTitle: 'Send a message',
+      fullNamePlaceholder: 'Full name',
+      emailPlaceholder: 'Email address',
+      subjectPlaceholder: 'Subject',
+      phonePlaceholder: 'Phone number',
+      messagePlaceholder: 'Message',
+      consentText: 'By clicking, you agree to our form terms and consent to cookie usage in your browser.',
+      sendButton: 'Send Message',
+      sidebarTitle: 'Find us',
+      locationTitle: 'Our Location',
+      emailTitle: 'Email Address',
+      phoneTitle: 'Phone Number',
     },
   },
 };

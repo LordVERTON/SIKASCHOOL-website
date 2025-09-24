@@ -9,20 +9,20 @@ const HowTo = () => {
       title: "Testez !",
       description: "Réservez votre première séance gratuite via l'agenda des disponibilités avec l'un de nos tuteurs.",
       buttonText: "Réserver",
-      image: "/images/how-to/step1.jpg"
+      image: "/images/wix/test.jpg"
     },
     {
       id: 2,
       title: "Choisissez !",
       description: "Une formule de paiement personnalisée qui vous convient :",
       options: ["NOTA (Collège)", "AVA (Lycée)", "TODA (Supérieur)"],
-      image: "/images/how-to/step2.jpg"
+      image: "/images/wix/choose.jpg"
     },
     {
       id: 3,
       title: "Progressez !",
       description: "Des exercices thématiques, des méthodes efficaces, des sessions de préparation d'examens...",
-      image: "/images/how-to/step3.jpg"
+      image: "/images/wix/progress3.png"
     }
   ];
 
