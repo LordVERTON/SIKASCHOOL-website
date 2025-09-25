@@ -69,7 +69,6 @@ const AboutPage = () => {
               headerInfo={{
                 title: `Qui sommes nous ?`,
                 subtitle: `On ne naît pas excellent, on le devient !`,
-                description: `Nous avons le plaisir de vous présenter notre plate-forme de cours en ligne, SIKA ⭐.`,
               }}
             />
           </div>

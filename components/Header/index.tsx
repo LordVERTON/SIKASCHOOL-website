@@ -7,12 +7,14 @@ import { useEffect, useState } from "react";
 import ThemeToggler from "./ThemeToggler";
 import getMenuData from "./menuData";
 import { useLanguage } from "@/context/LanguageContext";
+import { useSession, signOut } from "next-auth/react";
 
 const Header = () => {
   const [navigationOpen, setNavigationOpen] = useState(false);
   const [dropdownToggler, setDropdownToggler] = useState(false);
   const [stickyMenu, setStickyMenu] = useState(false);
   const { t } = useLanguage();
+  const { data: session, status } = useSession();
 
   const pathUrl = usePathname();
 
@@ -74,15 +76,15 @@ const Header = () => {
             <Image
               src="/images/logo/logo-dark.svg"
               alt="logo"
-              width={119.03}
-              height={30}
+              width={170}
+              height={50}
               className="hidden w-full dark:block"
             />
             <Image
               src="/images/logo/logo-light.svg"
               alt="logo"
-              width={119.03}
-              height={30}
+              width={170}
+              height={50}
               className="w-full dark:hidden"
             />
           </a>
@@ -189,22 +191,56 @@ const Header = () => {
 
           <div className="mt-7 flex items-center gap-6 xl:mt-0">
             <ThemeToggler />
-
-            <Link
-              href="/auth/signin"
-              className="text-regular font-medium text-waterloo hover:text-primary"
-              onClick={handleMenuClose}
-            >
-              {t.nav.signIn}
-            </Link>
-
-            <Link
-              href="#pricing"
-              className="flex items-center justify-center rounded-full bg-primary px-7.5 py-2.5 text-regular text-white duration-300 ease-in-out hover:bg-primaryho"
-              onClick={handleMenuClose}
-            >
-              {t.hero.reserveButton}
-            </Link>
+            {status === "authenticated" ? (
+              <div className="flex items-center gap-4">
+                {session?.user?.image ? (
+                  <Image
+                    src={session.user.image}
+                    alt={session.user.name || session.user.email || "User"}
+                    width={32}
+                    height={32}
+                    className="h-8 w-8 rounded-full object-cover"
+                  />
+                ) : null}
+                <span className="hidden text-regular font-medium text-black dark:text-white sm:block">
+                  {session?.user?.name || session?.user?.email}
+                </span>
+                <button
+                  aria-label="logout"
+                  onClick={() => {
+                    handleMenuClose();
+                    signOut({ callbackUrl: "/" });
+                  }}
+                  className="flex items-center justify-center rounded-full bg-transparent px-4 py-2 text-regular font-medium text-waterloo ring-1 ring-stroke duration-300 ease-in-out hover:text-primary hover:ring-primary dark:text-manatee dark:ring-strokedark"
+                >
+                  Logout
+                </button>
+                <Link
+                  href="#pricing"
+                  className="flex items-center justify-center rounded-full bg-primary px-7.5 py-2.5 text-regular text-white duration-300 ease-in-out hover:bg-primaryho"
+                  onClick={handleMenuClose}
+                >
+                  {t.hero.reserveButton}
+                </Link>
+              </div>
+            ) : (
+              <>
+                <Link
+                  href="/auth/signin"
+                  className="text-regular font-medium text-waterloo hover:text-primary"
+                  onClick={handleMenuClose}
+                >
+                  {t.nav.signIn}
+                </Link>
+                <Link
+                  href="#pricing"
+                  className="flex items-center justify-center rounded-full bg-primary px-7.5 py-2.5 text-regular text-white duration-300 ease-in-out hover:bg-primaryho"
+                  onClick={handleMenuClose}
+                >
+                  {t.hero.reserveButton}
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>

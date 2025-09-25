@@ -119,6 +119,36 @@ export interface Translations {
     emailTitle: string;
     phoneTitle: string;
   };
+
+  // Auth
+  auth: {
+    signin: {
+      title: string;
+      withGoogle: string;
+      withGithub: string;
+      orEmail: string;
+      emailPlaceholder: string;
+      passwordPlaceholder: string;
+      keepSignedIn: string;
+      forgotPassword: string;
+      submit: string;
+      noAccount: string;
+      signUpLink: string;
+    };
+    signup?: {
+      title: string;
+      withGoogle: string;
+      orEmail: string;
+      firstNamePlaceholder: string;
+      lastNamePlaceholder: string;
+      emailPlaceholder: string;
+      passwordPlaceholder: string;
+      keepSignedIn: string;
+      submit: string;
+      haveAccount: string;
+      signInLink: string;
+    };
+  };
 }
 
 export const translations: Record<Language, Translations> = {
@@ -133,11 +163,11 @@ export const translations: Record<Language, Translations> = {
     },
     hero: {
       title: 'Atteignez vos objectifs académiques',
-      subtitle: 'Séance d\'essai gratuite',
-      description: 'Comprendre, Progresser, Réussir. Professeurs certifiés et étudiants des meilleures écoles. Programmez votre première séance GRATUITE avec un tuteur pédagogique.',
+      subtitle: 'Séance d’essai gratuite',
+      description: 'Professeurs certifiés et étudiants des meilleures écoles. Programmez votre première séance GRATUITE avec un tuteur pédagogique.',
       emailPlaceholder: 'Votre e-mail',
       reserveButton: 'Commencer',
-      freeTrial: 'Essayez gratuitement, sans carte bancaire.',
+      freeTrial: 'Programmez votre première séance GRATUITE avec un tuteur pédagogique',
     },
     about: {
       title: 'Nos Méthodes',
@@ -219,6 +249,34 @@ export const translations: Record<Language, Translations> = {
       locationTitle: 'Notre adresse',
       emailTitle: 'Adresse e-mail',
       phoneTitle: 'Numéro de téléphone',
+    },
+    auth: {
+      signin: {
+        title: 'Connexion à votre compte',
+        withGoogle: 'Se connecter avec Google',
+        withGithub: 'Se connecter avec GitHub',
+        orEmail: 'Ou, connectez-vous avec votre e-mail',
+        emailPlaceholder: 'Adresse e-mail',
+        passwordPlaceholder: 'Mot de passe',
+        keepSignedIn: 'Rester connecté',
+        forgotPassword: 'Mot de passe oublié ?',
+        submit: 'Se connecter',
+        noAccount: "Vous n'avez pas de compte ?",
+        signUpLink: "S'inscrire",
+      },
+      signup: {
+        title: 'Créer un compte',
+        withGoogle: 'S’inscrire avec Google',
+        orEmail: 'Ou, inscrivez-vous avec votre e-mail',
+        firstNamePlaceholder: 'Prénom',
+        lastNamePlaceholder: 'Nom',
+        emailPlaceholder: 'Adresse e-mail',
+        passwordPlaceholder: 'Mot de passe',
+        keepSignedIn: 'Rester connecté',
+        submit: 'Créer le compte',
+        haveAccount: 'Vous avez déjà un compte ?',
+        signInLink: 'Se connecter',
+      },
     },
   },
   en: {
@@ -318,6 +376,34 @@ export const translations: Record<Language, Translations> = {
       locationTitle: 'Our Location',
       emailTitle: 'Email Address',
       phoneTitle: 'Phone Number',
+    },
+    auth: {
+      signin: {
+        title: 'Login to Your Account',
+        withGoogle: 'Sign in with Google',
+        withGithub: 'Sign in with GitHub',
+        orEmail: 'Or, login with your email',
+        emailPlaceholder: 'Email',
+        passwordPlaceholder: 'Password',
+        keepSignedIn: 'Keep me signed in',
+        forgotPassword: 'Forgot Password?',
+        submit: 'Log in',
+        noAccount: "Don't have an account?",
+        signUpLink: 'Sign Up',
+      },
+      signup: {
+        title: 'Create an Account',
+        withGoogle: 'Sign up with Google',
+        orEmail: 'Or, register with your email',
+        firstNamePlaceholder: 'First name',
+        lastNamePlaceholder: 'Last name',
+        emailPlaceholder: 'Email address',
+        passwordPlaceholder: 'Password',
+        keepSignedIn: 'Keep me signed in',
+        submit: 'Create Account',
+        haveAccount: 'Already have an account?',
+        signInLink: 'Sign In',
+      },
     },
   },
 };
