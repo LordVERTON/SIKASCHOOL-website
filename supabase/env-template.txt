@@ -1,0 +1,16 @@
+# Copy this to your .env.local file and update with your actual Supabase credentials
+
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+# Authentication (for custom auth system)
+JWT_SECRET=your-super-secret-jwt-key-here-make-it-long-and-random
+
+# Next.js
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-nextauth-secret-here
+
+# Development
+NODE_ENV=development

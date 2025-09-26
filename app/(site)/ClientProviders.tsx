@@ -8,7 +8,6 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { SkipLink } from "@/components/Accessibility";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { ThemeProvider } from "next-themes";
-import { SessionProvider } from "next-auth/react";
 import ToasterContext from "../context/ToastContext";
 
 export default function ClientProviders({
@@ -22,19 +21,17 @@ export default function ClientProviders({
       attribute="class"
       defaultTheme="light"
     >
-      <SessionProvider>
-        <LanguageProvider>
-          <ErrorBoundary>
-            <SkipLink />
-            <Lines />
-            <Header />
-            <ToasterContext />
-            {children}
-            <Footer />
-            <ScrollToTop />
-          </ErrorBoundary>
-        </LanguageProvider>
-      </SessionProvider>
+      <LanguageProvider>
+        <ErrorBoundary>
+          <SkipLink />
+          <Lines />
+          <Header />
+          <ToasterContext />
+          {children}
+          <Footer />
+          <ScrollToTop />
+        </ErrorBoundary>
+      </LanguageProvider>
     </ThemeProvider>
   );
 }

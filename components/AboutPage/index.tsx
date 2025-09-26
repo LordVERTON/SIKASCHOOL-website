@@ -6,31 +6,31 @@ const AboutPage = () => {
   const teamMembers = [
     {
       id: 1,
-      name: "Ruudy",
+      name: "Ruudy Mbouza-Bayonne",
       image: "/images/team/ruudy.jpg",
       role: "Tuteur"
     },
     {
       id: 2,
-      name: "Walid",
+      name: "Walid Lakas",
       image: "/images/team/walid.jpg", 
       role: "Tuteur"
     },
     {
       id: 3,
-      name: "Daniel",
+      name: "Daniel Verton",
       image: "/images/team/daniel.jpg",
       role: "Tuteur"
     },
     {
       id: 4,
-      name: "Alix",
+      name: "Alix Tarrade",
       image: "/images/team/alix.jpg",
       role: "Tutrice"
     },
     {
       id: 5,
-      name: "Nolwen",
+      name: "Nolwen Verton",
       image: "/images/team/nolwen.jpg",
       role: "Tutrice"
     },
@@ -69,6 +69,7 @@ const AboutPage = () => {
               headerInfo={{
                 title: `Qui sommes nous ?`,
                 subtitle: `On ne naît pas excellent, on le devient !`,
+                description: `Découvrez notre équipe de tuteurs passionnés et notre approche pédagogique unique.`
               }}
             />
           </div>

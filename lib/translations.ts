@@ -163,7 +163,7 @@ export const translations: Record<Language, Translations> = {
     },
     hero: {
       title: 'Atteignez vos objectifs académiques',
-      subtitle: 'Séance d’essai gratuite',
+      subtitle: 'Excellence académique à votre portée',
       description: 'Professeurs certifiés et étudiants des meilleures écoles. Programmez votre première séance GRATUITE avec un tuteur pédagogique.',
       emailPlaceholder: 'Votre e-mail',
       reserveButton: 'Commencer',
@@ -189,7 +189,7 @@ export const translations: Record<Language, Translations> = {
       qualifications: 'Nos tuteurs sont certifiés et sélectionnés pour leur expertise pédagogique.',
     },
     funFacts: {
-      title: 'Quelques Chiffres...',
+      title: 'Pourquoi choisir SIKASCHOOL',
       years: '5+ ans d\'expérience',
       families: '200+ familles accompagnées',
       success: '95% de mention obtenues au bac',
