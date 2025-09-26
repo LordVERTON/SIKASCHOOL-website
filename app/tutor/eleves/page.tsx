@@ -1,9 +1,43 @@
+"use client";
+import { useEffect, useState } from 'react';
+
 export default function TutorEleves() {
-  const rows = [
-    { id: "1", nom: "Marie Dupont", niveau: "Terminale", matiere: "Mathématiques", statut: "Actif", dernier: "15/09/2025" },
-    { id: "2", nom: "Lucas Martin", niveau: "Première", matiere: "Physique", statut: "Actif", dernier: "12/09/2025" },
-    { id: "3", nom: "Sofia Leroy", niveau: "Collège", matiere: "Français", statut: "En pause", dernier: "28/08/2025" },
-  ];
+  const [rows, setRows] = useState<Array<{ id: string; nom: string; niveau: string; matiere: string; statut: string; dernier: string }>>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch('/api/tutor/students', { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          const mapped = (data.students || []).map((s: any) => ({
+            id: s.id,
+            nom: s.name,
+            niveau: s.level,
+            matiere: s.subject,
+            statut: s.status,
+            dernier: s.lastSessionAt ? new Date(s.lastSessionAt).toLocaleDateString('fr-FR') : '—'
+          }));
+          setRows(mapped);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  if (loading) {
+    return (
+      <main className="pb-20 pt-15 lg:pb-25 xl:pb-30">
+        <div className="mx-auto max-w-c-1315 px-4 md:px-8 xl:px-0">
+          <h1 className="text-3xl font-bold text-black dark:text-white xl:text-sectiontitle3">Mes élèves</h1>
+          <div className="mt-10 animate-pulse h-40 rounded-lg border border-stroke dark:border-strokedark"></div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="pb-20 pt-15 lg:pb-25 xl:pb-30">

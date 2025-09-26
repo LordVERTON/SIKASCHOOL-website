@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔍 Récupération des FAQ depuis Supabase...');
+    console.warn('🔍 Récupération des FAQ depuis Supabase...');
 
     const { data: faqs, error } = await supabase
       .from('faqs')
@@ -16,11 +16,11 @@ export async function GET(request: NextRequest) {
       throw error;
     }
 
-    console.log(`✅ ${faqs?.length || 0} FAQ trouvées`);
+    console.warn(`✅ ${faqs?.length || 0} FAQ trouvées`);
 
     // Si aucune FAQ trouvée, retourner les données mock
     if (!faqs || faqs.length === 0) {
-      console.log('⚠️  Aucune FAQ trouvée, utilisation des données mock');
+      console.warn('⚠️  Aucune FAQ trouvée, utilisation des données mock');
       const mockFAQs = [
         {
           id: 1,
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(formattedFAQs);
   } catch (error) {
-    console.error('❌ Erreur lors de la récupération des FAQ:', error);
+    console.warn('❌ Erreur lors de la récupération des FAQ:', error);
     return NextResponse.json(
       { error: 'Erreur lors de la récupération des FAQ' },
       { status: 500 }

@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
       .slice(0, 5);
 
     return NextResponse.json({ events, upcomingEvents });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       { error: 'Failed to fetch calendar data' },
       { status: 500 }

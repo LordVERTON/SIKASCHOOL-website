@@ -98,7 +98,7 @@ export default function AdministrationPage() {
         setPayments(paymentsData);
       }
     } catch (error) {
-      console.error('Erreur lors du chargement des données:', error);
+      console.warn('Erreur lors du chargement des données:', error);
     } finally {
       setLoadingData(false);
     }
@@ -118,7 +118,7 @@ export default function AdministrationPage() {
           alert('Erreur lors de la réinitialisation du mot de passe');
         }
       } catch (error) {
-        console.error('Erreur:', error);
+        console.warn('Erreur:', error);
         alert('Erreur lors de la réinitialisation du mot de passe');
       }
     }
@@ -141,14 +141,14 @@ export default function AdministrationPage() {
         alert('Erreur lors de la modification du statut');
       }
     } catch (error) {
-      console.error('Erreur:', error);
+      console.warn('Erreur:', error);
       alert('Erreur lors de la modification du statut');
     }
   };
 
   const handleCreateUser = async (userData: Partial<User>) => {
     try {
-      console.log('🔄 Création utilisateur:', userData);
+      console.warn('🔄 Création utilisateur:', userData);
       
       const response = await fetch('/api/admin/users', {
         method: 'POST',
@@ -158,17 +158,17 @@ export default function AdministrationPage() {
         body: JSON.stringify(userData)
       });
       
-      console.log('📡 Réponse reçue:', response.status, response.statusText);
+      console.warn('📡 Réponse reçue:', response.status, response.statusText);
       
       if (response.ok) {
         const result = await response.json();
-        console.log('✅ Création réussie:', result);
+        console.warn('✅ Création réussie:', result);
         alert('Utilisateur créé avec succès');
         setShowUserModal(false);
         fetchData();
       } else {
         const errorText = await response.text();
-        console.error('❌ Erreur API:', response.status, errorText);
+        console.warn('❌ Erreur API:', response.status, errorText);
         
         try {
           const error = JSON.parse(errorText);
@@ -178,7 +178,7 @@ export default function AdministrationPage() {
         }
       }
     } catch (error) {
-      console.error('❌ Erreur fetch:', error);
+      console.warn('❌ Erreur fetch:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
       alert(`Erreur de connexion: ${errorMessage}`);
     }
@@ -202,7 +202,7 @@ export default function AdministrationPage() {
 
   const handleUpdateUser = async (userId: string, userData: Partial<User>) => {
     try {
-      console.log('🔄 Mise à jour utilisateur:', userId, userData);
+      console.warn('🔄 Mise à jour utilisateur:', userId, userData);
       
       const response = await fetch(`/api/admin/users/${userId}`, {
         method: 'PUT',
@@ -212,18 +212,18 @@ export default function AdministrationPage() {
         body: JSON.stringify(userData)
       });
       
-      console.log('📡 Réponse reçue:', response.status, response.statusText);
+      console.warn('📡 Réponse reçue:', response.status, response.statusText);
       
       if (response.ok) {
         const result = await response.json();
-        console.log('✅ Mise à jour réussie:', result);
+        console.warn('✅ Mise à jour réussie:', result);
         alert('Utilisateur modifié avec succès');
         setShowUserModal(false);
         setEditingUser(null);
         fetchData();
       } else {
         const errorText = await response.text();
-        console.error('❌ Erreur API:', response.status, errorText);
+        console.warn('❌ Erreur API:', response.status, errorText);
         
         try {
           const error = JSON.parse(errorText);
@@ -233,7 +233,7 @@ export default function AdministrationPage() {
         }
       }
     } catch (error) {
-      console.error('❌ Erreur fetch:', error);
+      console.warn('❌ Erreur fetch:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
       alert(`Erreur de connexion: ${errorMessage}`);
     }
@@ -254,7 +254,7 @@ export default function AdministrationPage() {
           alert(`Erreur lors de la suppression: ${error.error}`);
         }
       } catch (error) {
-        console.error('Erreur:', error);
+        console.warn('Erreur:', error);
         alert('Erreur lors de la suppression de l\'utilisateur');
       }
     }
@@ -279,7 +279,7 @@ export default function AdministrationPage() {
         alert(`Erreur lors de la création: ${error.error}`);
       }
     } catch (error) {
-      console.error('Erreur:', error);
+      console.warn('Erreur:', error);
       alert('Erreur lors de la création de la session');
     }
   };
@@ -324,7 +324,7 @@ export default function AdministrationPage() {
           alert(`Erreur lors de la suppression: ${error.error}`);
         }
       } catch (error) {
-        console.error('Erreur:', error);
+        console.warn('Erreur:', error);
         alert('Erreur lors de la suppression de la session');
       }
     }
@@ -346,7 +346,7 @@ export default function AdministrationPage() {
           alert(`Erreur lors de la synchronisation: ${error.error}`);
         }
       } catch (error) {
-        console.error('Erreur:', error);
+      console.warn('Erreur:', error);
         alert('Erreur lors de la synchronisation');
       }
     }

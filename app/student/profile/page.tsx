@@ -1,32 +1,62 @@
-import Link from "next/link";
+"use client";
+// import Link from "next/link";
+import { useEffect, useState } from "react";
+
+interface StudentProfileData {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string;
+  level: string;
+  school: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  postalCode?: string;
+  country?: string;
+  dateOfBirth?: string | null;
+  joinDate: string;
+  timezone: string;
+  language: string;
+  theme?: string;
+  notifications?: { email: boolean; push: boolean; sms: boolean };
+}
 
 export default function StudentProfile() {
-  const user = {
-    name: "Marie Dupont",
-    email: "marie.dupont@email.com",
-    avatar: "/images/user/user-01.png",
-    level: "Terminale",
-    joinDate: "2024-01-15",
-    timezone: "Europe/Paris",
-    language: "fr",
-    notifications: {
-      email: true,
-      push: true,
-      sms: false
-    }
-  };
+  const [profile, setProfile] = useState<StudentProfileData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const res = await fetch('/api/student/profile', { credentials: 'include' });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || `Erreur ${res.status}`);
+        }
+        const data = await res.json();
+        setProfile(data);
+      } catch (e: any) {
+        setError(e.message || 'Erreur de chargement du profil');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadProfile();
+  }, []);
 
   const preferences = [
     {
       id: "language",
       label: "Langue",
-      value: "Français",
+      value: profile?.language === 'en' ? 'English' : 'Français',
       options: ["Français", "English"]
     },
     {
       id: "timezone", 
       label: "Fuseau horaire",
-      value: "Europe/Paris",
+      value: profile?.timezone || 'Europe/Paris',
       options: ["Europe/Paris", "Europe/London", "America/New_York"]
     },
     {
@@ -42,21 +72,46 @@ export default function StudentProfile() {
       id: "email",
       label: "Notifications par email",
       description: "Recevoir des notifications par email",
-      enabled: user.notifications.email
+      enabled: profile?.notifications?.email ?? true
     },
     {
       id: "push",
       label: "Notifications push",
       description: "Recevoir des notifications dans le navigateur",
-      enabled: user.notifications.push
+      enabled: profile?.notifications?.push ?? true
     },
     {
       id: "sms",
       label: "Notifications SMS",
       description: "Recevoir des notifications par SMS",
-      enabled: user.notifications.sms
+      enabled: profile?.notifications?.sms ?? false
     }
   ];
+
+  if (loading) {
+    return (
+      <main className="pb-20 pt-15 lg:pb-25 xl:pb-30">
+        <div className="mx-auto max-w-c-1315 px-4 md:px-8 xl:px-0">
+          <div className="animate_top mx-auto text-center">
+            <h1 className="text-3xl font-bold text-black dark:text-white xl:text-sectiontitle3">Chargement du profil…</h1>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (error || !profile) {
+    return (
+      <main className="pb-20 pt-15 lg:pb-25 xl:pb-30">
+        <div className="mx-auto max-w-c-1315 px-4 md:px-8 xl:px-0">
+          <div className="animate_top mx-auto text-center">
+            <h1 className="text-3xl font-bold text-black dark:text-white xl:text-sectiontitle3">Mon profil</h1>
+            <p className="mt-4 text-para2 text-waterloo dark:text-manatee">{error || "Profil indisponible"}</p>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="pb-20 pt-15 lg:pb-25 xl:pb-30">
@@ -78,26 +133,26 @@ export default function StudentProfile() {
                 {/* Avatar */}
                 <div className="mx-auto w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center mb-4">
                   <span className="text-3xl font-bold text-primary">
-                    {user.name.split(' ').map(n => n[0]).join('')}
+                    {profile.name.split(' ').map(n => n[0]).join('')}
                   </span>
                 </div>
                 
                 <h2 className="text-xl font-semibold text-black dark:text-white mb-2">
-                  {user.name}
+                  {profile.name}
                 </h2>
                 <p className="text-waterloo dark:text-manatee mb-4">
-                  {user.email}
+                  {profile.email}
                 </p>
                 
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-waterloo dark:text-manatee">Niveau:</span>
-                    <span className="text-black dark:text-white">{user.level}</span>
+                    <span className="text-black dark:text-white">{profile.level}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-waterloo dark:text-manatee">Membre depuis:</span>
                     <span className="text-black dark:text-white">
-                      {new Date(user.joinDate).toLocaleDateString('fr-FR', { 
+                      {new Date(profile.joinDate).toLocaleDateString('fr-FR', { 
                         month: 'long', 
                         year: 'numeric' 
                       })}
@@ -128,7 +183,7 @@ export default function StudentProfile() {
                     </label>
                     <input
                       type="text"
-                      defaultValue={user.name}
+                      defaultValue={profile.name}
                       className="w-full p-3 border border-stroke rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:border-strokedark dark:bg-blacksection"
                     />
                   </div>
@@ -139,7 +194,7 @@ export default function StudentProfile() {
                     </label>
                     <input
                       type="email"
-                      defaultValue={user.email}
+                      defaultValue={profile.email}
                       className="w-full p-3 border border-stroke rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:border-strokedark dark:bg-blacksection"
                     />
                   </div>
@@ -149,10 +204,10 @@ export default function StudentProfile() {
                       Niveau scolaire
                     </label>
                     <select className="w-full p-3 border border-stroke rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:border-strokedark dark:bg-blacksection">
-                      <option value="3eme">3ème</option>
-                      <option value="2nde">2nde</option>
-                      <option value="1ere">1ère</option>
-                      <option value="terminale" selected>Terminale</option>
+                      <option value="3eme" selected={profile.level === '3eme'}>3ème</option>
+                      <option value="2nde" selected={profile.level === '2nde'}>2nde</option>
+                      <option value="1ere" selected={profile.level === '1ere'}>1ère</option>
+                      <option value="terminale" selected={profile.level === 'terminale' || profile.level === 'Terminale'}>Terminale</option>
                     </select>
                   </div>
                   
@@ -162,14 +217,45 @@ export default function StudentProfile() {
                     </label>
                     <input
                       type="tel"
-                      placeholder="+33 6 12 34 56 78"
+                      defaultValue={profile.phone || ''}
                       className="w-full p-3 border border-stroke rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:border-strokedark dark:bg-blacksection"
                     />
                   </div>
                 </div>
                 
                 <div className="mt-6 flex justify-end">
-                  <button className="rounded-md bg-primary px-6 py-2 font-medium text-white transition hover:opacity-90">
+                  <button
+                    onClick={async () => {
+                      if (!profile) return;
+                      const payload = {
+                        grade_level: profile.level,
+                        school_name: profile.school,
+                        phone: profile.phone,
+                        theme: profile.theme,
+                        notify_email: profile.notifications?.email,
+                        notify_push: profile.notifications?.push,
+                        notify_sms: profile.notifications?.sms,
+                        timezone: profile.timezone,
+                        language: profile.language,
+                      } as any;
+                      const res = await fetch('/api/student/profile', {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify(payload)
+                      });
+                      if (res.ok) {
+                        const refreshed = await fetch('/api/student/profile', { credentials: 'include' });
+                        if (refreshed.ok) {
+                          const data = await refreshed.json();
+                          setProfile(data);
+                        }
+                      } else {
+                        console.error('Échec de la sauvegarde');
+                      }
+                    }}
+                    className="rounded-md bg-primary px-6 py-2 font-medium text-white transition hover:opacity-90"
+                  >
                     Sauvegarder
                   </button>
                 </div>

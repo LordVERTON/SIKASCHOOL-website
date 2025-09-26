@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
 
 interface DashboardData {
@@ -65,7 +64,7 @@ interface DashboardData {
 }
 
 export default function StudentDashboard() {
-  const { user, loading: authLoading, error } = useAuth('STUDENT');
+  const { user, loading: authLoading, error: authError } = useAuth('STUDENT');
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [userInfo, setUserInfo] = useState<{ firstName: string; name: string } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -80,24 +79,53 @@ export default function StudentDashboard() {
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-      if (!user) return;
+      if (!user) {
+        console.warn('❌ Pas d\'utilisateur connecté');
+        setLoading(false);
+        return;
+      }
       
       try {
+        console.warn('🔄 Récupération des données du dashboard pour:', user);
+        console.warn('👤 Utilisateur:', { id: user.id, name: user.name, role: user.role });
+        
         // Récupérer les données du dashboard
-        const dashboardResponse = await fetch('/api/student/dashboard');
+        const dashboardResponse = await fetch('/api/student/dashboard', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include', // Important pour les cookies de session
+        });
+        
+        console.warn('📡 Réponse API:', dashboardResponse.status, dashboardResponse.statusText);
+        
         if (dashboardResponse.ok) {
           const data = await dashboardResponse.json();
+          console.warn('📊 Données reçues:', data);
           setDashboardData(data);
+        } else {
+          const errorData = await dashboardResponse.json().catch(() => ({}));
+          console.warn('❌ Erreur API:', dashboardResponse.status, errorData);
+          
+          // Si erreur 401, l'utilisateur n'est pas authentifié
+          if (dashboardResponse.status === 401) {
+            console.warn('🔐 Problème d\'authentification - redirection vers la connexion');
+            // Optionnel: rediriger vers la page de connexion
+            // window.location.href = '/auth/signin';
+          }
         }
       } catch (error) {
-        console.error('Error fetching dashboard data:', error);
+        console.warn('❌ Erreur réseau:', error);
       } finally {
+        console.warn('✅ Fin du chargement');
         setLoading(false);
       }
     };
 
     fetchDashboardData();
   }, [user]);
+
 
   if (authLoading || loading) {
     return (
@@ -116,7 +144,7 @@ export default function StudentDashboard() {
     );
   }
 
-  if (error) {
+  if (authError) {
     return (
       <main className="pb-20 pt-15 lg:pb-25 xl:pb-30">
         <div className="mx-auto max-w-c-1315 px-4 md:px-8 xl:px-0">
@@ -125,7 +153,7 @@ export default function StudentDashboard() {
               Accès refusé
             </h1>
             <p className="mt-4 text-para2 text-waterloo dark:text-manatee">
-              {error}
+              {authError}
             </p>
             <p className="mt-2 text-sm text-waterloo dark:text-manatee">
               Redirection en cours...
@@ -136,21 +164,9 @@ export default function StudentDashboard() {
     );
   }
 
+  // Si pas de données, ne rien afficher (design original sans fallback étendu)
   if (!dashboardData) {
-    return (
-      <main className="pb-20 pt-15 lg:pb-25 xl:pb-30">
-        <div className="mx-auto max-w-c-1315 px-4 md:px-8 xl:px-0">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-black dark:text-white mb-4">
-              Erreur de chargement
-            </h1>
-            <p className="text-waterloo dark:text-manatee">
-              Impossible de charger les données du tableau de bord.
-            </p>
-          </div>
-        </div>
-      </main>
-    );
+    return null;
   }
 
   return (
@@ -164,18 +180,33 @@ export default function StudentDashboard() {
             Suivez vos séances, communiquez avec vos tuteurs et gérez votre apprentissage.
           </p>
         </div>
-
+      
         {/* Stats Cards */}
         <div className="mt-10 grid gap-7.5 md:grid-cols-2 lg:grid-cols-4">
-          {dashboardData.stats.map((stat, index) => (
-            <div key={index} className="animate_top rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-waterloo dark:text-manatee text-sm">{stat.label}</div>
-                <span className="text-2xl">{stat.icon}</span>
+          {dashboardData.stats.map((stat, index) => {
+            const bgColors = [
+              "bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20",
+              "bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20", 
+              "bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20",
+              "bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20"
+            ];
+            const borderColors = [
+              "border-blue-200 dark:border-blue-700",
+              "border-green-200 dark:border-green-700",
+              "border-purple-200 dark:border-purple-700", 
+              "border-yellow-200 dark:border-yellow-700"
+            ];
+            
+            return (
+              <div key={index} className={`animate_top rounded-lg border ${borderColors[index]} ${bgColors[index]} p-7.5 shadow-solid-10`}>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-waterloo dark:text-manatee text-sm">{stat.label}</div>
+                  <span className="text-2xl">{stat.icon}</span>
+                </div>
+                <div className={`text-2xl font-semibold ${stat.color}`}>{stat.value}</div>
               </div>
-              <div className={`text-2xl font-semibold ${stat.color}`}>{stat.value}</div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Actions rapides */}
@@ -330,19 +361,19 @@ export default function StudentDashboard() {
           <h2 className="text-xl font-semibold text-black dark:text-white mb-6">Vos statistiques</h2>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <div className="text-center">
-              <div className="text-3xl font-bold text-primary mb-2">{dashboardData.tutorStats.totalSessions}</div>
+              <div className="text-3xl font-bold text-blue-600 mb-2">{dashboardData.tutorStats.totalSessions}</div>
               <div className="text-sm text-waterloo dark:text-manatee">Séances terminées</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-primary mb-2">{dashboardData.tutorStats.totalHours}h</div>
+              <div className="text-3xl font-bold text-green-600 mb-2">{dashboardData.tutorStats.totalHours}h</div>
               <div className="text-sm text-waterloo dark:text-manatee">Heures de cours</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-primary mb-2">{dashboardData.tutorStats.totalSpent.toFixed(0)}€</div>
+              <div className="text-3xl font-bold text-purple-600 mb-2">{dashboardData.tutorStats.totalSpent.toFixed(0)}€</div>
               <div className="text-sm text-waterloo dark:text-manatee">Total investi</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-primary mb-2">
+              <div className="text-3xl font-bold text-yellow-600 mb-2">
                 {dashboardData.tutorStats.averageRating || 'N/A'}
               </div>
               <div className="text-sm text-waterloo dark:text-manatee">Note moyenne</div>

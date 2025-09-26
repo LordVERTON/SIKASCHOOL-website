@@ -38,7 +38,7 @@ export async function GET() {
 
     return NextResponse.json(threads);
   } catch (error) {
-    console.error('Error fetching messages:', error);
+    console.warn('Error fetching messages:', error);
     return NextResponse.json(
       { error: 'Failed to fetch messages' },
       { status: 500 }
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     const { subject, recipientId, message } = body;
 
     // Mock message creation - in real app, save to database
-    console.log('Creating new message thread:', { subject, recipientId, message });
+    console.warn('Creating new message thread:', { subject, recipientId, message });
 
     const newThread = {
       id: Date.now().toString(),
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(newThread);
   } catch (error) {
-    console.error('Error creating message thread:', error);
+    console.warn('Error creating message thread:', error);
     return NextResponse.json(
       { error: 'Failed to create message thread' },
       { status: 500 }

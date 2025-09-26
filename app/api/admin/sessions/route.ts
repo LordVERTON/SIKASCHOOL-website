@@ -17,7 +17,7 @@ export async function GET() {
     }
 
     // Récupérer toutes les sessions avec les informations des utilisateurs
-    const { data: sessions, error } = await supabaseAdmin
+    const { data: sessions, error: _error } = await supabaseAdmin
       .from('sessions')
       .select(`
         id,
@@ -36,7 +36,7 @@ export async function GET() {
       `)
       .order('created_at', { ascending: false });
 
-    if (error) {
+    if (_error) {
       return NextResponse.json({ error: 'Failed to fetch sessions' }, { status: 500 });
     }
 
@@ -83,7 +83,7 @@ export async function GET() {
     }) || [];
 
     return NextResponse.json(formattedSessions);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -151,8 +151,8 @@ export async function POST(request: NextRequest) {
       session: newSession,
       message: 'Session created successfully' 
     });
-  } catch (error) {
-    console.error('Erreur dans /api/admin/sessions POST:', error);
+  } catch (_error) {
+    console.warn('Erreur dans /api/admin/sessions POST:', _error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

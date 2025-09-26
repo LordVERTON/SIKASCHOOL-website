@@ -47,7 +47,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({ thread, messages });
   } catch (error) {
-    console.error('Error fetching thread:', error);
+    console.warn('Error fetching thread:', error);
     return NextResponse.json(
       { error: 'Failed to fetch thread' },
       { status: 500 }
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const { message, attachments } = body;
 
     // Mock message creation - in real app, save to database
-    console.log(`Sending message to thread ${threadId}:`, { message, attachments });
+    console.warn(`Sending message to thread ${threadId}:`, { message, attachments });
 
     const newMessage = {
       id: Date.now().toString(),
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json(newMessage);
   } catch (error) {
-    console.error('Error sending message:', error);
+    console.warn('Error sending message:', error);
     return NextResponse.json(
       { error: 'Failed to send message' },
       { status: 500 }

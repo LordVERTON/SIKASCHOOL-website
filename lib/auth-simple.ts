@@ -31,7 +31,7 @@ export interface User {
  */
 export async function authenticateUser(email: string, password: string): Promise<User | null> {
   try {
-    console.log('🔐 Tentative d\'authentification pour:', email);
+    console.warn('🔐 Tentative d\'authentification pour:', email);
 
     // Récupérer l'utilisateur depuis Supabase
     const { data: user, error } = await supabaseAdmin
@@ -42,7 +42,7 @@ export async function authenticateUser(email: string, password: string): Promise
       .single() as any;
 
     if (error || !user) {
-      console.log('❌', ERROR_MESSAGES.USER_NOT_FOUND, ':', email, error?.message);
+      console.warn('❌', ERROR_MESSAGES.USER_NOT_FOUND, ':', email, error?.message);
       return null;
     }
 
@@ -56,7 +56,7 @@ export async function authenticateUser(email: string, password: string): Promise
       is_active: boolean;
     };
     
-    console.log('✅ Utilisateur trouvé:', validUser.email, 'Rôle:', validUser.role);
+    console.warn('✅ Utilisateur trouvé:', validUser.email, 'Rôle:', validUser.role);
 
     // Récupérer les credentials depuis la table user_credentials
     const { data: credentials, error: credError } = await supabaseAdmin
@@ -68,7 +68,7 @@ export async function authenticateUser(email: string, password: string): Promise
       .single() as any;
 
     if (credError || !credentials) {
-      console.log('❌', ERROR_MESSAGES.CREDENTIALS_NOT_FOUND, ':', validUser.email, credError?.message);
+      console.warn('❌', ERROR_MESSAGES.CREDENTIALS_NOT_FOUND, ':', validUser.email, credError?.message);
       return null;
     }
 
@@ -77,18 +77,18 @@ export async function authenticateUser(email: string, password: string): Promise
       credential_value: string;
     };
 
-    console.log('✅ Credentials trouvés pour:', validUser.email);
+    console.warn('✅ Credentials trouvés pour:', validUser.email);
 
     // Vérifier le mot de passe
     const bcrypt = await import('bcryptjs');
     const isValidPassword = await bcrypt.compare(password, validCredentials.credential_value);
 
     if (!isValidPassword) {
-      console.log('❌', ERROR_MESSAGES.INVALID_PASSWORD, ':', validUser.email);
+      console.warn('❌', ERROR_MESSAGES.INVALID_PASSWORD, ':', validUser.email);
       return null;
     }
 
-    console.log('🎉 Authentification réussie pour:', validUser.email);
+    console.warn('🎉 Authentification réussie pour:', validUser.email);
 
     return {
       id: validUser.id,

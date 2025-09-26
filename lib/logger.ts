@@ -51,7 +51,11 @@ class Logger {
     const logEntry = this.formatMessage(level, message, context);
     
     if (this.isDevelopment) {
-      console[level](logEntry);
+      if (level === LogLevel.ERROR) {
+        console.error(logEntry);
+      } else {
+        console.warn(logEntry);
+      }
     } else {
       // In production, you might want to send logs to a service
       // For now, we'll just log errors

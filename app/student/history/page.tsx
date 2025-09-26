@@ -30,7 +30,9 @@ export default function HistoryPage() {
   useEffect(() => {
     const fetchSessions = async () => {
       try {
-        const response = await fetch('/api/student/sessions');
+        const statusParam = filter === 'all' ? '' : (filter === 'completed' ? 'COMPLETED' : 'IN_PROGRESS');
+        const url = `/api/student/sessions${statusParam ? `?status=${statusParam}` : ''}`;
+        const response = await fetch(url, { credentials: 'include' });
         if (response.ok) {
           const data = await response.json();
           setSessions(data.sessions || []);
@@ -42,8 +44,9 @@ export default function HistoryPage() {
       }
     };
 
+    setLoading(true);
     fetchSessions();
-  }, []);
+  }, [filter]);
 
   const filteredSessions = sessions.filter(session => {
     if (filter === 'all') return true;

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
 import { hasAdminPermissions } from '@/lib/admin-permissions';
@@ -27,13 +27,13 @@ export async function GET() {
     }
 
     // Récupérer les profils tuteurs
-    const { data: tutors, error: tutorsError } = await supabaseAdmin
+    const { data: tutors } = await supabaseAdmin
       .from('tutors')
       .select('user_id, bio, experience_years, subjects, is_available');
 
 
     // Récupérer les profils étudiants
-    const { data: students, error: studentsError } = await supabaseAdmin
+    const { data: students } = await supabaseAdmin
       .from('students')
       .select('user_id, grade_level, academic_goals');
 
@@ -80,7 +80,7 @@ export async function GET() {
     }) || [];
 
     return NextResponse.json(usersWithProfiles);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

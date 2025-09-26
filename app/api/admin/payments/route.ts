@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
 import { hasAdminPermissions } from '@/lib/admin-permissions';
@@ -17,7 +17,7 @@ export async function GET() {
     }
 
     // Récupérer tous les paiements
-    const { data: payments, error } = await supabaseAdmin
+    const { data: payments, error: _error } = await supabaseAdmin
       .from('session_payments')
       .select(`
         id,
@@ -34,7 +34,7 @@ export async function GET() {
       `)
       .order('created_at', { ascending: false });
 
-    if (error) {
+    if (_error) {
       return NextResponse.json({ error: 'Failed to fetch payments' }, { status: 500 });
     }
 
@@ -79,7 +79,7 @@ export async function GET() {
     }) || [];
 
     return NextResponse.json(formattedPayments);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

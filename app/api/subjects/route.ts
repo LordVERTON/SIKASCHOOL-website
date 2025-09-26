@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔍 Récupération des matières depuis Supabase...');
+    console.warn('🔍 Récupération des matières depuis Supabase...');
 
     const { data: subjects, error } = await supabase
       .from('subjects')
@@ -15,11 +15,11 @@ export async function GET(request: NextRequest) {
       throw error;
     }
 
-    console.log(`✅ ${subjects?.length || 0} matières trouvées`);
+    console.warn(`✅ ${subjects?.length || 0} matières trouvées`);
 
     // Si aucune matière trouvée, retourner les données mock
     if (!subjects || subjects.length === 0) {
-      console.log('⚠️  Aucune matière trouvée, utilisation des données mock');
+      console.warn('⚠️  Aucune matière trouvée, utilisation des données mock');
       const mockSubjects = [
         { id: '1', name: 'Mathématiques', description: 'Cours de mathématiques', level: 'Collège' },
         { id: '2', name: 'Mathématiques', description: 'Cours de mathématiques', level: 'Lycée' },
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(subjects);
   } catch (error) {
-    console.error('❌ Erreur lors de la récupération des matières:', error);
+    console.warn('❌ Erreur lors de la récupération des matières:', error);
     return NextResponse.json(
       { error: 'Erreur lors de la récupération des matières' },
       { status: 500 }

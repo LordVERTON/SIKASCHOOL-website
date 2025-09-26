@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔍 Récupération des témoignages depuis Supabase...');
+    console.warn('🔍 Récupération des témoignages depuis Supabase...');
 
     const { data: testimonials, error } = await supabase
       .from('reviews')
@@ -15,11 +15,11 @@ export async function GET(request: NextRequest) {
       throw error;
     }
 
-    console.log(`✅ ${testimonials?.length || 0} témoignages trouvés`);
+    console.warn(`✅ ${testimonials?.length || 0} témoignages trouvés`);
 
     // Si aucun témoignage trouvé, retourner les données mock
     if (!testimonials || testimonials.length === 0) {
-      console.log('⚠️  Aucun témoignage trouvé, utilisation des données mock');
+      console.warn('⚠️  Aucun témoignage trouvé, utilisation des données mock');
       const mockTestimonials = [
         {
           id: '1',
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(formattedTestimonials);
   } catch (error) {
-    console.error('❌ Erreur lors de la récupération des témoignages:', error);
+    console.warn('❌ Erreur lors de la récupération des témoignages:', error);
     return NextResponse.json(
       { error: 'Erreur lors de la récupération des témoignages' },
       { status: 500 }

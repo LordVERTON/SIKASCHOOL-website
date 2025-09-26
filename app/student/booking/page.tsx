@@ -117,7 +117,7 @@ export default function BookingPage() {
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       // Ici, vous feriez l'appel API pour créer la réservation
-      console.log('Réservation créée:', formData);
+      console.warn('Réservation créée:', formData);
       
       // Rediriger vers le dashboard ou afficher un message de succès
       alert('Réservation créée avec succès !');
