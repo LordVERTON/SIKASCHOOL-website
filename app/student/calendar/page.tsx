@@ -241,6 +241,14 @@ export default function StudentCalendar() {
                   <div className="text-xs text-waterloo dark:text-manatee mt-1">
                     {new Date(s.started_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}
                   </div>
+                  <div className="mt-3 flex justify-end">
+                    <a
+                      href={`/live/${s.id}`}
+                      className="inline-flex items-center rounded-md bg-primary px-3 py-1 text-xs font-medium text-white hover:opacity-90"
+                    >
+                      Rejoindre
+                    </a>
+                  </div>
                 </div>
               ));
               })()}

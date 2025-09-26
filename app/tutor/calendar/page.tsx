@@ -166,6 +166,14 @@ export default function TutorCalendar() {
                       <span className={`text-xs px-2 py-0.5 rounded-full ${s.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' : s.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>{s.status}</span>
                     </div>
                     <div className="text-xs text-waterloo dark:text-manatee mt-1">{new Date(s.started_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</div>
+                    <div className="mt-3 flex justify-end">
+                      <a
+                        href={`/live/${s.id}`}
+                        className="inline-flex items-center rounded-md bg-primary px-3 py-1 text-xs font-medium text-white hover:opacity-90"
+                      >
+                        Rejoindre
+                      </a>
+                    </div>
                   </div>
                 ));
               })()}
