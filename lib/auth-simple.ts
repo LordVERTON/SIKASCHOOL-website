@@ -5,8 +5,8 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { supabase } from './supabase';
-import bcrypt from 'bcryptjs';
+import { supabaseAdmin } from './supabase';
+// Import dynamique de bcryptjs pour éviter les problèmes de build
 import { 
   SESSION_CONFIG, 
   CREDENTIAL_TYPES, 
@@ -34,12 +34,12 @@ export async function authenticateUser(email: string, password: string): Promise
     console.log('🔐 Tentative d\'authentification pour:', email);
 
     // Récupérer l'utilisateur depuis Supabase
-    const { data: user, error } = await supabase
+    const { data: user, error } = await supabaseAdmin
       .from('users')
       .select('id, email, first_name, last_name, role, is_active')
       .eq('email', email)
       .eq('is_active', true)
-      .single();
+      .single() as any;
 
     if (error || !user) {
       console.log('❌', ERROR_MESSAGES.USER_NOT_FOUND, ':', email, error?.message);
@@ -59,13 +59,13 @@ export async function authenticateUser(email: string, password: string): Promise
     console.log('✅ Utilisateur trouvé:', validUser.email, 'Rôle:', validUser.role);
 
     // Récupérer les credentials depuis la table user_credentials
-    const { data: credentials, error: credError } = await supabase
+    const { data: credentials, error: credError } = await supabaseAdmin
       .from('user_credentials')
       .select('credential_value')
       .eq('user_id', validUser.id)
       .eq('credential_type', CREDENTIAL_TYPES.PASSWORD)
       .eq('is_active', true)
-      .single();
+      .single() as any;
 
     if (credError || !credentials) {
       console.log('❌', ERROR_MESSAGES.CREDENTIALS_NOT_FOUND, ':', validUser.email, credError?.message);
@@ -80,6 +80,7 @@ export async function authenticateUser(email: string, password: string): Promise
     console.log('✅ Credentials trouvés pour:', validUser.email);
 
     // Vérifier le mot de passe
+    const bcrypt = await import('bcryptjs');
     const isValidPassword = await bcrypt.compare(password, validCredentials.credential_value);
 
     if (!isValidPassword) {

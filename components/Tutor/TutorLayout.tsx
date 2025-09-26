@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import LogoutButton from "../Auth/LogoutButton";
+import { isAdminTutor } from "@/lib/admin-permissions";
 
 interface TutorLayoutProps {
   children: React.ReactNode;
@@ -11,6 +12,27 @@ interface TutorLayoutProps {
 
 export default function TutorLayout({ children }: TutorLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Récupérer l'email de l'utilisateur connecté
+    const fetchUserInfo = async () => {
+      try {
+        const response = await fetch('/api/auth/me');
+        if (response.ok) {
+          const userData = await response.json();
+          setUserEmail(userData.email);
+        }
+      } catch (error) {
+        console.error('Erreur lors de la récupération des informations utilisateur:', error);
+      }
+    };
+
+    fetchUserInfo();
+  }, []);
+
+  // Vérifier si l'utilisateur a les permissions admin
+  const isAdmin = userEmail ? isAdminTutor(userEmail) : false;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-black">
@@ -86,6 +108,17 @@ export default function TutorLayout({ children }: TutorLayoutProps) {
               </svg>
               Paiements
             </Link>
+            {isAdmin && (
+              <Link
+                href="/tutor/administration"
+                className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
+              >
+                <svg className="mr-3 h-5 w-5 text-red-600 group-hover:text-red-700 dark:text-red-400 dark:group-hover:text-red-300" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+                </svg>
+                Administration
+              </Link>
+            )}
           </nav>
           
           {/* Bouton de déconnexion mobile */}
@@ -151,6 +184,19 @@ export default function TutorLayout({ children }: TutorLayoutProps) {
                       Paiements
                     </Link>
                   </li>
+                  {isAdmin && (
+                    <li>
+                      <Link
+                        href="/tutor/administration"
+                        className="group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20"
+                      >
+                        <svg className="h-6 w-6 shrink-0 text-red-600 group-hover:text-red-700 dark:text-red-400 dark:group-hover:text-red-300" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+                        </svg>
+                        Administration
+                      </Link>
+                    </li>
+                  )}
                 </ul>
               </li>
             </ul>

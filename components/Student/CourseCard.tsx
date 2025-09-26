@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 interface CourseCardProps {
   id: string;
@@ -32,9 +33,11 @@ export default function CourseCard({
       {/* Course Cover */}
       <div className="mb-6 h-48 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
         {coverUrl ? (
-          <img 
+          <Image 
             src={coverUrl} 
             alt={title}
+            width={400}
+            height={192}
             className="w-full h-full object-cover rounded-lg"
           />
         ) : (

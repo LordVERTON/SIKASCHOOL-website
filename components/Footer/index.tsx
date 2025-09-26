@@ -1,6 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
 
@@ -32,7 +33,7 @@ const Footer = () => {
                 viewport={{ once: true }}
                 className="animate_top w-1/2 lg:w-1/4"
               >
-                <a href="/" className="relative">
+                <Link href="/" className="relative">
                   <Image
                     width={110}
                     height={80}
@@ -47,7 +48,7 @@ const Footer = () => {
                     alt="Logo"
                     className="hidden dark:block"
                   />
-                </a>
+                </Link>
 
                 <p className="mb-10 mt-5">
                   {t.footer.description}
@@ -89,36 +90,36 @@ const Footer = () => {
 
                   <ul className="text-sm">
                     <li>
-                      <a
+                      <Link
                         href="/"
                         className="mb-3 inline-block hover:text-primary"
                       >
                         {t.nav.home}
-                      </a>
+                      </Link>
                     </li>
                     <li>
-                      <a
+                      <Link
                         href="/how-to"
                         className="mb-3 inline-block hover:text-primary"
                       >
                         {t.nav.howItWorks}
-                      </a>
+                      </Link>
                     </li>
                     <li>
-                      <a
+                      <Link
                         href="/about"
                         className="mb-3 inline-block hover:text-primary"
                       >
                         {t.nav.aboutUs}
-                      </a>
+                      </Link>
                     </li>
                     <li>
-                      <a
+                      <Link
                         href="/packs"
                         className="mb-3 inline-block hover:text-primary"
                       >
                         {t.nav.sessionPacks}
-                      </a>
+                      </Link>
                     </li>
                   </ul>
                 </motion.div>
@@ -147,36 +148,36 @@ const Footer = () => {
 
                   <ul className="text-sm">
                     <li>
-                      <a
+                      <Link
                         href="/about"
                         className="mb-3 inline-block hover:text-primary"
                       >
                         {t.nav.aboutUs}
-                      </a>
+                      </Link>
                     </li>
                     <li>
-                      <a
+                      <Link
                         href="/book-online"
                         className="mb-3 inline-block hover:text-primary"
                       >
                         {t.nav.perSession}
-                      </a>
+                      </Link>
                     </li>
                     <li>
-                      <a
+                      <Link
                         href="/how-to"
                         className="mb-3 inline-block hover:text-primary"
                       >
                         {t.nav.howItWorks}
-                      </a>
+                      </Link>
                     </li>
                     <li>
-                      <a
+                      <Link
                         href="mailto:contact@sikaschool.com"
                         className="mb-3 inline-block hover:text-primary"
                       >
                         contact@sikaschool.com
-                      </a>
+                      </Link>
                     </li>
                   </ul>
                 </motion.div>

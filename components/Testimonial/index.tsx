@@ -9,11 +9,42 @@ import { Swiper, SwiperSlide } from "swiper/react";
 
 import { motion } from "framer-motion";
 import SingleTestimonial from "./SingleTestimonial";
-import { getTestimonialData } from "./testimonialData";
 import { useLanguage } from "@/context/LanguageContext";
+import { useState, useEffect } from "react";
+
+interface Testimonial {
+  id: string;
+  name: string;
+  role: string;
+  content: string;
+  rating: number;
+  avatar: string;
+}
 
 const Testimonial = () => {
   const { t } = useLanguage();
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTestimonials = async () => {
+      try {
+        const response = await fetch('/api/testimonials');
+        if (response.ok) {
+          const data = await response.json();
+          setTestimonials(data);
+        } else {
+          console.error('Erreur lors du chargement des témoignages');
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des témoignages:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTestimonials();
+  }, []);
 
   return (
     <>
@@ -75,11 +106,22 @@ const Testimonial = () => {
                 },
               }}
             >
-              {getTestimonialData(t).map((review) => (
-                <SwiperSlide key={review?.id}>
-                  <SingleTestimonial review={review} />
+              {loading ? (
+                <SwiperSlide>
+                  <div className="p-6 text-center">Chargement des témoignages...</div>
                 </SwiperSlide>
-              ))}
+              ) : (
+                testimonials.map((review) => (
+                  <SwiperSlide key={review?.id}>
+                    <SingleTestimonial review={{
+                      ...review,
+                      id: parseInt(review?.id || '0'),
+                      image: (review as any)?.avatar_url || '/images/user/user-01.png',
+                      designation: (review as any)?.role || 'Utilisateur'
+                    }} />
+                  </SwiperSlide>
+                ))
+              )}
             </Swiper>
           </div>
         </motion.div>

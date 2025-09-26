@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function SimpleSignin() {
   const [data, setData] = useState({
@@ -68,14 +69,18 @@ export default function SimpleSignin() {
         <div className="relative z-1 mx-auto max-w-c-1016 px-7.5 pb-7.5 pt-10 lg:px-15 lg:pt-15 xl:px-20 xl:pt-20">
           <div className="absolute left-0 top-0 -z-1 h-2/3 w-full rounded-lg bg-linear-to-t from-transparent to-[#dee7ff47] dark:bg-linear-to-t dark:to-[#252A42]"></div>
           <div className="absolute bottom-17.5 left-0 -z-1 h-1/3 w-full">
-            <img
+            <Image
               src="/images/shape/shape-dotted-light.svg"
               alt="Dotted"
+              width={100}
+              height={100}
               className="dark:hidden"
             />
-            <img
+            <Image
               src="/images/shape/shape-dotted-dark.svg"
               alt="Dotted"
+              width={100}
+              height={100}
               className="hidden dark:block"
             />
           </div>
@@ -188,19 +193,6 @@ export default function SimpleSignin() {
                 </p>
               </div>
 
-              <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
-                  Comptes de test disponibles :
-                </h3>
-                <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
-                  <p><strong>Tuteurs:</strong></p>
-                  <p>• alix.tarrade@sikaschool.com / wTCvyb5*jAuD</p>
-                  <p>• daniel.verton@sikaschool.com / N9SUOYn@fFsw</p>
-                  <p><strong>Élèves:</strong></p>
-                  <p>• liele.ghoma@sikaschool.com / WrRKa^KX0&S6</p>
-                  <p>• steve.kenfack@sikaschool.com / eq^YQeT!uWG9</p>
-                </div>
-              </div>
             </form>
           </div>
         </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface Tutor {
   id: string;
@@ -185,9 +186,11 @@ export default function BookingPage() {
                   onClick={() => handleTutorSelect(tutor)}
                 >
                   <div className="flex items-start space-x-4">
-                    <img
+                    <Image
                       src={tutor.avatar}
                       alt={tutor.name}
+                      width={48}
+                      height={48}
                       className="w-12 h-12 rounded-full object-cover"
                     />
                     <div className="flex-1">

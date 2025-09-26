@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const month = searchParams.get('month');
-    const year = searchParams.get('year');
+    searchParams.get('month');
+    searchParams.get('year');
 
     // Mock data - in real app, fetch from database based on month/year
     const events = [
@@ -62,7 +62,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ events, upcomingEvents });
   } catch (error) {
-    console.error('Error fetching calendar data:', error);
     return NextResponse.json(
       { error: 'Failed to fetch calendar data' },
       { status: 500 }

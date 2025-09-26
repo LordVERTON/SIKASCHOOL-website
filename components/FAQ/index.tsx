@@ -1,12 +1,34 @@
 "use client";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import FAQItem from "./FAQItem";
-import faqData from "./faqData";
+import { FAQ } from "@/types/faq";
 
 const FAQ = () => {
   const [activeFaq, setActiveFaq] = useState(1);
+  const [faqData, setFaqData] = useState<FAQ[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFAQs = async () => {
+      try {
+        const response = await fetch('/api/faqs');
+        if (response.ok) {
+          const data = await response.json();
+          setFaqData(data);
+        } else {
+          console.error('Erreur lors du chargement des FAQ');
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des FAQ:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFAQs();
+  }, []);
 
   const handleFaqToggle = (id: number) => {
     activeFaq === id ? setActiveFaq(0) : setActiveFaq(id);
@@ -98,12 +120,16 @@ const FAQ = () => {
               className="animate_right md:w-3/5 lg:w-1/2"
             >
               <div className="rounded-lg bg-white shadow-solid-8 dark:border dark:border-strokedark dark:bg-blacksection">
-                {faqData.map((faq, key) => (
-                  <FAQItem
-                    key={key}
-                    faqData={{ ...faq, activeFaq, handleFaqToggle }}
-                  />
-                ))}
+                {loading ? (
+                  <div className="p-6 text-center">Chargement des FAQ...</div>
+                ) : (
+                  faqData.map((faq, key) => (
+                    <FAQItem
+                      key={key}
+                      faqData={{ ...faq, activeFaq, handleFaqToggle }}
+                    />
+                  ))
+                )}
               </div>
             </motion.div>
           </div>

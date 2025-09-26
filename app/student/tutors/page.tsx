@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface Tutor {
   id: string;
@@ -189,9 +190,11 @@ export default function TutorsPage() {
               className="animate_top rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection"
             >
               <div className="text-center mb-6">
-                <img
+                <Image
                   src={tutor.avatar}
                   alt={tutor.name}
+                  width={80}
+                  height={80}
                   className="w-20 h-20 rounded-full object-cover mx-auto mb-4"
                 />
                 <h3 className="text-xl font-semibold text-black dark:text-white mb-2">

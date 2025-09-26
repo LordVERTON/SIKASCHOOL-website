@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface Session {
   id: string;
@@ -153,9 +154,11 @@ export default function HistoryPage() {
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-start space-x-4">
-                    <img
+                    <Image
                       src={session.tutorAvatar || '/images/user/user-01.png'}
                       alt={session.tutor}
+                      width={48}
+                      height={48}
                       className="w-12 h-12 rounded-full object-cover"
                     />
                     <div className="flex-1">
