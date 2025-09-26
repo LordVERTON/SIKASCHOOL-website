@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { toast } from 'react-hot-toast';
 
 interface Tutor {
   id: string;
@@ -43,64 +44,29 @@ export default function BookingPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    // Tuteurs de SikaSchool avec leurs spécialisations
-    const mockTutors: Tutor[] = [
-        {
-          id: '1',
-          name: 'Alix Tarrade',
-          avatar: '/images/team/alix.jpg',
-          subjects: ['Français', 'Méthodologie', 'Droits'],
-          rating: 0, // Note retirée
-          pricePerHour: 60,
-          bio: 'Spécialiste en français et méthodologie, diplômée en lettres modernes et en droit. Approche pédagogique adaptée du collège au supérieur.',
-          availability: ['Lundi 14h-18h', 'Mercredi 16h-20h', 'Samedi 10h-14h']
-        },
-        {
-          id: '2',
-          name: 'Nolwen Verton',
-          avatar: '/images/team/nolwen.jpg',
-          subjects: ['Mathématiques', 'Mécanique'],
-          rating: 0, // Note retirée
-          pricePerHour: 60,
-          bio: 'Ingénieur de formation, passionnée par les mathématiques et la mécanique. Expertise solide dans les sciences exactes avec approche pratique.',
-          availability: ['Mardi 15h-19h', 'Jeudi 14h-18h', 'Dimanche 10h-16h']
-        },
-        {
-          id: '3',
-          name: 'Ruudy Mbouza-Bayonne',
-          avatar: '/images/team/ruudy.jpg',
-          subjects: ['Mécanique des fluides', 'Physique', 'Mathématiques'],
-          rating: 0, // Note retirée
-          pricePerHour: 70,
-          bio: 'Expert en mécanique des fluides et physique, docteur en physique. Expérience internationale et pédagogie exceptionnelle.',
-          availability: ['Lundi 16h-20h', 'Mercredi 14h-18h', 'Vendredi 15h-19h']
-        },
-        {
-          id: '4',
-          name: 'Daniel Verton',
-          avatar: '/images/team/daniel.jpg',
-          subjects: ['Mathématiques', 'Physique', 'Informatique', 'Sciences de l\'ingénieur'],
-          rating: 0, // Note retirée
-          pricePerHour: 65,
-          bio: 'Polyvalent et expérimenté, ingénieur diplômé en informatique. Méthode pédagogique structurée et approche pratique.',
-          availability: ['Lundi 14h-18h', 'Mercredi 16h-20h', 'Samedi 10h-14h', 'Dimanche 14h-18h']
-        },
-        {
-          id: '5',
-          name: 'Walid Lakas',
-          avatar: '/images/team/walid.jpg',
-          subjects: ['Mathématiques', 'Informatique', 'Physique'],
-          rating: 0, // Note retirée
-          pricePerHour: 60,
-          bio: 'Spécialiste en mathématiques et informatique, diplômé en informatique et mathématiques appliquées. Approche méthodique et progressive.',
-          availability: ['Mardi 15h-19h', 'Jeudi 14h-18h', 'Vendredi 16h-20h']
-        }
-    ];
-    
-    setTimeout(() => {
-      setTutors(mockTutors);
-      setLoading(false);
-    }, 1000);
+    const loadTutors = async () => {
+      try {
+        const res = await fetch('/api/student/tutors', { credentials: 'include' });
+        if (!res.ok) throw new Error('failed');
+        const payload = await res.json();
+        const apiTutors: Tutor[] = (payload.tutors || []).map((t: any) => ({
+          id: t.id, // UUID from Supabase users.id
+          name: t.name,
+          avatar: t.avatar || '/images/team/default.jpg',
+          subjects: t.subjects || [],
+          rating: t.rating || 0,
+          pricePerHour: t.pricePerHour || 0,
+          bio: t.bio || '',
+          availability: [],
+        }));
+        setTutors(apiTutors);
+      } catch (_e) {
+        toast.error('Impossible de charger les tuteurs');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadTutors();
   }, []);
 
   const handleTutorSelect = (tutor: Tutor) => {
@@ -113,17 +79,28 @@ export default function BookingPage() {
     setSubmitting(true);
 
     try {
-      // Simuler la soumission
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Ici, vous feriez l'appel API pour créer la réservation
-      console.warn('Réservation créée:', formData);
-      
-      // Rediriger vers le dashboard ou afficher un message de succès
-      alert('Réservation créée avec succès !');
-    } catch (error) {
-      console.error('Erreur lors de la réservation:', error);
-      alert('Erreur lors de la création de la réservation');
+      const res = await fetch('/api/student/bookings', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tutorId: formData.tutorId,
+          subject: formData.subject,
+          sessionType: formData.sessionType,
+          level: formData.level,
+          date: formData.date,
+          time: formData.time,
+          duration: formData.duration,
+          notes: formData.notes,
+        }),
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload.error || 'failed');
+      }
+      toast.success('Demande envoyée au tuteur. Vous serez notifié de sa réponse.');
+    } catch (_e) {
+      toast.error('Impossible d\'envoyer la demande. Réessayez.');
     } finally {
       setSubmitting(false);
     }

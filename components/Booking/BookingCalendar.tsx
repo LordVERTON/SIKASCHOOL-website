@@ -1,4 +1,5 @@
 "use client";
+import { toast } from "react-hot-toast";
 import { useState } from "react";
 // import Image from "next/image";
 import SectionHeader from "../Common/SectionHeader";
@@ -44,8 +45,7 @@ const BookingCalendar = () => {
 
   const handleConfirmBooking = () => {
     if (selectedDate && selectedTime) {
-      // Here you would typically send the booking data to your backend
-      alert(`Réservation confirmée pour le ${formatDate(selectedDate)} à ${selectedTime}`);
+      toast.success(`Réservation confirmée pour le ${formatDate(selectedDate)} à ${selectedTime}`);
     }
   };
 

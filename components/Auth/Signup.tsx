@@ -1,4 +1,5 @@
 "use client";
+import { toast } from "react-hot-toast";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -60,7 +61,7 @@ const Signup = () => {
             <div className="flex items-center gap-8">
               <button
                 aria-label="signup with google"
-                onClick={() => alert('Google signup not available')}
+                onClick={() => toast("Google signup non disponible", { icon: "ℹ️" })}
                 className="text-body-color dark:text-body-color-dark dark:shadow-two mb-6 flex w-full items-center justify-center rounded-xs border border-stroke bg-[#f8f8f8] px-6 py-3 text-base outline-hidden transition-all duration-300 hover:border-primary hover:bg-primary/5 hover:text-primary dark:border-transparent dark:bg-[#2C303B] dark:hover:border-primary dark:hover:bg-primary/5 dark:hover:text-primary dark:hover:shadow-none"
               >
                 <span className="mr-3">
