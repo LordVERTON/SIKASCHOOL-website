@@ -2,17 +2,49 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Create custom types
-CREATE TYPE user_role AS ENUM ('ADMIN', 'TUTOR', 'STUDENT');
-CREATE TYPE enrollment_status AS ENUM ('ACTIVE', 'COMPLETED', 'SUSPENDED', 'CANCELLED');
-CREATE TYPE assignment_status AS ENUM ('PENDING', 'SUBMITTED', 'GRADED', 'OVERDUE');
-CREATE TYPE booking_status AS ENUM ('SCHEDULED', 'COMPLETED', 'CANCELLED', 'NO_SHOW');
-CREATE TYPE booking_type AS ENUM ('TRIAL', 'REGULAR', 'PACK');
-CREATE TYPE plan_type AS ENUM ('PACK', 'SINGLE');
-CREATE TYPE purchase_status AS ENUM ('PENDING', 'COMPLETED', 'FAILED', 'REFUNDED');
-CREATE TYPE notification_type AS ENUM ('ASSIGNMENT', 'MESSAGE', 'BOOKING', 'PAYMENT', 'SYSTEM');
+DO $$ BEGIN
+IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
+    CREATE TYPE user_role AS ENUM ('ADMIN', 'TUTOR', 'STUDENT');
+END IF;
+END $$;
+DO $$ BEGIN
+IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'enrollment_status') THEN
+    CREATE TYPE enrollment_status AS ENUM ('ACTIVE', 'COMPLETED', 'SUSPENDED', 'CANCELLED');
+END IF;
+END $$;
+DO $$ BEGIN
+IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'assignment_status') THEN
+    CREATE TYPE assignment_status AS ENUM ('PENDING', 'SUBMITTED', 'GRADED', 'OVERDUE');
+END IF;
+END $$;
+DO $$ BEGIN
+IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'booking_status') THEN
+    CREATE TYPE booking_status AS ENUM ('SCHEDULED', 'COMPLETED', 'CANCELLED', 'NO_SHOW');
+END IF;
+END $$;
+DO $$ BEGIN
+IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'booking_type') THEN
+    CREATE TYPE booking_type AS ENUM ('TRIAL', 'REGULAR', 'PACK');
+END IF;
+END $$;
+DO $$ BEGIN
+IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'plan_type') THEN
+    CREATE TYPE plan_type AS ENUM ('PACK', 'SINGLE');
+END IF;
+END $$;
+DO $$ BEGIN
+IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'purchase_status') THEN
+    CREATE TYPE purchase_status AS ENUM ('PENDING', 'COMPLETED', 'FAILED', 'REFUNDED');
+END IF;
+END $$;
+DO $$ BEGIN
+IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'notification_type') THEN
+    CREATE TYPE notification_type AS ENUM ('ASSIGNMENT', 'MESSAGE', 'BOOKING', 'PAYMENT', 'SYSTEM');
+END IF;
+END $$;
 
 -- Users table (base table, no dependencies)
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
@@ -35,7 +67,7 @@ CREATE TABLE users (
 );
 
 -- User credentials management (depends on users)
-CREATE TABLE user_credentials (
+CREATE TABLE IF NOT EXISTS user_credentials (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     credential_type VARCHAR(50) NOT NULL,
@@ -49,7 +81,7 @@ CREATE TABLE user_credentials (
 );
 
 -- Tutors specific information (depends on users)
-CREATE TABLE tutors (
+CREATE TABLE IF NOT EXISTS tutors (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     bio TEXT,
@@ -64,7 +96,7 @@ CREATE TABLE tutors (
 );
 
 -- Students specific information (depends on users)
-CREATE TABLE students (
+CREATE TABLE IF NOT EXISTS students (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     grade_level VARCHAR(50),
@@ -79,7 +111,7 @@ CREATE TABLE students (
 );
 
 -- Subjects/Courses (independent table)
-CREATE TABLE subjects (
+CREATE TABLE IF NOT EXISTS subjects (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(100) NOT NULL,
     description TEXT,
@@ -89,7 +121,7 @@ CREATE TABLE subjects (
 );
 
 -- Courses (depends on subjects)
-CREATE TABLE courses (
+CREATE TABLE IF NOT EXISTS courses (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title VARCHAR(255) NOT NULL,
     description TEXT,
@@ -102,7 +134,7 @@ CREATE TABLE courses (
 );
 
 -- Lessons (depends on courses)
-CREATE TABLE lessons (
+CREATE TABLE IF NOT EXISTS lessons (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
@@ -116,7 +148,7 @@ CREATE TABLE lessons (
 );
 
 -- Enrollments (depends on users and courses)
-CREATE TABLE enrollments (
+CREATE TABLE IF NOT EXISTS enrollments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     student_id UUID REFERENCES users(id) ON DELETE CASCADE,
     course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
@@ -130,7 +162,7 @@ CREATE TABLE enrollments (
 );
 
 -- Progress tracking (depends on enrollments and lessons)
-CREATE TABLE progress (
+CREATE TABLE IF NOT EXISTS progress (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     enrollment_id UUID REFERENCES enrollments(id) ON DELETE CASCADE,
     lesson_id UUID REFERENCES lessons(id) ON DELETE CASCADE,
@@ -144,7 +176,7 @@ CREATE TABLE progress (
 );
 
 -- Assignments (depends on courses)
-CREATE TABLE assignments (
+CREATE TABLE IF NOT EXISTS assignments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
@@ -158,7 +190,7 @@ CREATE TABLE assignments (
 );
 
 -- Submissions (depends on assignments and users)
-CREATE TABLE submissions (
+CREATE TABLE IF NOT EXISTS submissions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     assignment_id UUID REFERENCES assignments(id) ON DELETE CASCADE,
     student_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -173,7 +205,7 @@ CREATE TABLE submissions (
 );
 
 -- Message threads (depends on users)
-CREATE TABLE message_threads (
+CREATE TABLE IF NOT EXISTS message_threads (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     subject VARCHAR(255) NOT NULL,
     created_by UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -183,7 +215,7 @@ CREATE TABLE message_threads (
 );
 
 -- Messages (depends on message_threads and users)
-CREATE TABLE messages (
+CREATE TABLE IF NOT EXISTS messages (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     thread_id UUID REFERENCES message_threads(id) ON DELETE CASCADE,
     sender_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -193,7 +225,7 @@ CREATE TABLE messages (
 );
 
 -- Notifications (depends on users)
-CREATE TABLE notifications (
+CREATE TABLE IF NOT EXISTS notifications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     type notification_type NOT NULL,
@@ -205,7 +237,7 @@ CREATE TABLE notifications (
 );
 
 -- Plans (independent table)
-CREATE TABLE plans (
+CREATE TABLE IF NOT EXISTS plans (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -219,7 +251,7 @@ CREATE TABLE plans (
 );
 
 -- Purchases (depends on users and plans)
-CREATE TABLE purchases (
+CREATE TABLE IF NOT EXISTS purchases (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     student_id UUID REFERENCES users(id) ON DELETE CASCADE,
     plan_id UUID REFERENCES plans(id) ON DELETE SET NULL,
@@ -233,7 +265,7 @@ CREATE TABLE purchases (
 );
 
 -- Availabilities (depends on users/tutors)
-CREATE TABLE availabilities (
+CREATE TABLE IF NOT EXISTS availabilities (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tutor_id UUID REFERENCES users(id) ON DELETE CASCADE,
     day_of_week INTEGER NOT NULL,
@@ -245,7 +277,7 @@ CREATE TABLE availabilities (
 );
 
 -- Bookings (depends on users, courses, and availabilities)
-CREATE TABLE bookings (
+CREATE TABLE IF NOT EXISTS bookings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     student_id UUID REFERENCES users(id) ON DELETE CASCADE,
     tutor_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -264,7 +296,7 @@ CREATE TABLE bookings (
 );
 
 -- Reviews (depends on users and bookings)
-CREATE TABLE reviews (
+CREATE TABLE IF NOT EXISTS reviews (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     booking_id UUID REFERENCES bookings(id) ON DELETE CASCADE,
     student_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -274,8 +306,7 @@ CREATE TABLE reviews (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Pricing rules (independent table)
-CREATE TABLE pricing_rules (
+CREATE TABLE IF NOT EXISTS pricing_rules (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     session_type VARCHAR(20) NOT NULL,
     level VARCHAR(50) NOT NULL,
@@ -287,7 +318,7 @@ CREATE TABLE pricing_rules (
 );
 
 -- Sessions (depends on bookings and users)
-CREATE TABLE sessions (
+CREATE TABLE IF NOT EXISTS sessions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     booking_id UUID REFERENCES bookings(id) ON DELETE CASCADE,
     student_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -312,7 +343,7 @@ CREATE TABLE sessions (
 );
 
 -- Session payments (depends on sessions)
-CREATE TABLE session_payments (
+CREATE TABLE IF NOT EXISTS session_payments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     session_id UUID REFERENCES sessions(id) ON DELETE CASCADE,
     student_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -331,61 +362,69 @@ CREATE TABLE session_payments (
 );
 
 -- Create indexes for better performance
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_role ON users(role);
-CREATE INDEX idx_user_credentials_user_id ON user_credentials(user_id);
-CREATE INDEX idx_tutors_user_id ON tutors(user_id);
-CREATE INDEX idx_students_user_id ON students(user_id);
-CREATE INDEX idx_enrollments_student_id ON enrollments(student_id);
-CREATE INDEX idx_enrollments_course_id ON enrollments(course_id);
-CREATE INDEX idx_progress_enrollment_id ON progress(enrollment_id);
-CREATE INDEX idx_progress_lesson_id ON progress(lesson_id);
-CREATE INDEX idx_assignments_course_id ON assignments(course_id);
-CREATE INDEX idx_submissions_assignment_id ON submissions(assignment_id);
-CREATE INDEX idx_submissions_student_id ON submissions(student_id);
-CREATE INDEX idx_messages_thread_id ON messages(thread_id);
-CREATE INDEX idx_messages_sender_id ON messages(sender_id);
-CREATE INDEX idx_notifications_user_id ON notifications(user_id);
-CREATE INDEX idx_purchases_student_id ON purchases(student_id);
-CREATE INDEX idx_availabilities_tutor_id ON availabilities(tutor_id);
-CREATE INDEX idx_bookings_student_id ON bookings(student_id);
-CREATE INDEX idx_bookings_tutor_id ON bookings(tutor_id);
-CREATE INDEX idx_bookings_scheduled_at ON bookings(scheduled_at);
-CREATE INDEX idx_reviews_booking_id ON reviews(booking_id);
-CREATE INDEX idx_reviews_tutor_id ON reviews(tutor_id);
-CREATE INDEX idx_sessions_booking_id ON sessions(booking_id);
-CREATE INDEX idx_sessions_student_id ON sessions(student_id);
-CREATE INDEX idx_sessions_tutor_id ON sessions(tutor_id);
-CREATE INDEX idx_sessions_started_at ON sessions(started_at);
-CREATE INDEX idx_session_payments_session_id ON session_payments(session_id);
-CREATE INDEX idx_session_payments_student_id ON session_payments(student_id);
-CREATE INDEX idx_session_payments_tutor_id ON session_payments(tutor_id);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+CREATE INDEX IF NOT EXISTS idx_user_credentials_user_id ON user_credentials(user_id);
+CREATE INDEX IF NOT EXISTS idx_tutors_user_id ON tutors(user_id);
+CREATE INDEX IF NOT EXISTS idx_students_user_id ON students(user_id);
+CREATE INDEX IF NOT EXISTS idx_enrollments_student_id ON enrollments(student_id);
+CREATE INDEX IF NOT EXISTS idx_enrollments_course_id ON enrollments(course_id);
+CREATE INDEX IF NOT EXISTS idx_progress_enrollment_id ON progress(enrollment_id);
+CREATE INDEX IF NOT EXISTS idx_progress_lesson_id ON progress(lesson_id);
+CREATE INDEX IF NOT EXISTS idx_assignments_course_id ON assignments(course_id);
+CREATE INDEX IF NOT EXISTS idx_submissions_assignment_id ON submissions(assignment_id);
+CREATE INDEX IF NOT EXISTS idx_submissions_student_id ON submissions(student_id);
+CREATE INDEX IF NOT EXISTS idx_messages_thread_id ON messages(thread_id);
+CREATE INDEX IF NOT EXISTS idx_messages_sender_id ON messages(sender_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_purchases_student_id ON purchases(student_id);
+CREATE INDEX IF NOT EXISTS idx_availabilities_tutor_id ON availabilities(tutor_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_student_id ON bookings(student_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_tutor_id ON bookings(tutor_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_scheduled_at ON bookings(scheduled_at);
+CREATE INDEX IF NOT EXISTS idx_reviews_booking_id ON reviews(booking_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_tutor_id ON reviews(tutor_id);
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' AND table_name = 'sessions' AND column_name = 'booking_id'
+    ) THEN
+        CREATE INDEX IF NOT EXISTS idx_sessions_booking_id ON sessions(booking_id);
+    END IF;
+END $$;
+CREATE INDEX IF NOT EXISTS idx_sessions_student_id ON sessions(student_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_tutor_id ON sessions(tutor_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_started_at ON sessions(started_at);
+CREATE INDEX IF NOT EXISTS idx_session_payments_session_id ON session_payments(session_id);
+CREATE INDEX IF NOT EXISTS idx_session_payments_student_id ON session_payments(student_id);
+CREATE INDEX IF NOT EXISTS idx_session_payments_tutor_id ON session_payments(tutor_id);
 
 -- Create updated_at trigger function
-CREATE OR REPLACE FUNCTION update_updated_at_column()
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$ LANGUAGE plpgsql SET search_path = public;
 
 -- Apply updated_at triggers to relevant tables
-CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_user_credentials_updated_at BEFORE UPDATE ON user_credentials FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_tutors_updated_at BEFORE UPDATE ON tutors FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_students_updated_at BEFORE UPDATE ON students FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_courses_updated_at BEFORE UPDATE ON courses FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_lessons_updated_at BEFORE UPDATE ON lessons FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_enrollments_updated_at BEFORE UPDATE ON enrollments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_progress_updated_at BEFORE UPDATE ON progress FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_assignments_updated_at BEFORE UPDATE ON assignments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_submissions_updated_at BEFORE UPDATE ON submissions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_message_threads_updated_at BEFORE UPDATE ON message_threads FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_plans_updated_at BEFORE UPDATE ON plans FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_purchases_updated_at BEFORE UPDATE ON purchases FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_availabilities_updated_at BEFORE UPDATE ON availabilities FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_bookings_updated_at BEFORE UPDATE ON bookings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_sessions_updated_at BEFORE UPDATE ON sessions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_session_payments_updated_at BEFORE UPDATE ON session_payments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_pricing_rules_updated_at BEFORE UPDATE ON pricing_rules FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_user_credentials_updated_at BEFORE UPDATE ON user_credentials FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_tutors_updated_at BEFORE UPDATE ON tutors FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_students_updated_at BEFORE UPDATE ON students FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_courses_updated_at BEFORE UPDATE ON courses FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_lessons_updated_at BEFORE UPDATE ON lessons FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_enrollments_updated_at BEFORE UPDATE ON enrollments FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_progress_updated_at BEFORE UPDATE ON progress FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_assignments_updated_at BEFORE UPDATE ON assignments FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_submissions_updated_at BEFORE UPDATE ON submissions FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_message_threads_updated_at BEFORE UPDATE ON message_threads FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_plans_updated_at BEFORE UPDATE ON plans FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_purchases_updated_at BEFORE UPDATE ON purchases FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_availabilities_updated_at BEFORE UPDATE ON availabilities FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_bookings_updated_at BEFORE UPDATE ON bookings FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_sessions_updated_at BEFORE UPDATE ON sessions FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_session_payments_updated_at BEFORE UPDATE ON session_payments FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_pricing_rules_updated_at BEFORE UPDATE ON pricing_rules FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();

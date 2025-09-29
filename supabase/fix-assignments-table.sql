@@ -25,17 +25,17 @@ CREATE INDEX idx_tutor_student_assignments_student_id ON tutor_student_assignmen
 CREATE INDEX idx_tutor_student_assignments_active ON tutor_student_assignments(is_active);
 
 -- Créer le trigger pour updated_at
-CREATE OR REPLACE FUNCTION update_updated_at_column()
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$ LANGUAGE plpgsql SET search_path = public;
 
 CREATE TRIGGER update_tutor_student_assignments_updated_at 
     BEFORE UPDATE ON tutor_student_assignments 
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 -- =============================================
 -- Peupler la table avec les sessions existantes

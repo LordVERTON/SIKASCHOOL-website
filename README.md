@@ -89,21 +89,6 @@ npm run dev
 
 The app will be available at `http://localhost:3000`.
 
-### **Test Credentials**
-The application includes test accounts for development:
-
-**Students:**
-- Email: `student@sikaschool.com` | Password: `Steve`
-- Email: `liele.ghoma@sikaschool.com` | Password: `Liele123`
-- Email: `milly.koula@sikaschool.com` | Password: `Milly123`
-
-**Tutors:**
-- Email: `daniel.verton@sikaschool.com` | Password: `Daniel123` (Admin)
-- Email: `ruudy.mbouza-bayonne@sikaschool.com` | Password: `Ruudy123` (Admin)
-- Email: `alix.tarrade@sikaschool.com` | Password: `Alix123`
-- Email: `nolwen.verton@sikaschool.com` | Password: `Nolwen123`
-- Email: `walid.lakas@sikaschool.com` | Password: `Walid123`
-
 ### **Build & Deployment**
 ```bash
 # Build for production

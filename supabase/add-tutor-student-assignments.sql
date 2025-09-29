@@ -21,7 +21,8 @@ CREATE INDEX IF NOT EXISTS idx_tutor_student_assignments_tutor_id ON tutor_stude
 CREATE INDEX IF NOT EXISTS idx_tutor_student_assignments_student_id ON tutor_student_assignments(student_id);
 CREATE INDEX IF NOT EXISTS idx_tutor_student_assignments_active ON tutor_student_assignments(is_active);
 
--- Créer le trigger pour updated_at
+-- Créer le trigger pour updated_at (idempotent)
+DROP TRIGGER IF EXISTS update_tutor_student_assignments_updated_at ON tutor_student_assignments;
 CREATE TRIGGER update_tutor_student_assignments_updated_at 
     BEFORE UPDATE ON tutor_student_assignments 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -31,7 +32,7 @@ CREATE TRIGGER update_tutor_student_assignments_updated_at
 -- =============================================
 
 -- Fonction pour attribuer un tuteur à un étudiant
-CREATE OR REPLACE FUNCTION assign_tutor_to_student(
+CREATE OR REPLACE FUNCTION public.assign_tutor_to_student(
     p_tutor_id UUID,
     p_student_id UUID,
     p_assigned_by UUID DEFAULT NULL,
@@ -62,10 +63,10 @@ BEGIN
     
     RETURN assignment_id;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SET search_path = public;
 
 -- Fonction pour désactiver une attribution
-CREATE OR REPLACE FUNCTION deassign_tutor_from_student(
+CREATE OR REPLACE FUNCTION public.deassign_tutor_from_student(
     p_tutor_id UUID,
     p_student_id UUID
 ) RETURNS BOOLEAN AS $$
@@ -76,10 +77,10 @@ BEGIN
     
     RETURN FOUND;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SET search_path = public;
 
 -- Fonction pour obtenir les tuteurs attribués à un étudiant
-CREATE OR REPLACE FUNCTION get_student_assigned_tutors(p_student_id UUID)
+CREATE OR REPLACE FUNCTION public.get_student_assigned_tutors(p_student_id UUID)
 RETURNS TABLE (
     tutor_id UUID,
     tutor_name TEXT,
@@ -112,7 +113,7 @@ BEGIN
     AND tsa.is_active = true
     ORDER BY tsa.assigned_at DESC;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SET search_path = public;
 
 -- =============================================
 -- Exemples d'utilisation
