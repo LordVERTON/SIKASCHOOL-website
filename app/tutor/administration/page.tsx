@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { formatMinutes } from '@/lib/time-utils';
 import { hasAdminPermissions } from '@/lib/admin-permissions';
 import AssignmentModal from '@/components/Admin/AssignmentModal';
+// import { useConfirm } from '@/components/Common/ConfirmDialog';
 
 interface User {
   id: string;
@@ -57,6 +58,7 @@ interface Payment {
 
 export default function AdministrationPage() {
   const { user, loading } = useAuth(['TUTOR', 'ADMIN']);
+  // const { confirm, ConfirmDialog } = useConfirm();
   const [activeTab, setActiveTab] = useState<'users' | 'sessions' | 'payments' | 'assignments' | 'sync'>('users');
   const [users, setUsers] = useState<User[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -75,12 +77,9 @@ export default function AdministrationPage() {
   // Vérifier si l'utilisateur a les permissions admin avec useMemo pour éviter les re-calculs
   const isAdmin = useMemo(() => {
     if (!user) {
-      console.log('🔒 Administration: Pas d\'utilisateur');
       return false;
     }
-    console.log('🔒 Administration: Utilisateur:', user.email, 'Rôle:', user.role);
     const hasPermissions = hasAdminPermissions(user);
-    console.log('🔒 Administration: Permissions admin:', hasPermissions);
     return hasPermissions;
   }, [user]);
 
@@ -115,15 +114,16 @@ export default function AdministrationPage() {
       }
       
       setDataLoaded(true);
-    } catch (error) {
-      console.warn('Erreur lors du chargement des données:', error);
+    } catch (_error) {
+      console.warn('Erreur lors du chargement des données:', _error);
     } finally {
       setLoadingData(false);
     }
   };
 
   const handleResetPassword = async (userId: string) => {
-    if (confirm('Êtes-vous sûr de vouloir réinitialiser le mot de passe de cet utilisateur ?')) {
+    // eslint-disable-next-line no-alert
+    if (window.confirm('Êtes-vous sûr de vouloir réinitialiser le mot de passe de cet utilisateur ?')) {
       try {
         const response = await fetch(`/api/admin/users/${userId}/reset-password`, {
           method: 'POST'
@@ -137,8 +137,8 @@ export default function AdministrationPage() {
           // eslint-disable-next-line no-alert
           // alert('Erreur lors de la réinitialisation du mot de passe');
         }
-      } catch (error) {
-        console.warn('Erreur:', error);
+      } catch (_error) {
+        console.warn('Erreur:', _error);
         // eslint-disable-next-line no-alert
         // alert('Erreur lors de la réinitialisation du mot de passe');
       }
@@ -163,8 +163,8 @@ export default function AdministrationPage() {
         // eslint-disable-next-line no-alert
         // alert('Erreur lors de la modification du statut');
       }
-    } catch (error) {
-      console.warn('Erreur:', error);
+    } catch (_error) {
+      console.warn('Erreur:', _error);
       // eslint-disable-next-line no-alert
       // alert('Erreur lors de la modification du statut');
     }
@@ -185,8 +185,8 @@ export default function AdministrationPage() {
       console.warn('📡 Réponse reçue:', response.status, response.statusText);
       
       if (response.ok) {
-        const result = await response.json();
-        console.warn('✅ Création réussie:', result);
+        const _result = await response.json();
+        console.warn('✅ Création réussie:', _result);
         // eslint-disable-next-line no-alert
         // alert('Utilisateur créé avec succès');
         setShowUserModal(false);
@@ -196,17 +196,17 @@ export default function AdministrationPage() {
         console.warn('❌ Erreur API:', response.status, errorText);
         
         try {
-          const error = JSON.parse(errorText);
+          const _error = JSON.parse(errorText);
           // eslint-disable-next-line no-alert
           // alert(`Erreur lors de la création: ${error.error}`);
-        } catch (e) {
+        } catch {
           // eslint-disable-next-line no-alert
           // alert(`Erreur lors de la création: ${response.status} ${response.statusText}`);
         }
       }
-    } catch (error) {
-      console.warn('❌ Erreur fetch:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+    } catch (_error) {
+      console.warn('❌ Erreur fetch:', _error);
+      const _errorMessage = _error instanceof Error ? _error.message : 'Erreur inconnue';
       // eslint-disable-next-line no-alert
       // alert(`Erreur de connexion: ${errorMessage}`);
     }
@@ -243,8 +243,8 @@ export default function AdministrationPage() {
       console.warn('📡 Réponse reçue:', response.status, response.statusText);
       
       if (response.ok) {
-        const result = await response.json();
-        console.warn('✅ Mise à jour réussie:', result);
+        const _result = await response.json();
+        console.warn('✅ Mise à jour réussie:', _result);
         // eslint-disable-next-line no-alert
         // alert('Utilisateur modifié avec succès');
         setShowUserModal(false);
@@ -255,24 +255,25 @@ export default function AdministrationPage() {
         console.warn('❌ Erreur API:', response.status, errorText);
         
         try {
-          const error = JSON.parse(errorText);
+          const _error = JSON.parse(errorText);
           // eslint-disable-next-line no-alert
           // alert(`Erreur lors de la modification: ${error.error}`);
-        } catch (e) {
+        } catch {
           // eslint-disable-next-line no-alert
           // alert(`Erreur lors de la modification: ${response.status} ${response.statusText}`);
         }
       }
-    } catch (error) {
-      console.warn('❌ Erreur fetch:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+    } catch (_error) {
+      console.warn('❌ Erreur fetch:', _error);
+      const _errorMessage = _error instanceof Error ? _error.message : 'Erreur inconnue';
       // eslint-disable-next-line no-alert
       // alert(`Erreur de connexion: ${errorMessage}`);
     }
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.')) {
+    // eslint-disable-next-line no-alert
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.')) {
       try {
         const response = await fetch(`/api/admin/users/${userId}`, {
           method: 'DELETE'
@@ -283,12 +284,12 @@ export default function AdministrationPage() {
           // alert('Utilisateur supprimé avec succès');
           fetchData();
         } else {
-          const error = await response.json();
+          const _error = await response.json();
           // eslint-disable-next-line no-alert
           // alert(`Erreur lors de la suppression: ${error.error}`);
         }
-      } catch (error) {
-        console.warn('Erreur:', error);
+      } catch (_error) {
+        console.warn('Erreur:', _error);
         // eslint-disable-next-line no-alert
         // alert('Erreur lors de la suppression de l\'utilisateur');
       }
@@ -311,12 +312,12 @@ export default function AdministrationPage() {
         setShowSessionModal(false);
         fetchData();
       } else {
-        const error = await response.json();
+        const _error = await response.json();
         // eslint-disable-next-line no-alert
         // alert(`Erreur lors de la création: ${error.error}`);
       }
-    } catch (error) {
-      console.warn('Erreur:', error);
+    } catch (_error) {
+      console.warn('Erreur:', _error);
       // eslint-disable-next-line no-alert
       // alert('Erreur lors de la création de la session');
     }
@@ -339,19 +340,20 @@ export default function AdministrationPage() {
         setEditingSession(null);
         fetchData();
       } else {
-        const error = await response.json();
+        const _error = await response.json();
         // eslint-disable-next-line no-alert
         // alert(`Erreur lors de la modification: ${error.error}`);
       }
-    } catch (error) {
-      console.error('Erreur:', error);
+    } catch (_error) {
+      console.error('Erreur:', _error);
       // eslint-disable-next-line no-alert
       // alert('Erreur lors de la modification de la session');
     }
   };
 
   const handleDeleteSession = async (sessionId: string) => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer cette session ? Cette action est irréversible.')) {
+    // eslint-disable-next-line no-alert
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette session ? Cette action est irréversible.')) {
       try {
         const response = await fetch(`/api/admin/sessions/${sessionId}`, {
           method: 'DELETE'
@@ -362,12 +364,12 @@ export default function AdministrationPage() {
           // alert('Session supprimée avec succès');
           fetchData();
         } else {
-          const error = await response.json();
+          const _error = await response.json();
           // eslint-disable-next-line no-alert
           // alert(`Erreur lors de la suppression: ${error.error}`);
         }
-      } catch (error) {
-        console.warn('Erreur:', error);
+      } catch (_error) {
+        console.warn('Erreur:', _error);
         // eslint-disable-next-line no-alert
         // alert('Erreur lors de la suppression de la session');
       }
@@ -375,24 +377,25 @@ export default function AdministrationPage() {
   };
 
   const handleSyncProfiles = async () => {
-    if (confirm('Êtes-vous sûr de vouloir synchroniser les profils ? Cela créera les profils manquants.')) {
+    // eslint-disable-next-line no-alert
+    if (window.confirm('Êtes-vous sûr de vouloir synchroniser les profils ? Cela créera les profils manquants.')) {
       try {
         const response = await fetch('/api/admin/sync-profiles', {
           method: 'POST'
         });
         
         if (response.ok) {
-          const result = await response.json();
+          const _result = await response.json();
           // eslint-disable-next-line no-alert
           // alert(`Synchronisation réussie !\n- Profils tuteurs créés: ${result.createdTutorProfiles}\n- Profils étudiants créés: ${result.createdStudentProfiles}`);
           fetchData();
         } else {
-          const error = await response.json();
+          const _error = await response.json();
           // eslint-disable-next-line no-alert
           // alert(`Erreur lors de la synchronisation: ${error.error}`);
         }
-      } catch (error) {
-      console.warn('Erreur:', error);
+      } catch (_error) {
+      console.warn('Erreur:', _error);
         // eslint-disable-next-line no-alert
         // alert('Erreur lors de la synchronisation');
       }
@@ -419,8 +422,8 @@ export default function AdministrationPage() {
         const availableData = await availableResponse.json();
         setAvailableUsers(availableData.users || []);
       }
-    } catch (error) {
-      console.error('Erreur lors du chargement des assignations:', error);
+    } catch (_error) {
+      console.error('Erreur lors du chargement des assignations:', _error);
     }
   };
 
@@ -445,12 +448,12 @@ export default function AdministrationPage() {
         // Recharger les assignations
         handleViewAssignments(selectedUserForAssignments);
       } else {
-        const error = await response.json();
-        alert(`Erreur: ${error.error}`);
+        const _error = await response.json();
+        console.error(`Erreur: ${_error.error}`);
       }
-    } catch (error) {
-      console.error('Erreur lors de l\'assignation:', error);
-      alert('Erreur lors de l\'assignation');
+    } catch (_error) {
+      console.error('Erreur lors de l\'assignation:', _error);
+      console.error('Erreur lors de l\'assignation');
     }
   };
 
@@ -469,12 +472,12 @@ export default function AdministrationPage() {
         // Recharger les assignations
         handleViewAssignments(selectedUserForAssignments);
       } else {
-        const error = await response.json();
-        alert(`Erreur: ${error.error}`);
+        const _error = await response.json();
+        console.error(`Erreur: ${_error.error}`);
       }
-    } catch (error) {
-      console.error('Erreur lors de la désassignation:', error);
-      alert('Erreur lors de la désassignation');
+    } catch (_error) {
+      console.error('Erreur lors de la désassignation:', _error);
+      console.error('Erreur lors de la désassignation');
     }
   };
 
@@ -1364,6 +1367,8 @@ function SessionModal({ session, users, onSave, onClose }: {
           </div>
         </form>
       </div>
+      
+      {/* <ConfirmDialog /> */}
     </div>
   );
 }

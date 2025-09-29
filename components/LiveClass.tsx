@@ -98,7 +98,7 @@ export default function LiveClass({ serverUrl, token, className, onLeavePath }: 
             setConnectionError(null);
           }}
           onDisconnected={(reason) => {
-            console.log('LiveKit disconnected:', reason);
+            // LiveKit disconnected
             
             // Redirection vers le calendrier pour toutes les déconnexions volontaires
             const isVoluntaryDisconnect = reason?.toString() === 'CLIENT_INITIATED' || 
@@ -107,7 +107,7 @@ export default function LiveClass({ serverUrl, token, className, onLeavePath }: 
             
             if (isVoluntaryDisconnect) {
               // Déconnexion volontaire ou serveur - rediriger vers le calendrier
-              console.log('Redirection vers le calendrier:', onLeavePath);
+              // Redirection vers le calendrier
               if (onLeavePath) {
                 // Utiliser window.location pour une redirection plus robuste
                 window.location.href = onLeavePath;
@@ -121,7 +121,7 @@ export default function LiveClass({ serverUrl, token, className, onLeavePath }: 
             }
           }}
           onError={(error) => {
-            console.error('LiveKit error:', error);
+            // LiveKit error
             if (error.message?.includes('timeout') || error.message?.includes('timed out')) {
               setConnectionError('Connexion au serveur de visio expirée. Vérifiez votre connexion internet.');
             } else if (error.message?.includes('unauthorized') || error.message?.includes('permission')) {

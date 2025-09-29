@@ -64,7 +64,7 @@ export async function GET() {
     }));
 
     return NextResponse.json(formattedNotifications);
-  } catch (error) {
+      } catch {
     return NextResponse.json(
       { error: 'Erreur lors de la récupération des notifications' },
       { status: 500 }
@@ -112,7 +112,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
-  } catch (error) {
+      } catch {
     return NextResponse.json(
       { error: 'Erreur lors de la mise à jour des notifications' },
       { status: 500 }

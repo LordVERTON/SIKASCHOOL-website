@@ -67,7 +67,7 @@ export default function CreateSessionModal({
         const errorData = await response.json();
         setError(errorData.error || 'Erreur lors de la création de la séance');
       }
-    } catch (err) {
+      } catch {
       setError('Erreur de connexion');
     } finally {
       setLoading(false);

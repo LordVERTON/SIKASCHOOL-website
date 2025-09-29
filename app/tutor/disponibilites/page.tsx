@@ -1,11 +1,11 @@
 "use client";
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 
 export default function TutorDisponibilites() {
-  const hours = [
+  const hours = useMemo(() => [
     'Matin', '13h-14h', '14h-15h', '15h-16h', '16h-17h', '17h-18h', '18h-19h', '19h-20h'
-  ];
-  const days = ['lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.', 'dim.'];
+  ], []);
+  const days = useMemo(() => ['lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.', 'dim.'], []);
 
   const [isAvailable, setIsAvailable] = useState(true);
   const [grid, setGrid] = useState<Record<string, boolean>>({});
@@ -21,7 +21,7 @@ export default function TutorDisponibilites() {
       }
     }
     setGrid(initial);
-  }, []);
+  }, [days, hours]);
 
   const toggle = (h: string, d: string) => {
     const key = `${h}|${d}`;

@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Vérifier si l'email existe déjà
-    const { data: existingUser, error: checkError } = await supabaseAdmin
+        const { data: existingUser, error: _checkError } = await supabaseAdmin
       .from('users')
       .select('id')
       .eq('email', email)
@@ -59,7 +59,6 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     // Créer l'utilisateur dans la base de données
-    console.log('🔄 Tentative de création d\'utilisateur dans Supabase...');
     
     const { data: newUser, error: userError } = await supabaseAdmin
       .from('users')
@@ -85,7 +84,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('✅ Compte étudiant créé avec succès:', newUser.email);
+    // Compte étudiant créé avec succès
 
     return NextResponse.json({
       success: true,

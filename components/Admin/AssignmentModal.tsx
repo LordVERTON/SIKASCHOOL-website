@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+// import { useConfirm } from '@/components/Common/ConfirmDialog';
 
 interface User {
   id: string;
@@ -31,6 +32,7 @@ export default function AssignmentModal({
   const [selectedUserId, setSelectedUserId] = useState('');
   const [notes, setNotes] = useState('');
   const [isAssigning, setIsAssigning] = useState(false);
+  // const { confirm, ConfirmDialog } = useConfirm();
 
   const handleAssign = async () => {
     if (!selectedUserId) return;
@@ -48,7 +50,8 @@ export default function AssignmentModal({
   };
 
   const handleUnassign = async (targetUserId: string) => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer cette assignation ?')) {
+    // eslint-disable-next-line no-alert
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette assignation ?')) {
       try {
         await onUnassign(targetUserId);
       } catch (error) {
@@ -58,7 +61,7 @@ export default function AssignmentModal({
   };
 
   const isTutor = user.role === 'TUTOR';
-  const targetRole = isTutor ? 'STUDENT' : 'TUTOR';
+  const _targetRole = isTutor ? 'STUDENT' : 'TUTOR';
   const targetRoleLabel = isTutor ? 'étudiant' : 'tuteur';
 
   return (
@@ -225,6 +228,8 @@ export default function AssignmentModal({
           </div>
         </div>
       </div>
+      
+      {/* <ConfirmDialog /> */}
     </div>
   );
 }

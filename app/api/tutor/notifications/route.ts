@@ -34,7 +34,7 @@ export async function GET() {
     }));
 
     return NextResponse.json(formatted);
-  } catch (_error) {
+      } catch {
     return NextResponse.json({ error: 'Erreur lors de la récupération des notifications' }, { status: 500 });
   }
 }
@@ -143,7 +143,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true, created: true, sessionId: created?.id });
-  } catch (_error) {
+      } catch {
     return NextResponse.json({ error: 'Erreur lors du traitement' }, { status: 500 });
   }
 }

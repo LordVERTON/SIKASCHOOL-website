@@ -69,12 +69,12 @@ export async function GET() {
       if (!error && data) {
         messages = data as any[];
       }
-    } catch (_e) {
+    } catch {
       // ignorer les erreurs de messages pour ne pas bloquer le dashboard
     }
 
     // Calculer les statistiques
-    const totalSessions = (sessions as any)?.length || 0;
+    const _totalSessions = (sessions as any)?.length || 0;
     const completedSessions = (sessions as any)?.filter((s: any) => s.status === 'COMPLETED').length || 0;
     const totalHours = (sessions as any)?.reduce((acc: number, s: any) => acc + (s.duration_minutes || 0), 0) / 60 || 0;
     // Calculer le montant total basé sur la durée et un tarif moyen (35€/h)
@@ -239,7 +239,7 @@ export async function GET() {
 
     return NextResponse.json(dashboardData);
 
-  } catch (error) {
+      } catch {
     
     // Retourner des données par défaut en cas d'erreur pour éviter un écran vide
     const fallbackData = {

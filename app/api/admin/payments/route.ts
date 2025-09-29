@@ -74,7 +74,7 @@ export async function GET() {
     }) || [];
 
     return NextResponse.json(formattedPayments);
-  } catch (_error) {
+      } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

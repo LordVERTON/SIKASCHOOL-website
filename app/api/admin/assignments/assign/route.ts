@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Vérifier si l'assignation existe déjà
-    const { data: existingAssignment, error: checkError } = await supabase
+        const { data: existingAssignment, error: _checkError } = await supabase
       .from('tutor_student_assignments')
       .select('id, is_active')
       .eq('tutor_id', tutorId)

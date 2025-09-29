@@ -7,7 +7,7 @@ export enum Role {
   STUDENT = "STUDENT"
 }
 
-export async function requireAuth(request: NextRequest) {
+export async function requireAuth(_request: NextRequest) {
   const session = await getUserSession();
   
   if (!session) {

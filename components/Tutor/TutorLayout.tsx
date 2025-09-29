@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import LogoutButton from "../Auth/LogoutButton";
-import { isAdminTutor, hasAdminPermissions } from "@/lib/admin-permissions";
+import { hasAdminPermissions } from "@/lib/admin-permissions";
 
 interface TutorLayoutProps {
   children: React.ReactNode;

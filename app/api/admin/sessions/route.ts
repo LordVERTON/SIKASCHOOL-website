@@ -78,7 +78,7 @@ export async function GET() {
     }) || [];
 
     return NextResponse.json(formattedSessions);
-  } catch (_error) {
+      } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -141,8 +141,8 @@ export async function POST(request: NextRequest) {
       session: newSession,
       message: 'Session created successfully' 
     });
-  } catch (_error) {
-    console.warn('Erreur dans /api/admin/sessions POST:', _error);
+      } catch {
+    console.warn('Erreur dans /api/admin/sessions POST');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

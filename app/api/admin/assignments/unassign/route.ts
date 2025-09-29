@@ -17,7 +17,7 @@ export async function DELETE(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const tutorId = searchParams.get('tutorId');
     const studentId = searchParams.get('studentId');
-    const assignmentId = searchParams.get('assignmentId');
+        const _assignmentId = searchParams.get('assignmentId');
 
     if (!tutorId || !studentId) {
       return NextResponse.json({ error: 'tutorId et studentId sont requis' }, { status: 400 });

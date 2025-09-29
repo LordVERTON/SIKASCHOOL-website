@@ -9,7 +9,7 @@ import { supabaseAdmin } from './supabase';
 // Import dynamique de bcryptjs pour éviter les problèmes de build
 import { 
   SESSION_CONFIG, 
-  CREDENTIAL_TYPES, 
+  // CREDENTIAL_TYPES, 
   ERROR_MESSAGES, 
   ROLE_REDIRECTS,
   type UserRole 

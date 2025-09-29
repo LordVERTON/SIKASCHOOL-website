@@ -69,7 +69,7 @@ export default function TutorPaiements() {
         {activeTab==='historique' && (
           <section className="mt-6">
             <div className="mb-3 w-full sm:w-80">
-              <select value={selectedMonth} onChange={(e)=>setSelectedMonth(e.target.value)} className="w-full rounded-md border border-stroke bg-transparent px-3 py-2 text-sm dark:border-strokedark">
+              <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="w-full rounded-md border border-stroke bg-transparent px-3 py-2 text-sm dark:border-strokedark">
                 {months.map(m => (<option key={m.value} value={m.value}>{m.label}</option>))}
               </select>
             </div>

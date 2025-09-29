@@ -285,10 +285,10 @@ function CreateSessionModal({ date, students, onClose, onSuccess }: {
         onSuccess();
       } else {
         const data = await res.json();
-        alert(data.error || 'Erreur lors de la création');
+        console.error('Erreur lors de la création:', data.error);
       }
-    } catch (e) {
-      alert('Erreur lors de la création');
+        } catch {
+      console.error('Erreur lors de la création');
     } finally {
       setSaving(false);
     }

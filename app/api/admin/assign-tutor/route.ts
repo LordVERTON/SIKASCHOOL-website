@@ -6,9 +6,7 @@ import { canAccessAdminFeatures } from '@/lib/admin-permissions';
 import { supabaseAdmin } from '@/lib/supabase';
 import type { Database } from '@/types/supabase';
 
-type AssignmentRow = Database['public']['Tables']['tutor_student_assignments']['Row'];
-type AssignmentInsert = Database['public']['Tables']['tutor_student_assignments']['Insert'];
-type AssignmentUpdate = Database['public']['Tables']['tutor_student_assignments']['Update'];
+// Types supprimés car non utilisés
 
 type UsersRow = Database['public']['Tables']['users']['Row'];
 
@@ -33,7 +31,7 @@ const deassignSchema = z
 
 async function ensureUserExists(id: string, role: UsersRow['role']) {
   const { data, error } = await supabaseAdmin
-    .from<UsersRow>('users')
+    .from('users')
     .select('id, role')
     .eq('id', id)
     .eq('role', role)
@@ -79,15 +77,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Student not found' }, { status: 404 });
     }
 
-    const insertPayload: AssignmentInsert = {
+    const insertPayload = {
       tutor_id: tutorId,
       student_id: studentId,
       assigned_by: sessionUser.id,
       notes: trimmedNotes,
     };
 
-    const { data: assignment, error: assignmentError } = await supabaseAdmin
-      .from<AssignmentRow>('tutor_student_assignments')
+    const { data: assignment, error: assignmentError } = await (supabaseAdmin as any)
+      .from('tutor_student_assignments')
       .insert(insertPayload)
       .select('id')
       .single();
@@ -133,12 +131,12 @@ export async function DELETE(request: NextRequest) {
     }
 
     const { tutorId, studentId } = parsed.data;
-    const updatePayload: AssignmentUpdate = {
+    const updatePayload = {
       is_active: false,
     };
 
-    const { error: deassignError } = await supabaseAdmin
-      .from<AssignmentRow>('tutor_student_assignments')
+    const { error: deassignError } = await (supabaseAdmin as any)
+      .from('tutor_student_assignments')
       .update(updatePayload)
       .eq('tutor_id', tutorId)
       .eq('student_id', studentId);

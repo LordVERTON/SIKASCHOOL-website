@@ -25,7 +25,7 @@ export default function TutorNotificationsPage() {
       if (!res.ok) throw new Error('Erreur de chargement');
       const data = await res.json();
       setItems(data);
-    } catch (_e) {
+    } catch {
       setError("Impossible de charger les notifications");
     } finally {
       setLoading(false);
@@ -54,7 +54,7 @@ export default function TutorNotificationsPage() {
         toast('Demande refusée.', { icon: 'ℹ️' });
       }
       await fetchNotifications();
-    } catch (_e) {
+    } catch {
       setError('Action impossible');
       toast.error('Une erreur est survenue. Réessayez.');
     } finally {

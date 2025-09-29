@@ -63,7 +63,7 @@ const studentAssignmentSelect = `
 
 export async function GET(
   _request: NextRequest,
-  context: { params: { userId: string } },
+  context: { params: Promise<{ userId: string }> },
 ) {
   try {
     const sessionUser = await getUserSession();
@@ -94,10 +94,10 @@ export async function GET(
 
     let assignments: TutorAssignmentRow[] | StudentAssignmentRow[] = [];
 
-    if (userData.role === 'TUTOR') {
+    if ((userData as any).role === 'TUTOR') {
       const { data: tutorAssignments, error: tutorError } = await supabaseAdmin
         .from('tutor_student_assignments')
-        .select<TutorAssignmentRow>(tutorAssignmentSelect)
+        .select(tutorAssignmentSelect)
         .eq('tutor_id', userId)
         .eq('is_active', true)
         .order('assigned_at', { ascending: false });
@@ -108,10 +108,10 @@ export async function GET(
       }
 
       assignments = tutorAssignments ?? [];
-    } else if (userData.role === 'STUDENT') {
+    } else if ((userData as any).role === 'STUDENT') {
       const { data: studentAssignments, error: studentError } = await supabaseAdmin
         .from('tutor_student_assignments')
-        .select<StudentAssignmentRow>(studentAssignmentSelect)
+        .select(studentAssignmentSelect)
         .eq('student_id', userId)
         .eq('is_active', true)
         .order('assigned_at', { ascending: false });

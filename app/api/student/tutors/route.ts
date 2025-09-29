@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
       : formattedTutors;
 
     return NextResponse.json({ tutors: filteredTutors });
-  } catch (error) {
+      } catch {
     return NextResponse.json(
       { error: 'Failed to fetch tutors' },
       { status: 500 }

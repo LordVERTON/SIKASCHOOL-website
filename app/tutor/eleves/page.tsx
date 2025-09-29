@@ -1,11 +1,12 @@
 "use client";
 import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 
 export default function TutorEleves() {
   const [rows, setRows] = useState<Array<{ id: string; nom: string; niveau: string; matiere: string; statut: string; dernier: string; avatar?: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [activeOnly, setActiveOnly] = useState(true);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  // const [expandedId, setExpandedId] = useState<string | null>(null);
   const [activeTabByStudent, setActiveTabByStudent] = useState<any>({});
   const [selectedMonthByStudent, setSelectedMonthByStudent] = useState<any>({});
   const monthOptions = useMemo(() => {
@@ -72,7 +73,7 @@ export default function TutorEleves() {
             <div key={r.id} className="rounded-lg border border-stroke bg-white p-5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex items-center gap-4">
-                  <img src={r.avatar || '/images/user/user-01.png'} alt={r.nom} className="h-12 w-12 rounded-full object-cover flex-shrink-0" />
+                  <Image src={r.avatar || '/images/user/user-01.png'} alt={r.nom} width={48} height={48} className="h-12 w-12 rounded-full object-cover flex-shrink-0" />
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="text-lg font-semibold text-black dark:text-white">{r.nom}</h3>
