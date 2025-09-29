@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
+import { formatHours } from '@/lib/time-utils';
 
 export async function GET() {
   try {
@@ -141,12 +142,12 @@ export async function GET() {
         },
         {
           label: 'Heures de cours',
-          value: `${totalHours.toFixed(1)}h`,
+          value: formatHours(totalHours),
           color: 'text-green-600',
           icon: '⏰'
         },
         {
-          label: 'Tuteurs actifs',
+          label: 'Tuteur(s) actif(s)',
           value: activeTutors.toString(),
           color: 'text-purple-600',
           icon: '👨‍🏫'

@@ -9,6 +9,9 @@ export default function TutorCalendar() {
   const currentYear = currentDate.getFullYear();
   const [sessions, setSessions] = useState<Array<{ id: string; started_at: string; course: string; type: string; status: string; student: string }>>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createDate, setCreateDate] = useState<string | null>(null);
+  const [students, setStudents] = useState<Array<{ id: string; name: string }>>([]);
 
   const monthNames = [
     "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
@@ -45,6 +48,17 @@ export default function TutorCalendar() {
     };
     load();
   }, [currentMonth, currentYear]);
+
+  useEffect(() => {
+    const loadStudents = async () => {
+      const res = await fetch('/api/tutor/students', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setStudents((data.students || []).map((s: any) => ({ id: s.id, name: s.name })));
+      }
+    };
+    loadStudents();
+  }, []);
 
   const sessionsByDay = useMemo(() => {
     const map = new Map<string, any[]>();
@@ -96,14 +110,20 @@ export default function TutorCalendar() {
                   <div key={day} className="p-2 text-center text-sm font-medium text-waterloo dark:text-manatee">{day}</div>
                 ))}
                 {calendarDays.map((day, index) => (
-                  <div key={index} className={`min-h-[80px] p-2 border border-stroke dark:border-strokedark ${day ? 'hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer' : ''}`} onClick={() => day && setSelectedDate(`${currentYear}-${String(currentMonth + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`)}>
+                  <div key={index} className={`min-h-[80px] p-2 border border-stroke dark:border-strokedark ${day ? 'hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer' : ''}`} onClick={() => {
+                    if (day) {
+                      const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                      setSelectedDate(dateStr);
+                      setCreateDate(dateStr);
+                    }
+                  }}>
                     {day && (
                       <>
                         <div className={`text-sm font-medium mb-1 ${isToday(day) ? 'text-primary' : 'text-black dark:text-white'}`}>{day}</div>
                         <div className="space-y-1">
                           {(sessionsByDay.get(`${currentYear}-${String(currentMonth + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`) || []).slice(0,2).map((s, idx) => (
                             <div key={idx} className={`text-xs p-1 rounded text-white truncate ${s.status === 'SCHEDULED' ? 'bg-blue-500' : s.status === 'IN_PROGRESS' ? 'bg-yellow-600' : 'bg-green-600'}`} title={`${s.course} • ${s.student}`}>
-                              {new Date(s.started_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})} {s.course}
+                              {s.started_at.split('T')[1]?.split(':').slice(0,2).join(':')} {s.course}
                             </div>
                           ))}
                           {(sessionsByDay.get(`${currentYear}-${String(currentMonth + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`) || []).length > 2 && (
@@ -128,7 +148,7 @@ export default function TutorCalendar() {
                       <div className={`w-3 h-3 rounded-full mt-1.5 ${s.status === 'SCHEDULED' ? 'bg-blue-500' : s.status === 'IN_PROGRESS' ? 'bg-yellow-600' : 'bg-green-600'}`}></div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-black dark:text-white truncate">{s.course} • {s.student}</p>
-                        <p className="text-xs text-waterloo dark:text-manatee">{new Date(s.started_at).toLocaleDateString('fr-FR')} • {new Date(s.started_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</p>
+                        <p className="text-xs text-waterloo dark:text-manatee">{s.started_at.split('T')[0].split('-').reverse().join('/')} • {s.started_at.split('T')[1]?.split(':').slice(0,2).join(':')}</p>
                       </div>
                     </div>
                   ))}
@@ -148,12 +168,23 @@ export default function TutorCalendar() {
         </div>
       </div>
 
-      {selectedDate && (
+      {selectedDate && !showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSelectedDate(null)}>
           <div className="bg-white dark:bg-blacksection rounded-lg p-6 w-full max-w-xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-black dark:text-white">Séances du {new Date(selectedDate).toLocaleDateString('fr-FR')}</h3>
-              <button className="text-waterloo dark:text-manatee" onClick={() => setSelectedDate(null)}>✕</button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => {
+                    setSelectedDate(null);
+                    setShowCreateModal(true);
+                  }}
+                  className="inline-flex items-center rounded-md bg-primary px-3 py-1 text-xs font-medium text-white hover:opacity-90"
+                >
+                  Nouvelle séance
+                </button>
+                <button className="text-waterloo dark:text-manatee" onClick={() => setSelectedDate(null)}>✕</button>
+              </div>
             </div>
             <div className="space-y-3 max-h-[60vh] overflow-auto">
               {(() => {
@@ -165,7 +196,7 @@ export default function TutorCalendar() {
                       <div className="text-sm text-black dark:text-white font-medium">{s.course} • {s.student}</div>
                       <span className={`text-xs px-2 py-0.5 rounded-full ${s.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' : s.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>{s.status}</span>
                     </div>
-                    <div className="text-xs text-waterloo dark:text-manatee mt-1">{new Date(s.started_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</div>
+                    <div className="text-xs text-waterloo dark:text-manatee mt-1">{s.started_at.split('T')[1]?.split(':').slice(0,2).join(':')}</div>
                     <div className="mt-3 flex justify-end">
                       <a
                         href={`/live/${s.id}`}
@@ -181,8 +212,178 @@ export default function TutorCalendar() {
           </div>
         </div>
       )}
+
+      {showCreateModal && (
+        <CreateSessionModal
+          date={createDate}
+          students={students}
+          onClose={() => {
+            setShowCreateModal(false);
+            setCreateDate(null);
+          }}
+          onSuccess={() => {
+            setShowCreateModal(false);
+            setCreateDate(null);
+            // Reload sessions
+            const start = new Date(currentYear, currentMonth, 1);
+            const end = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999);
+            const startISO = start.toISOString();
+            const endISO = end.toISOString();
+            fetch(`/api/tutor/sessions?start=${encodeURIComponent(startISO)}&end=${encodeURIComponent(endISO)}`, { credentials: 'include' })
+              .then(res => res.json())
+              .then(data => {
+                setSessions((data.sessions || []).map((s: any) => ({
+                  id: s.id,
+                  started_at: s.started_at,
+                  course: s.course,
+                  type: s.type,
+                  status: s.status,
+                  student: s.student,
+                })));
+              });
+          }}
+        />
+      )}
     </main>
   );
 }
 
+function CreateSessionModal({ date, students, onClose, onSuccess }: {
+  date: string | null;
+  students: Array<{ id: string; name: string }>;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const [formData, setFormData] = useState({
+    studentId: '',
+    subject: '',
+    duration: 60,
+    sessionDate: date || '',
+    sessionTime: '14:00',
+  });
+  const [saving, setSaving] = useState(false);
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      // Stocker l'heure exactement comme saisie par l'utilisateur
+      const startedAt = `${formData.sessionDate}T${formData.sessionTime}:00`;
+      
+      const res = await fetch('/api/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          studentId: formData.studentId,
+          subject: formData.subject,
+          duration: formData.duration,
+          startedAt: startedAt,
+        }),
+      });
+      if (res.ok) {
+        onSuccess();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Erreur lors de la création');
+      }
+    } catch (e) {
+      alert('Erreur lors de la création');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
+      <div className="bg-white dark:bg-blacksection rounded-lg p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-black dark:text-white">Créer une séance</h3>
+          <button className="text-waterloo dark:text-manatee" onClick={onClose}>✕</button>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-black dark:text-white mb-1">Élève</label>
+            {students.length === 0 ? (
+              <div className="w-full rounded-md border border-stroke bg-gray-50 px-3 py-2 text-sm text-gray-500 dark:border-strokedark dark:bg-gray-800 dark:text-gray-400">
+                Aucun élève assigné. Contactez l'administration pour obtenir des assignations.
+              </div>
+            ) : (
+              <select
+                value={formData.studentId}
+                onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
+                className="w-full rounded-md border border-stroke bg-transparent px-3 py-2 text-sm dark:border-strokedark"
+                required
+              >
+                <option value="">Sélectionner un élève</option>
+                {students.map(s => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-black dark:text-white mb-1">Matière</label>
+            <input
+              type="text"
+              value={formData.subject}
+              onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+              className="w-full rounded-md border border-stroke bg-transparent px-3 py-2 text-sm dark:border-strokedark"
+              placeholder="Mathématiques, Physique, etc."
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-black dark:text-white mb-1">Durée (minutes)</label>
+            <select
+              value={formData.duration}
+              onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
+              className="w-full rounded-md border border-stroke bg-transparent px-3 py-2 text-sm dark:border-strokedark"
+            >
+              <option value={30}>30 minutes</option>
+              <option value={60}>1 heure</option>
+              <option value={90}>1h30</option>
+              <option value={120}>2 heures</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-black dark:text-white mb-1">Date</label>
+            <input
+              type="date"
+              value={formData.sessionDate}
+              onChange={(e) => setFormData({ ...formData, sessionDate: e.target.value })}
+              className="w-full rounded-md border border-stroke bg-transparent px-3 py-2 text-sm dark:border-strokedark"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-black dark:text-white mb-1">Heure</label>
+            <input
+              type="time"
+              value={formData.sessionTime}
+              onChange={(e) => setFormData({ ...formData, sessionTime: e.target.value })}
+              className="w-full rounded-md border border-stroke bg-transparent px-3 py-2 text-sm dark:border-strokedark"
+              required
+            />
+          </div>
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 rounded-md border border-stroke px-4 py-2 text-sm font-medium text-black transition hover:opacity-90 dark:border-strokedark dark:text-white"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex-1 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
+            >
+              {saving ? 'Création...' : 'Créer'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

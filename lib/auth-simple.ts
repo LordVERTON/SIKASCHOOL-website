@@ -36,7 +36,7 @@ export async function authenticateUser(email: string, password: string): Promise
     // Récupérer l'utilisateur depuis Supabase
     const { data: user, error } = await supabaseAdmin
       .from('users')
-      .select('id, email, first_name, last_name, role, is_active')
+      .select('id, email, first_name, last_name, role, is_active, password_hash')
       .eq('email', email)
       .eq('is_active', true)
       .single() as any;
@@ -54,34 +54,14 @@ export async function authenticateUser(email: string, password: string): Promise
       last_name: string;
       role: UserRole;
       is_active: boolean;
+      password_hash: string;
     };
     
     console.warn('✅ Utilisateur trouvé:', validUser.email, 'Rôle:', validUser.role);
 
-    // Récupérer les credentials depuis la table user_credentials
-    const { data: credentials, error: credError } = await supabaseAdmin
-      .from('user_credentials')
-      .select('credential_value')
-      .eq('user_id', validUser.id)
-      .eq('credential_type', CREDENTIAL_TYPES.PASSWORD)
-      .eq('is_active', true)
-      .single() as any;
-
-    if (credError || !credentials) {
-      console.warn('❌', ERROR_MESSAGES.CREDENTIALS_NOT_FOUND, ':', validUser.email, credError?.message);
-      return null;
-    }
-
-    // Type assertion explicite pour les credentials
-    const validCredentials = credentials as {
-      credential_value: string;
-    };
-
-    console.warn('✅ Credentials trouvés pour:', validUser.email);
-
-    // Vérifier le mot de passe
+    // Vérifier le mot de passe directement depuis la table users
     const bcrypt = await import('bcryptjs');
-    const isValidPassword = await bcrypt.compare(password, validCredentials.credential_value);
+    const isValidPassword = await bcrypt.compare(password, validUser.password_hash);
 
     if (!isValidPassword) {
       console.warn('❌', ERROR_MESSAGES.INVALID_PASSWORD, ':', validUser.email);

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { formatMinutes } from '@/lib/time-utils';
 
 interface Session {
   id: string;
@@ -172,7 +173,7 @@ export default function HistoryPage() {
                         avec {session.tutor} • {session.level}
                       </p>
                       <p className="text-sm text-waterloo dark:text-manatee">
-                        {session.date} à {session.time} • {session.duration} minutes
+                        {session.date} à {session.time} • {formatMinutes(session.duration)}
                       </p>
                     </div>
                   </div>

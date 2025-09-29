@@ -29,7 +29,7 @@ export async function createLiveKitToken(params: LiveKitTokenParams): Promise<st
     canPublish = true,
     canSubscribe = true,
     canPublishData = true,
-    ttlSeconds = 60 * 60,
+    ttlSeconds = 60 * 60 * 2, // 2 heures au lieu d'1 heure
   } = params;
 
   if (!identity) {

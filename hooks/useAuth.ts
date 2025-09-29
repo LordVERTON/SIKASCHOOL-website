@@ -34,19 +34,25 @@ interface UseAuthReturn {
 
 /**
  * Hook d'authentification
- * @param requiredRole - Rôle requis pour accéder à la ressource
+ * @param requiredRole - Rôle(s) requis pour accéder à la ressource
  * @returns Objet contenant l'état d'authentification et les fonctions utilitaires
  */
-export function useAuth(requiredRole?: UserRole): UseAuthReturn {
+export function useAuth(requiredRole?: UserRole | UserRole[]): UseAuthReturn {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
   const router = useRouter();
 
   /**
    * Vérifie l'authentification et l'autorisation
    */
   const checkAuth = useCallback(async () => {
+    // Éviter les appels multiples si déjà initialisé
+    if (isInitialized && user) {
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -66,18 +72,32 @@ export function useAuth(requiredRole?: UserRole): UseAuthReturn {
       const userData: User = await response.json();
       
       // Vérifier le rôle si requis
-      if (requiredRole && userData.role !== requiredRole) {
-        console.log(`🔒 useAuth: Rôle incorrect. Requis: ${requiredRole}, Reçu: ${userData.role}`);
-        setError(`${ERROR_MESSAGES.ACCESS_DENIED} ${requiredRole}`);
-        
-        // Rediriger vers l'espace approprié selon le rôle
-        const redirectPath = ROLE_REDIRECTS[userData.role] || '/auth/signin';
-        router.push(redirectPath);
-        return;
+      if (requiredRole) {
+        const allowedRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+        if (!allowedRoles.includes(userData.role)) {
+          console.log(`🔒 useAuth: Rôle incorrect. Requis: ${allowedRoles.join(' ou ')}, Reçu: ${userData.role}`);
+          setError(`${ERROR_MESSAGES.ACCESS_DENIED} ${allowedRoles.join(' ou ')}`);
+          
+          // Rediriger vers l'espace approprié selon le rôle
+          const redirectPath = ROLE_REDIRECTS[userData.role] || '/auth/signin';
+          router.push(redirectPath);
+          return;
+        }
       }
 
-      setUser(userData);
-      console.log(`🔒 useAuth: Utilisateur authentifié - ${userData.email} (${userData.role})`);
+      // Éviter les re-rendus inutiles en comparant les données
+      setUser(prevUser => {
+        if (prevUser && 
+            prevUser.id === userData.id && 
+            prevUser.email === userData.email && 
+            prevUser.role === userData.role) {
+          return prevUser; // Pas de changement, éviter le re-render
+        }
+        console.log(`🔒 useAuth: Utilisateur authentifié - ${userData.email} (${userData.role})`);
+        return userData;
+      });
+      
+      setIsInitialized(true);
       
     } catch (error) {
       console.error('🔒 useAuth: Erreur de vérification:', error);
@@ -86,7 +106,7 @@ export function useAuth(requiredRole?: UserRole): UseAuthReturn {
     } finally {
       setLoading(false);
     }
-  }, [requiredRole, router]);
+  }, [requiredRole, router, isInitialized, user]);
 
   useEffect(() => {
     checkAuth();

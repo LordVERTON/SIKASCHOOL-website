@@ -8,9 +8,12 @@ export default function SimpleSignin() {
   const [data, setData] = useState({
     email: "",
     password: "",
+    firstName: "",
+    lastName: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isSignup, setIsSignup] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -19,21 +22,46 @@ export default function SimpleSignin() {
     setError("");
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: data.email,
-          password: data.password,
-        }),
-      });
+      let response;
+      
+      if (isSignup) {
+        // Inscription
+        if (!data.firstName || !data.lastName) {
+          setError('Prénom et nom requis pour l\'inscription');
+          return;
+        }
+        
+        response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: data.email,
+            password: data.password,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            role: 'STUDENT' // Rôle par défaut
+          }),
+        });
+      } else {
+        // Connexion
+        response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: data.email,
+            password: data.password,
+          }),
+        });
+      }
 
       const result = await response.json();
 
       if (!response.ok) {
-        setError(result.error || 'Erreur de connexion');
+        setError(result.error || (isSignup ? 'Erreur d\'inscription' : 'Erreur de connexion'));
         return;
       }
 
@@ -47,7 +75,7 @@ export default function SimpleSignin() {
             router.push('/student');
             break;
           case 'ADMIN':
-            router.push('/admin');
+            router.push('/tutor'); // Les admins accèdent à l'espace tuteur avec administration
             break;
           default:
             router.push('/');
@@ -55,8 +83,8 @@ export default function SimpleSignin() {
         router.refresh();
       }
     } catch (error) {
-      console.error('Erreur de connexion:', error);
-      setError('Une erreur est survenue lors de la connexion');
+      console.error(isSignup ? 'Erreur d\'inscription:' : 'Erreur de connexion:', error);
+      setError(`Une erreur est survenue lors de ${isSignup ? 'l\'inscription' : 'la connexion'}`);
     } finally {
       setIsLoading(false);
     }
@@ -87,10 +115,62 @@ export default function SimpleSignin() {
 
           <div className="animate_top rounded-lg bg-white px-7.5 pt-7.5 shadow-solid-8 dark:border dark:border-strokedark dark:bg-black xl:px-15 xl:pt-15">
             <h2 className="mb-15 text-center text-3xl font-semibold text-black dark:text-white xl:text-sectiontitle2">
-              Connexion
+              {isSignup ? 'Inscription' : 'Connexion'}
             </h2>
+            
+            {/* Bouton de basculement */}
+            <div className="mb-7.5 flex justify-center">
+              <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+                <button
+                  type="button"
+                  onClick={() => setIsSignup(false)}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    !isSignup 
+                      ? 'bg-white text-black shadow-sm dark:bg-gray-700 dark:text-white' 
+                      : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
+                  }`}
+                >
+                  Connexion
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsSignup(true)}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isSignup 
+                      ? 'bg-white text-black shadow-sm dark:bg-gray-700 dark:text-white' 
+                      : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
+                  }`}
+                >
+                  Inscription
+                </button>
+              </div>
+            </div>
 
             <form onSubmit={handleSubmit}>
+              {isSignup && (
+                <div className="mb-7.5 flex flex-col gap-7.5 lg:mb-12.5 lg:flex-row lg:justify-between lg:gap-14">
+                  <input
+                    type="text"
+                    placeholder="Votre prénom"
+                    name="firstName"
+                    value={data.firstName}
+                    onChange={(e) => setData({ ...data, firstName: e.target.value })}
+                    required={isSignup}
+                    className="w-full border-b border-stroke bg-white! pb-3.5 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:bg-black! dark:focus:border-manatee dark:focus:placeholder:text-white lg:w-1/2"
+                  />
+
+                  <input
+                    type="text"
+                    placeholder="Votre nom"
+                    name="lastName"
+                    value={data.lastName}
+                    onChange={(e) => setData({ ...data, lastName: e.target.value })}
+                    required={isSignup}
+                    className="w-full border-b border-stroke bg-white! pb-3.5 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:bg-black! dark:focus:border-manatee dark:focus:placeholder:text-white lg:w-1/2"
+                  />
+                </div>
+              )}
+
               <div className="mb-7.5 flex flex-col gap-7.5 lg:mb-12.5 lg:flex-row lg:justify-between lg:gap-14">
                 <input
                   type="email"
@@ -164,7 +244,7 @@ export default function SimpleSignin() {
                   disabled={isLoading}
                   className="inline-flex items-center gap-2.5 rounded-full bg-black px-6 py-3 font-medium text-white duration-300 ease-in-out hover:bg-blackho dark:bg-btndark dark:hover:bg-blackho disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isLoading ? "Connexion..." : "Se connecter"}
+                  {isLoading ? (isSignup ? "Inscription..." : "Connexion...") : (isSignup ? "S'inscrire" : "Se connecter")}
                   <svg
                     className="fill-white"
                     width="14"
@@ -182,14 +262,11 @@ export default function SimpleSignin() {
               </div>
 
               <div className="mt-12.5 border-t border-stroke py-5 text-center dark:border-strokedark">
-                <p>
-                  Pas de compte ?{" "}
-                  <a
-                    className="text-black hover:text-primary dark:text-white dark:hover:text-primary"
-                    href="/auth/signup"
-                  >
-                    S'inscrire
-                  </a>
+                <p className="text-gray-600 dark:text-gray-400">
+                  {isSignup 
+                    ? 'Déjà un compte ? Utilisez l\'onglet "Connexion" ci-dessus'
+                    : 'Nouveau sur SikaSchool ? Utilisez l\'onglet "Inscription" ci-dessus'
+                  }
                 </p>
               </div>
 

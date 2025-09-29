@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
+import { canAccessTutorFeatures } from '@/lib/admin-permissions';
 
 export async function GET(request: NextRequest) {
   try {
     const user = await getUserSession();
-    if (!user || user.role !== 'TUTOR') {
+    if (!user || !canAccessTutorFeatures(user)) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
@@ -62,6 +63,7 @@ export async function GET(request: NextRequest) {
         course: s.subject || 'Cours',
         type: s.type || 'INDIVIDUAL',
         level: s.level || 'Niveau',
+        studentId: s.student_id || null,
         student: student ? `${student.first_name || ''} ${student.last_name || ''}`.trim() : 'Élève',
         studentAvatar: student?.avatar_url || '/images/user/user-01.png',
         duration: s.duration_minutes || 60,

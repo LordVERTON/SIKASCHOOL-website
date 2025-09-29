@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { formatMinutes } from '@/lib/time-utils';
 import { hasAdminPermissions } from '@/lib/admin-permissions';
+import AssignmentModal from '@/components/Admin/AssignmentModal';
 
 interface User {
   id: string;
@@ -54,25 +56,39 @@ interface Payment {
 }
 
 export default function AdministrationPage() {
-  const { user, loading } = useAuth('TUTOR');
-  const [activeTab, setActiveTab] = useState<'users' | 'sessions' | 'payments' | 'sync'>('users');
+  const { user, loading } = useAuth(['TUTOR', 'ADMIN']);
+  const [activeTab, setActiveTab] = useState<'users' | 'sessions' | 'payments' | 'assignments' | 'sync'>('users');
   const [users, setUsers] = useState<User[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loadingData, setLoadingData] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
   const [showUserModal, setShowUserModal] = useState(false);
   const [showSessionModal, setShowSessionModal] = useState(false);
+  const [showAssignmentModal, setShowAssignmentModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editingSession, setEditingSession] = useState<Session | null>(null);
+  const [selectedUserForAssignments, setSelectedUserForAssignments] = useState<User | null>(null);
+  const [userAssignments, setUserAssignments] = useState<any[]>([]);
+  const [availableUsers, setAvailableUsers] = useState<any[]>([]);
 
-  // Vérifier si l'utilisateur a les permissions admin
-  const isAdmin = user ? hasAdminPermissions(user) : false;
+  // Vérifier si l'utilisateur a les permissions admin avec useMemo pour éviter les re-calculs
+  const isAdmin = useMemo(() => {
+    if (!user) {
+      console.log('🔒 Administration: Pas d\'utilisateur');
+      return false;
+    }
+    console.log('🔒 Administration: Utilisateur:', user.email, 'Rôle:', user.role);
+    const hasPermissions = hasAdminPermissions(user);
+    console.log('🔒 Administration: Permissions admin:', hasPermissions);
+    return hasPermissions;
+  }, [user]);
 
   useEffect(() => {
-    if (user && isAdmin) {
+    if (user && isAdmin && !dataLoaded && !loadingData) {
       fetchData();
     }
-  }, [user, isAdmin]);
+  }, [user, isAdmin, dataLoaded, loadingData]);
 
   const fetchData = async () => {
     setLoadingData(true);
@@ -97,6 +113,8 @@ export default function AdministrationPage() {
         const paymentsData = await paymentsResponse.json();
         setPayments(paymentsData);
       }
+      
+      setDataLoaded(true);
     } catch (error) {
       console.warn('Erreur lors du chargement des données:', error);
     } finally {
@@ -381,12 +399,91 @@ export default function AdministrationPage() {
     }
   };
 
-  if (loading) {
+  // Fonctions pour gérer les assignations
+  const handleViewAssignments = async (user: User) => {
+    setSelectedUserForAssignments(user);
+    setShowAssignmentModal(true);
+    
+    try {
+      // Récupérer les assignations de l'utilisateur
+      const response = await fetch(`/api/admin/assignments/user/${user.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setUserAssignments(data.assignments || []);
+      }
+      
+      // Récupérer les utilisateurs disponibles pour assignation
+      const role = user.role === 'TUTOR' ? 'STUDENT' : 'TUTOR';
+      const availableResponse = await fetch(`/api/admin/assignments/available-users?role=${role}`);
+      if (availableResponse.ok) {
+        const availableData = await availableResponse.json();
+        setAvailableUsers(availableData.users || []);
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des assignations:', error);
+    }
+  };
+
+  const handleAssignUser = async (targetUserId: string, notes?: string) => {
+    if (!selectedUserForAssignments) return;
+
+    try {
+      const tutorId = selectedUserForAssignments.role === 'TUTOR' ? selectedUserForAssignments.id : targetUserId;
+      const studentId = selectedUserForAssignments.role === 'STUDENT' ? selectedUserForAssignments.id : targetUserId;
+
+      const response = await fetch('/api/admin/assignments/assign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tutorId,
+          studentId,
+          notes
+        })
+      });
+
+      if (response.ok) {
+        // Recharger les assignations
+        handleViewAssignments(selectedUserForAssignments);
+      } else {
+        const error = await response.json();
+        alert(`Erreur: ${error.error}`);
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'assignation:', error);
+      alert('Erreur lors de l\'assignation');
+    }
+  };
+
+  const handleUnassignUser = async (targetUserId: string) => {
+    if (!selectedUserForAssignments) return;
+
+    try {
+      const tutorId = selectedUserForAssignments.role === 'TUTOR' ? selectedUserForAssignments.id : targetUserId;
+      const studentId = selectedUserForAssignments.role === 'STUDENT' ? selectedUserForAssignments.id : targetUserId;
+
+      const response = await fetch(`/api/admin/assignments/unassign?tutorId=${tutorId}&studentId=${studentId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        // Recharger les assignations
+        handleViewAssignments(selectedUserForAssignments);
+      } else {
+        const error = await response.json();
+        alert(`Erreur: ${error.error}`);
+      }
+    } catch (error) {
+      console.error('Erreur lors de la désassignation:', error);
+      alert('Erreur lors de la désassignation');
+    }
+  };
+
+  if (loading || (user && isAdmin && !dataLoaded && loadingData)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Vérification de l'authentification...</p>
+          <p>{loading ? 'Vérification de l\'authentification...' : 'Chargement des données d\'administration...'}</p>
         </div>
       </div>
     );
@@ -425,6 +522,7 @@ export default function AdministrationPage() {
               { id: 'users', label: 'Utilisateurs', count: users.length },
               { id: 'sessions', label: 'Sessions', count: sessions.length },
               { id: 'payments', label: 'Paiements', count: payments.length },
+              { id: 'assignments', label: 'Assignations', count: 0 },
               { id: 'sync', label: 'Synchronisation', count: 0 }
             ].map((tab) => (
               <button
@@ -645,7 +743,7 @@ export default function AdministrationPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {session.duration_minutes} min
+                          {formatMinutes(session.duration_minutes)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                           {session.student_rating ? `${session.student_rating}/5` : '-'}
@@ -744,6 +842,83 @@ export default function AdministrationPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {/* Onglet Assignations */}
+          {activeTab === 'assignments' && (
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h2 className="text-lg font-medium text-gray-900 dark:text-white">
+                  Gestion des assignations tuteur-élève
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Gérez les assignations entre tuteurs et étudiants
+                </p>
+              </div>
+              <div className="p-6">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-700">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                          Utilisateur
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                          Rôle
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                          Email
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                          Statut
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                      {users.filter(u => u.role === 'TUTOR' || u.role === 'STUDENT').map((user) => (
+                        <tr key={user.id}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                            {user.first_name} {user.last_name}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              user.role === 'TUTOR' 
+                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                            }`}>
+                              {user.role === 'TUTOR' ? 'Tuteur' : 'Étudiant'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {user.email}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              user.is_active 
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                            }`}>
+                              {user.is_active ? 'Actif' : 'Inactif'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button
+                              onClick={() => handleViewAssignments(user)}
+                              className="text-primary hover:text-primary-dark mr-3"
+                            >
+                              Gérer les assignations
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
@@ -882,6 +1057,23 @@ export default function AdministrationPage() {
           onClose={() => {
             setShowSessionModal(false);
             setEditingSession(null);
+          }}
+        />
+      )}
+
+      {/* Modal Assignations */}
+      {showAssignmentModal && selectedUserForAssignments && (
+        <AssignmentModal
+          user={selectedUserForAssignments}
+          assignments={userAssignments}
+          availableUsers={availableUsers}
+          onAssign={handleAssignUser}
+          onUnassign={handleUnassignUser}
+          onClose={() => {
+            setShowAssignmentModal(false);
+            setSelectedUserForAssignments(null);
+            setUserAssignments([]);
+            setAvailableUsers([]);
           }}
         />
       )}

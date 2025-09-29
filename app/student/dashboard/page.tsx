@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
+import CreateSessionModal from '@/components/Student/CreateSessionModal';
+import { formatHours } from '@/lib/time-utils';
 
 interface DashboardData {
   stats: Array<{
@@ -63,11 +65,14 @@ interface DashboardData {
   }>;
 }
 
+
 export default function StudentDashboard() {
   const { user, loading: authLoading, error: authError } = useAuth('STUDENT');
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [userInfo, setUserInfo] = useState<{ firstName: string; name: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showCreateSession, setShowCreateSession] = useState(false);
+  const [tutors, setTutors] = useState<Array<{ id: string; name: string }>>([]);
 
   useEffect(() => {
     if (user) {
@@ -125,6 +130,43 @@ export default function StudentDashboard() {
 
     fetchDashboardData();
   }, [user]);
+
+  // Charger les tuteurs attribués
+  useEffect(() => {
+    const fetchTutors = async () => {
+      try {
+        const response = await fetch('/api/student/assigned-tutors', {
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setTutors(data.tutors.map((tutor: any) => ({
+            id: tutor.id,
+            name: tutor.name
+          })));
+        } else {
+          // Si l'API n'est pas disponible, utiliser une liste vide
+          console.warn('API assigned-tutors non disponible');
+          setTutors([]);
+        }
+      } catch (error) {
+        console.warn('Erreur lors du chargement des tuteurs:', error);
+        setTutors([]);
+      }
+    };
+
+    fetchTutors();
+  }, []);
+
+  const handleCreateSession = () => {
+    setShowCreateSession(true);
+  };
+
+  const handleSessionSuccess = () => {
+    // Recharger les données du dashboard
+    window.location.reload();
+  };
 
 
   if (authLoading || loading) {
@@ -213,17 +255,35 @@ export default function StudentDashboard() {
         <div className="mt-10 animate_top rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection">
           <h2 className="text-xl font-semibold text-black dark:text-white mb-6">Actions rapides</h2>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {dashboardData.quickActions.map((action, index) => (
-              <Link
-                key={index}
-                href={`/student/${action.action}`}
-                className={`p-6 rounded-lg ${action.color} text-white hover:opacity-90 transition-all transform hover:scale-105`}
-              >
-                <div className="text-3xl mb-3">{action.icon}</div>
-                <h3 className="font-semibold text-lg mb-2">{action.title}</h3>
-                <p className="text-sm opacity-90">{action.description}</p>
-              </Link>
-            ))}
+            {dashboardData.quickActions.map((action, index) => {
+              // Si c'est l'action de réservation, utiliser la popup
+              if (action.action === 'booking') {
+                return (
+                  <button
+                    key={index}
+                    onClick={handleCreateSession}
+                    className={`p-6 rounded-lg ${action.color} text-white hover:opacity-90 transition-all transform hover:scale-105`}
+                  >
+                    <div className="text-3xl mb-3">{action.icon}</div>
+                    <h3 className="font-semibold text-lg mb-2">{action.title}</h3>
+                    <p className="text-sm opacity-90">{action.description}</p>
+                  </button>
+                );
+              }
+              
+              // Pour les autres actions, utiliser les liens normaux
+              return (
+                <Link
+                  key={index}
+                  href={`/student/${action.action}`}
+                  className={`p-6 rounded-lg ${action.color} text-white hover:opacity-90 transition-all transform hover:scale-105`}
+                >
+                  <div className="text-3xl mb-3">{action.icon}</div>
+                  <h3 className="font-semibold text-lg mb-2">{action.title}</h3>
+                  <p className="text-sm opacity-90">{action.description}</p>
+                </Link>
+              );
+            })}
           </div>
         </div>
 
@@ -262,12 +322,12 @@ export default function StudentDashboard() {
               ) : (
                 <div className="text-center py-8">
                   <p className="text-waterloo dark:text-manatee mb-4">Aucune séance programmée</p>
-                  <Link
-                    href="/student/booking"
+                  <button
+                    onClick={handleCreateSession}
                     className="px-4 py-2 bg-primary text-white rounded-md hover:opacity-90 transition"
                   >
                     Réserver une séance
-                  </Link>
+                  </button>
                 </div>
               )}
             </div>
@@ -365,7 +425,7 @@ export default function StudentDashboard() {
               <div className="text-sm text-waterloo dark:text-manatee">Séances terminées</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-green-600 mb-2">{dashboardData.tutorStats.totalHours}h</div>
+              <div className="text-3xl font-bold text-green-600 mb-2">{formatHours(dashboardData.tutorStats.totalHours)}</div>
               <div className="text-sm text-waterloo dark:text-manatee">Heures de cours</div>
             </div>
             <div className="text-center">
@@ -381,6 +441,15 @@ export default function StudentDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Popup de création de séance */}
+      {showCreateSession && (
+        <CreateSessionModal
+          tutors={tutors}
+          onClose={() => setShowCreateSession(false)}
+          onSuccess={handleSessionSuccess}
+        />
+      )}
     </main>
   );
 }

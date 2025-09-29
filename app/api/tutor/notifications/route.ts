@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
+import { canAccessTutorFeatures } from '@/lib/admin-permissions';
 
 // GET tutor notifications
 export async function GET() {
   try {
     const user = await getUserSession();
-    if (!user || user.role !== 'TUTOR') {
+    if (!user || !canAccessTutorFeatures(user)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -42,7 +43,7 @@ export async function GET() {
 export async function PATCH(request: NextRequest) {
   try {
     const user = await getUserSession();
-    if (!user || user.role !== 'TUTOR') {
+    if (!user || !canAccessTutorFeatures(user)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

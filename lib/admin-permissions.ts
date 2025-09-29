@@ -24,6 +24,11 @@ export function isAdminTutor(email: string): boolean {
  * @returns true si l'utilisateur a les permissions admin, false sinon
  */
 export function hasAdminPermissions(user: { email: string; role: string }): boolean {
+  // Les utilisateurs avec le rôle ADMIN ont toujours les permissions admin
+  if (user.role === 'ADMIN') {
+    return true;
+  }
+  // Les tuteurs avec email spécifique ont aussi les permissions admin
   return user.role === 'TUTOR' && isAdminTutor(user.email);
 }
 
@@ -48,12 +53,31 @@ export function getAdminTutorEmails(): string[] {
   return [...ADMIN_TUTOR_EMAILS];
 }
 
+
 /**
- * Vérifie si un utilisateur peut accéder à une fonctionnalité admin
- * @param userEmail - Email de l'utilisateur
- * @param userRole - Rôle de l'utilisateur
- * @returns true si l'accès est autorisé, false sinon
+ * Vérifie si un utilisateur peut accéder aux fonctionnalités tutor
+ * @param user - Objet utilisateur avec email et role
+ * @returns true si l'utilisateur peut accéder aux fonctionnalités tutor, false sinon
  */
-export function canAccessAdminFeatures(userEmail: string, userRole: string): boolean {
-  return userRole === 'TUTOR' && isAdminTutor(userEmail);
+export function canAccessTutorFeatures(user: { email: string; role: string }): boolean {
+  // Les utilisateurs avec le rôle ADMIN ont accès aux fonctionnalités tutor
+  if (user.role === 'ADMIN') {
+    return true;
+  }
+  // Les tuteurs ont accès aux fonctionnalités tutor
+  return user.role === 'TUTOR';
+}
+
+/**
+ * Vérifie si un utilisateur peut accéder aux fonctionnalités admin
+ * @param user - Objet utilisateur avec email et role
+ * @returns true si l'utilisateur peut accéder aux fonctionnalités admin, false sinon
+ */
+export function canAccessAdminFeatures(user: { email: string; role: string }): boolean {
+  // Les utilisateurs avec le rôle ADMIN ont toujours accès aux fonctionnalités admin
+  if (user.role === 'ADMIN') {
+    return true;
+  }
+  // Les tuteurs avec email spécifique ont aussi accès aux fonctionnalités admin
+  return user.role === 'TUTOR' && isAdminTutor(user.email);
 }

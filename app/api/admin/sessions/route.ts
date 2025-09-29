@@ -1,19 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
-import { hasAdminPermissions } from '@/lib/admin-permissions';
+import { canAccessAdminFeatures } from '@/lib/admin-permissions';
 
 export async function GET() {
   try {
     // Vérifier l'authentification
     const user = await getUserSession();
-    if (!user || user.role !== 'TUTOR') {
+    if (!user || !canAccessAdminFeatures(user)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Vérifier les permissions admin
-    if (!hasAdminPermissions(user)) {
-      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
 
     // Récupérer toutes les sessions avec les informations des utilisateurs
@@ -92,13 +87,8 @@ export async function POST(request: NextRequest) {
   try {
     // Vérifier l'authentification
     const user = await getUserSession();
-    if (!user || user.role !== 'TUTOR') {
+    if (!user || !canAccessAdminFeatures(user)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Vérifier les permissions admin
-    if (!hasAdminPermissions(user)) {
-      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
 
     const { student_id, tutor_id, subject, level, type, status, duration_minutes, student_rating } = await request.json();

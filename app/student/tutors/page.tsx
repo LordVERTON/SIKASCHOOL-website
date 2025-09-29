@@ -27,84 +27,40 @@ export default function TutorsPage() {
 
   useEffect(() => {
     const fetchTutors = async () => {
-      // Tuteurs de SikaSchool avec leurs spécialisations
-      const mockTutors: Tutor[] = [
-        {
-          id: '1',
-          name: 'Alix Tarrade',
-          avatar: '/images/team/alix.jpg',
-          subjects: ['Français', 'Méthodologie', 'Droits'],
-          rating: 0, // Note retirée
-          totalReviews: 0, // Avis retirés
-          pricePerHour: 0, // Tarif retiré de l'affichage
-          bio: 'Spécialiste en français et méthodologie, diplômée en lettres modernes et en droit. Approche pédagogique adaptée du collège au supérieur.',
-          experience: 7,
-          availability: ['Lundi 14h-18h', 'Mercredi 16h-20h', 'Samedi 10h-14h'],
-          isAvailable: true,
-          totalSessions: 380
-        },
-        {
-          id: '2',
-          name: 'Nolwen Verton',
-          avatar: '/images/team/nolwen.jpg',
-          subjects: ['Mathématiques', 'Mécanique'],
-          rating: 0, // Note retirée
-          totalReviews: 0, // Avis retirés
-          pricePerHour: 0, // Tarif retiré de l'affichage
-          bio: 'Ingénieur de formation, passionnée par les mathématiques et la mécanique. Expertise solide dans les sciences exactes avec approche pratique.',
-          experience: 5,
-          availability: ['Mardi 15h-19h', 'Jeudi 14h-18h', 'Dimanche 10h-16h'],
-          isAvailable: true,
-          totalSessions: 290
-        },
-        {
-          id: '3',
-          name: 'Ruudy Mbouza-Bayonne',
-          avatar: '/images/team/ruudy.jpg',
-          subjects: ['Mécanique des fluides', 'Physique', 'Mathématiques'],
-          rating: 0, // Note retirée
-          totalReviews: 0, // Avis retirés
-          pricePerHour: 0, // Tarif retiré de l'affichage
-          bio: 'Expert en mécanique des fluides et physique, docteur en physique. Expérience internationale et pédagogie exceptionnelle.',
-          experience: 12,
-          availability: ['Lundi 16h-20h', 'Mercredi 14h-18h', 'Vendredi 15h-19h'],
-          isAvailable: true,
-          totalSessions: 520
-        },
-        {
-          id: '4',
-          name: 'Daniel Verton',
-          avatar: '/images/team/daniel.jpg',
-          subjects: ['Mathématiques', 'Physique', 'Informatique', 'Sciences de l\'ingénieur'],
-          rating: 0, // Note retirée
-          totalReviews: 0, // Avis retirés
-          pricePerHour: 0, // Tarif retiré de l'affichage
-          bio: 'Polyvalent et expérimenté, ingénieur diplômé en informatique. Méthode pédagogique structurée et approche pratique.',
-          experience: 10,
-          availability: ['Lundi 14h-18h', 'Mercredi 16h-20h', 'Samedi 10h-14h', 'Dimanche 14h-18h'],
-          isAvailable: true,
-          totalSessions: 650
-        },
-        {
-          id: '5',
-          name: 'Walid Lakas',
-          avatar: '/images/team/walid.jpg',
-          subjects: ['Mathématiques', 'Informatique', 'Physique'],
-          rating: 0, // Note retirée
-          totalReviews: 0, // Avis retirés
-          pricePerHour: 0, // Tarif retiré de l'affichage
-          bio: 'Spécialiste en mathématiques et informatique, diplômé en informatique et mathématiques appliquées. Approche méthodique et progressive.',
-          experience: 8,
-          availability: ['Mardi 15h-19h', 'Jeudi 14h-18h', 'Vendredi 16h-20h'],
-          isAvailable: true,
-          totalSessions: 420
+      try {
+        const response = await fetch('/api/student/assigned-tutors', {
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const tutorsData: Tutor[] = data.tutors.map((tutor: any) => ({
+            id: tutor.id,
+            name: tutor.name,
+            avatar: tutor.avatar,
+            subjects: tutor.subjects,
+            rating: 0,
+            totalReviews: 0,
+            pricePerHour: 0,
+            bio: tutor.bio,
+            experience: tutor.experience,
+            availability: ['Disponible sur demande'], // À adapter selon les besoins
+            isAvailable: tutor.isAvailable,
+            totalSessions: 0 // À calculer si nécessaire
+          }));
+          
+          setTutors(tutorsData);
+        } else {
+          // Si l'API retourne une erreur, afficher un message informatif
+          console.warn('API assigned-tutors non disponible, utilisation des tuteurs de démonstration');
+          setTutors([]);
         }
-      ];
-      
-      setTimeout(() => {
-        setTutors(mockTutors);
+      } catch (error) {
+        console.warn('Erreur réseau lors de la récupération des tuteurs attribués:', error);
+        setTutors([]);
+      } finally {
         setLoading(false);
-      }, 1000);
+      }
     };
 
     fetchTutors();
@@ -142,10 +98,10 @@ export default function TutorsPage() {
       <div className="mx-auto max-w-c-1315 px-4 md:px-8 xl:px-0">
         <div className="animate_top">
           <h1 className="text-3xl font-bold text-black dark:text-white xl:text-sectiontitle3">
-            Nos tuteurs
+            Mes tuteurs attribués
           </h1>
           <p className="mt-4 text-para2 text-waterloo dark:text-manatee">
-            Découvrez nos professeurs qualifiés et choisissez celui qui vous convient le mieux.
+            Voici les tuteurs qui vous ont été attribués par l'administration. Contactez-les pour planifier vos séances.
           </p>
         </div>
 
@@ -285,20 +241,25 @@ export default function TutorsPage() {
             <div className="py-12">
               <div className="text-6xl mb-4">👨‍🏫</div>
               <h3 className="text-xl font-semibold text-black dark:text-white mb-2">
-                Aucun tuteur trouvé
+                {tutors.length === 0 ? 'Aucun tuteur attribué' : 'Aucun tuteur trouvé'}
               </h3>
               <p className="text-waterloo dark:text-manatee mb-6">
-                Essayez de modifier vos critères de recherche.
+                {tutors.length === 0 
+                  ? 'Aucun tuteur ne vous a encore été attribué. Contactez l\'administration pour obtenir des tuteurs.'
+                  : 'Essayez de modifier vos critères de recherche.'
+                }
               </p>
-              <button
-                onClick={() => {
-                  setSearchTerm('');
-                  setSelectedSubject('');
-                }}
-                className="px-6 py-3 bg-primary text-white rounded-lg hover:opacity-90 transition"
-              >
-                Réinitialiser les filtres
-              </button>
+              {tutors.length > 0 && (
+                <button
+                  onClick={() => {
+                    setSearchTerm('');
+                    setSelectedSubject('');
+                  }}
+                  className="px-6 py-3 bg-primary text-white rounded-lg hover:opacity-90 transition"
+                >
+                  Réinitialiser les filtres
+                </button>
+              )}
             </div>
           </div>
         )}

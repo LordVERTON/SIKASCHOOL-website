@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import LogoutButton from "../Auth/LogoutButton";
-import { isAdminTutor } from "@/lib/admin-permissions";
+import { isAdminTutor, hasAdminPermissions } from "@/lib/admin-permissions";
 
 interface TutorLayoutProps {
   children: React.ReactNode;
@@ -13,15 +13,17 @@ interface TutorLayoutProps {
 export default function TutorLayout({ children }: TutorLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
-    // Récupérer l'email de l'utilisateur connecté
+    // Récupérer les informations de l'utilisateur connecté
     const fetchUserInfo = async () => {
       try {
         const response = await fetch('/api/auth/me');
         if (response.ok) {
           const userData = await response.json();
           setUserEmail(userData.email);
+          setUserRole(userData.role);
         }
       } catch (error) {
         console.error('Erreur lors de la récupération des informations utilisateur:', error);
@@ -32,7 +34,7 @@ export default function TutorLayout({ children }: TutorLayoutProps) {
   }, []);
 
   // Vérifier si l'utilisateur a les permissions admin
-  const isAdmin = userEmail ? isAdminTutor(userEmail) : false;
+  const isAdmin = userEmail && userRole ? hasAdminPermissions({ email: userEmail, role: userRole }) : false;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-black">
@@ -60,7 +62,7 @@ export default function TutorLayout({ children }: TutorLayoutProps) {
         <div className="relative flex w-64 flex-col bg-white dark:bg-blacksection">
           <div className="flex h-16 items-center justify-between px-4">
             <h1 className="text-xl font-bold text-black dark:text-white">
-              Espace Tuteur
+              {userRole === 'ADMIN' ? 'Espace Administration' : 'Espace Tuteur'}
             </h1>
             <button
               onClick={() => setSidebarOpen(false)}
@@ -151,7 +153,7 @@ export default function TutorLayout({ children }: TutorLayoutProps) {
         <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4 dark:bg-blacksection">
           <div className="flex h-16 shrink-0 items-center">
             <h1 className="text-xl font-bold text-black dark:text-white">
-              Espace Tuteur
+              {userRole === 'ADMIN' ? 'Espace Administration' : 'Espace Tuteur'}
             </h1>
           </div>
           <nav className="flex flex-1 flex-col">

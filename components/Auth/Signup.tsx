@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
+import { useRouter } from "next/navigation";
 
 const Signup = () => {
   const [data, setData] = useState({
@@ -13,7 +14,66 @@ const Signup = () => {
     email: "",
     password: "",
   });
+  const [loading, setLoading] = useState(false);
   const { t } = useLanguage();
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validation côté client
+    if (!data.firstName.trim()) {
+      toast.error('Le prénom est requis');
+      return;
+    }
+    
+    if (!data.lastName.trim()) {
+      toast.error('Le nom est requis');
+      return;
+    }
+    
+    if (!data.email.trim()) {
+      toast.error('L\'email est requis');
+      return;
+    }
+    
+    if (!data.password.trim()) {
+      toast.error('Le mot de passe est requis');
+      return;
+    }
+    
+    if (data.password.length < 6) {
+      toast.error('Le mot de passe doit contenir au moins 6 caractères');
+      return;
+    }
+    
+    setLoading(true);
+
+    try {
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        toast.success('Compte créé avec succès ! Vous pouvez maintenant vous connecter.');
+        // Rediriger vers la page de connexion
+        router.push('/auth/signin');
+      } else {
+        toast.error(result.error || 'Erreur lors de la création du compte');
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'inscription:', error);
+      toast.error('Erreur de connexion. Veuillez réessayer.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -58,58 +118,8 @@ const Signup = () => {
               {t.auth.signup?.title}
             </h2>
 
-            <div className="flex items-center gap-8">
-              <button
-                aria-label="signup with google"
-                onClick={() => toast("Google signup non disponible", { icon: "ℹ️" })}
-                className="text-body-color dark:text-body-color-dark dark:shadow-two mb-6 flex w-full items-center justify-center rounded-xs border border-stroke bg-[#f8f8f8] px-6 py-3 text-base outline-hidden transition-all duration-300 hover:border-primary hover:bg-primary/5 hover:text-primary dark:border-transparent dark:bg-[#2C303B] dark:hover:border-primary dark:hover:bg-primary/5 dark:hover:text-primary dark:hover:shadow-none"
-              >
-                <span className="mr-3">
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 20 20"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <g clipPath="url(#clip0_95:967)">
-                      <path
-                        d="M20.0001 10.2216C20.0122 9.53416 19.9397 8.84776 19.7844 8.17725H10.2042V11.8883H15.8277C15.7211 12.539 15.4814 13.1618 15.1229 13.7194C14.7644 14.2769 14.2946 14.7577 13.7416 15.1327L13.722 15.257L16.7512 17.5567L16.961 17.5772C18.8883 15.8328 19.9997 13.266 19.9997 10.2216"
-                        fill="#4285F4"
-                      />
-                      <path
-                        d="M10.2042 20.0001C12.9592 20.0001 15.2721 19.1111 16.9616 17.5778L13.7416 15.1332C12.88 15.7223 11.7235 16.1334 10.2042 16.1334C8.91385 16.126 7.65863 15.7206 6.61663 14.9747C5.57464 14.2287 4.79879 13.1802 4.39915 11.9778L4.27957 11.9878L1.12973 14.3766L1.08856 14.4888C1.93689 16.1457 3.23879 17.5387 4.84869 18.512C6.45859 19.4852 8.31301 20.0005 10.2046 20.0001"
-                        fill="#34A853"
-                      />
-                      <path
-                        d="M4.39911 11.9777C4.17592 11.3411 4.06075 10.673 4.05819 9.99996C4.0623 9.32799 4.17322 8.66075 4.38696 8.02225L4.38127 7.88968L1.19282 5.4624L1.08852 5.51101C0.372885 6.90343 0.00012207 8.4408 0.00012207 9.99987C0.00012207 11.5589 0.372885 13.0963 1.08852 14.4887L4.39911 11.9777Z"
-                        fill="#FBBC05"
-                      />
-                      <path
-                        d="M10.2042 3.86663C11.6663 3.84438 13.0804 4.37803 14.1498 5.35558L17.0296 2.59996C15.1826 0.901848 12.7366 -0.0298855 10.2042 -3.6784e-05C8.3126 -0.000477834 6.45819 0.514732 4.8483 1.48798C3.2384 2.46124 1.93649 3.85416 1.08813 5.51101L4.38775 8.02225C4.79132 6.82005 5.56974 5.77231 6.61327 5.02675C7.6568 4.28118 8.91279 3.87541 10.2042 3.86663Z"
-                        fill="#EB4335"
-                      />
-                    </g>
-                    <defs>
-                      <clipPath id="clip0_95:967">
-                        <rect width="20" height="20" fill="white" />
-                      </clipPath>
-                    </defs>
-                  </svg>
-                </span>
-                {t.auth.signup?.withGoogle}
-              </button>
-            </div>
 
-            <div className="mb-10 flex items-center justify-center">
-              <span className="dark:bg-stroke-dark hidden h-[1px] w-full max-w-[200px] bg-stroke dark:bg-strokedark sm:block"></span>
-              <p className="text-body-color dark:text-body-color-dark w-full px-5 text-center text-base">
-                {t.auth.signup?.orEmail}
-              </p>
-              <span className="dark:bg-stroke-dark hidden h-[1px] w-full max-w-[200px] bg-stroke dark:bg-strokedark sm:block"></span>
-            </div>
-
-            <form>
+            <form onSubmit={handleSubmit}>
               <div className="mb-7.5 flex flex-col gap-7.5 lg:mb-12.5 lg:flex-row lg:justify-between lg:gap-14">
                 <input
                   name="firstName"
@@ -191,23 +201,27 @@ const Signup = () => {
                 </div>
 
                 <button
+                  type="submit"
+                  disabled={loading}
                   aria-label="signup with email and password"
-                  className="inline-flex items-center gap-2.5 rounded-full bg-black px-6 py-3 font-medium text-white duration-300 ease-in-out hover:bg-blackho dark:bg-btndark dark:hover:bg-blackho"
+                  className="inline-flex items-center gap-2.5 rounded-full bg-black px-6 py-3 font-medium text-white duration-300 ease-in-out hover:bg-blackho dark:bg-btndark dark:hover:bg-blackho disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {t.auth.signup?.submit}
-                  <svg
-                    className="fill-white"
-                    width="14"
-                    height="14"
-                    viewBox="0 0 14 14"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M10.4767 6.16664L6.00668 1.69664L7.18501 0.518311L13.6667 6.99998L7.18501 13.4816L6.00668 12.3033L10.4767 7.83331H0.333344V6.16664H10.4767Z"
-                      fill=""
-                    />
-                  </svg>
+                  {loading ? 'Création...' : (t.auth.signup?.submit || 'Créer un compte')}
+                  {!loading && (
+                    <svg
+                      className="fill-white"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 14 14"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M10.4767 6.16664L6.00668 1.69664L7.18501 0.518311L13.6667 6.99998L7.18501 13.4816L6.00668 12.3033L10.4767 7.83331H0.333344V6.16664H10.4767Z"
+                        fill=""
+                      />
+                    </svg>
+                  )}
                 </button>
               </div>
 

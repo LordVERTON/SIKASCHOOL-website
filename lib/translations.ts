@@ -124,9 +124,7 @@ export interface Translations {
   auth: {
     signin: {
       title: string;
-      withGoogle: string;
       withGithub: string;
-      orEmail: string;
       emailPlaceholder: string;
       passwordPlaceholder: string;
       keepSignedIn: string;
@@ -137,8 +135,6 @@ export interface Translations {
     };
     signup?: {
       title: string;
-      withGoogle: string;
-      orEmail: string;
       firstNamePlaceholder: string;
       lastNamePlaceholder: string;
       emailPlaceholder: string;
@@ -253,9 +249,7 @@ export const translations: Record<Language, Translations> = {
     auth: {
       signin: {
         title: 'Connexion à votre compte',
-        withGoogle: 'Se connecter avec Google',
         withGithub: 'Se connecter avec GitHub',
-        orEmail: 'Ou, connectez-vous avec votre e-mail',
         emailPlaceholder: 'Adresse e-mail',
         passwordPlaceholder: 'Mot de passe',
         keepSignedIn: 'Rester connecté',
@@ -266,8 +260,6 @@ export const translations: Record<Language, Translations> = {
       },
       signup: {
         title: 'Créer un compte',
-        withGoogle: 'S’inscrire avec Google',
-        orEmail: 'Ou, inscrivez-vous avec votre e-mail',
         firstNamePlaceholder: 'Prénom',
         lastNamePlaceholder: 'Nom',
         emailPlaceholder: 'Adresse e-mail',
@@ -380,9 +372,7 @@ export const translations: Record<Language, Translations> = {
     auth: {
       signin: {
         title: 'Login to Your Account',
-        withGoogle: 'Sign in with Google',
         withGithub: 'Sign in with GitHub',
-        orEmail: 'Or, login with your email',
         emailPlaceholder: 'Email',
         passwordPlaceholder: 'Password',
         keepSignedIn: 'Keep me signed in',
@@ -393,8 +383,6 @@ export const translations: Record<Language, Translations> = {
       },
       signup: {
         title: 'Create an Account',
-        withGoogle: 'Sign up with Google',
-        orEmail: 'Or, register with your email',
         firstNamePlaceholder: 'First name',
         lastNamePlaceholder: 'Last name',
         emailPlaceholder: 'Email address',

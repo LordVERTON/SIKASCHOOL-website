@@ -28,7 +28,7 @@ export const PUBLIC_ROUTES = [
 
 // Redirections par rôle
 export const ROLE_REDIRECTS = {
-  [USER_ROLES.ADMIN]: '/admin',
+  [USER_ROLES.ADMIN]: '/tutor', // Les admins accèdent à l'espace tuteur avec administration
   [USER_ROLES.TUTOR]: '/tutor',
   [USER_ROLES.STUDENT]: '/student'
 } as const;
@@ -36,7 +36,7 @@ export const ROLE_REDIRECTS = {
 // Routes protégées par rôle
 export const PROTECTED_ROUTES = {
   '/student': USER_ROLES.STUDENT,
-  '/tutor': USER_ROLES.TUTOR,
+  '/tutor': [USER_ROLES.TUTOR, USER_ROLES.ADMIN], // Les admins peuvent aussi accéder à l'espace tuteur
   '/admin': USER_ROLES.ADMIN
 } as const;
 
@@ -84,8 +84,7 @@ export const API_ENDPOINTS = {
     ASSIGNMENTS: '/api/student/assignments',
     NOTIFICATIONS: '/api/student/notifications',
     SESSIONS: '/api/student/sessions',
-    TUTORS: '/api/student/tutors',
-    BOOKING: '/api/student/booking'
+    TUTORS: '/api/student/tutors'
   },
   TUTOR: {
     SESSIONS: '/api/tutor/sessions',

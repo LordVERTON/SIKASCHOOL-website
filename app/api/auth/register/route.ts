@@ -1,0 +1,116 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import bcrypt from 'bcryptjs';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+export async function POST(request: NextRequest) {
+  try {
+    const { email, password, firstName, lastName, role = 'STUDENT' } = await request.json();
+
+    if (!email || !password || !firstName || !lastName) {
+      return NextResponse.json(
+        { error: 'Tous les champs sont requis' },
+        { status: 400 }
+      );
+    }
+
+    // Vérifier si l'utilisateur existe déjà
+    const { data: existingUser, error: checkError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .single();
+
+    if (checkError && checkError.code !== 'PGRST116') {
+      console.error('Erreur lors de la vérification de l\'utilisateur:', checkError);
+      return NextResponse.json(
+        { error: 'Erreur lors de la vérification de l\'utilisateur' },
+        { status: 500 }
+      );
+    }
+
+    if (existingUser) {
+      return NextResponse.json(
+        { error: 'Un utilisateur avec cet email existe déjà' },
+        { status: 409 }
+      );
+    }
+
+    // Hasher le mot de passe
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    // Créer l'utilisateur
+    const { data: newUser, error: userError } = await supabase
+      .from('users')
+      .insert({
+        email,
+        password_hash: hashedPassword,
+        first_name: firstName,
+        last_name: lastName,
+        role,
+        is_active: true
+      })
+      .select('id, email, first_name, last_name, role')
+      .single();
+
+    if (userError) {
+      console.error('Erreur lors de la création de l\'utilisateur:', userError);
+      return NextResponse.json(
+        { error: 'Erreur lors de la création du compte' },
+        { status: 500 }
+      );
+    }
+
+    // Créer le profil selon le rôle
+    if (role === 'STUDENT') {
+      const { error: profileError } = await supabase
+        .from('students')
+        .insert({
+          user_id: newUser.id,
+          grade_level: 'Non spécifié',
+          academic_goals: 'Non spécifié',
+          is_active: true
+        });
+
+      if (profileError) {
+        console.error('Erreur lors de la création du profil étudiant:', profileError);
+        // Ne pas faire échouer l'inscription pour cela
+      }
+    } else if (role === 'TUTOR') {
+      const { error: profileError } = await supabase
+        .from('tutors')
+        .insert({
+          user_id: newUser.id,
+          bio: 'Bio à compléter',
+          subjects: [],
+          experience_years: 0,
+          is_available: true,
+          is_active: true
+        });
+
+      if (profileError) {
+        console.error('Erreur lors de la création du profil tuteur:', profileError);
+        // Ne pas faire échouer l'inscription pour cela
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      user: {
+        id: newUser.id,
+        email: newUser.email,
+        name: `${newUser.first_name} ${newUser.last_name}`,
+        role: newUser.role
+      }
+    });
+  } catch (error) {
+    console.error('Erreur d\'inscription:', error);
+    return NextResponse.json(
+      { error: 'Erreur interne du serveur' },
+      { status: 500 }
+    );
+  }
+}

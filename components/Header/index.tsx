@@ -50,16 +50,39 @@ const Header = () => {
       }
     };
 
+    // Close on Escape
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && navigationOpen) {
+        handleMenuClose();
+      }
+    };
+
+    // Lock body scroll when open
+    if (navigationOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
     if (navigationOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       window.addEventListener('scroll', handleScroll);
+      window.addEventListener('keydown', handleKeydown);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('keydown', handleKeydown);
+      document.body.style.overflow = '';
     };
   }, [navigationOpen]);
+
+  // Close menu on route change
+  useEffect(() => {
+    handleMenuClose();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathUrl]);
 
   return (
     <header
@@ -129,81 +152,162 @@ const Header = () => {
           {/* <!-- Hamburger Toggle BTN --> */}
         </div>
 
-        {/* Nav Menu Start   */}
+        {/* Nav Menu Start */}
         <div
-          className={`invisible h-0 w-full items-center justify-between xl:visible xl:flex xl:h-auto xl:w-full ${
-            navigationOpen &&
-            "navbar visible! mt-4 h-auto max-h-[400px] rounded-md bg-white p-7.5 shadow-solid-5 dark:bg-blacksection xl:h-auto xl:p-0 xl:shadow-none xl:dark:bg-transparent"
+          className={`w-full xl:flex xl:h-auto xl:w-full xl:items-center xl:justify-between ${
+            navigationOpen ? "" : ""
           }`}
         >
-          <nav>
-            <ul className="flex flex-col gap-5 xl:flex-row xl:items-center xl:gap-10">
-              {getMenuData(t).map((menuItem, key) => (
-                <li key={key} className={menuItem.submenu && "group relative"}>
-                  {menuItem.submenu ? (
-                    <>
-                      <button
-                        onClick={() => setDropdownToggler(!dropdownToggler)}
-                        className="flex cursor-pointer items-center justify-between gap-3 hover:text-primary"
+          {/* Mobile overlay and animated panel */}
+          <div className={`fixed inset-0 z-50 xl:hidden ${navigationOpen ? "pointer-events-auto" : "pointer-events-none"}`}>
+            {/* Backdrop */}
+            <div
+              className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${navigationOpen ? "opacity-100" : "opacity-0"}`}
+              onClick={handleMenuClose}
+            />
+            {/* Sliding panel */}
+            <div
+              className={`navbar absolute left-0 right-0 top-0 z-10 max-h-[90vh] overflow-y-auto rounded-b-xl bg-white p-7.5 shadow-solid-5 transition-transform duration-300 ease-out dark:bg-blacksection ${navigationOpen ? "translate-y-0" : "-translate-y-6"}`}
+            >
+              <nav>
+                <ul className="flex flex-col gap-5">
+                  {getMenuData(t).map((menuItem, key) => (
+                    <li key={key} className={menuItem.submenu && "group relative"}>
+                      {menuItem.submenu ? (
+                        <>
+                          <button
+                            onClick={() => setDropdownToggler(!dropdownToggler)}
+                            className="flex cursor-pointer items-center justify-between gap-3 hover:text-primary"
+                          >
+                            {menuItem.title}
+                            <span>
+                              <svg
+                                className="h-3 w-3 cursor-pointer fill-waterloo group-hover:fill-primary"
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 512 512"
+                              >
+                                <path d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z" />
+                              </svg>
+                            </span>
+                          </button>
+
+                          <ul className={`dropdown ${dropdownToggler ? "flex" : ""}`}>
+                            {menuItem.submenu.map((item, key) => (
+                              <li key={key} className="hover:text-primary">
+                                <Link href={item.path || "#"} onClick={handleMenuClose}>
+                                  {item.title}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        </>
+                      ) : (
+                        <Link
+                          href={`${menuItem.path}`}
+                          className={
+                            pathUrl === menuItem.path
+                              ? "text-primary hover:text-primary"
+                              : "hover:text-primary"
+                          }
+                          onClick={handleMenuClose}
+                        >
+                          {menuItem.title}
+                        </Link>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+
+              <div className="mt-7 flex items-center gap-6">
+                <ThemeToggler />
+                <Link
+                  href="/auth/signin"
+                  className="text-regular font-medium text-waterloo hover:text-primary"
+                  onClick={handleMenuClose}
+                >
+                  {t.nav.signIn}
+                </Link>
+                <Link
+                  href="#pricing"
+                  className="flex items-center justify-center rounded-full bg-primary px-7.5 py-2.5 text-regular text-white duration-300 ease-in-out hover:bg-primaryho"
+                  onClick={handleMenuClose}
+                >
+                  {t.hero.reserveButton}
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop navigation */}
+          <div className="hidden w-full items-center justify-between xl:flex">
+            <nav>
+              <ul className="flex flex-col gap-5 xl:flex-row xl:items-center xl:gap-10">
+                {getMenuData(t).map((menuItem, key) => (
+                  <li key={key} className={menuItem.submenu && "group relative"}>
+                    {menuItem.submenu ? (
+                      <>
+                        <button
+                          onClick={() => setDropdownToggler(!dropdownToggler)}
+                          className="flex cursor-pointer items-center justify-between gap-3 hover:text-primary"
+                        >
+                          {menuItem.title}
+                          <span>
+                            <svg
+                              className="h-3 w-3 cursor-pointer fill-waterloo group-hover:fill-primary"
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 512 512"
+                            >
+                              <path d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z" />
+                            </svg>
+                          </span>
+                        </button>
+
+                        <ul className={`dropdown ${dropdownToggler ? "flex" : ""}`}>
+                          {menuItem.submenu.map((item, key) => (
+                            <li key={key} className="hover:text-primary">
+                              <Link href={item.path || "#"} onClick={handleMenuClose}>
+                                {item.title}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </>
+                    ) : (
+                      <Link
+                        href={`${menuItem.path}`}
+                        className={
+                          pathUrl === menuItem.path
+                            ? "text-primary hover:text-primary"
+                            : "hover:text-primary"
+                        }
+                        onClick={handleMenuClose}
                       >
                         {menuItem.title}
-                        <span>
-                          <svg
-                            className="h-3 w-3 cursor-pointer fill-waterloo group-hover:fill-primary"
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 512 512"
-                          >
-                            <path d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z" />
-                          </svg>
-                        </span>
-                      </button>
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </nav>
 
-                      <ul
-                        className={`dropdown ${dropdownToggler ? "flex" : ""}`}
-                      >
-                        {menuItem.submenu.map((item, key) => (
-                          <li key={key} className="hover:text-primary">
-                            <Link href={item.path || "#"} onClick={handleMenuClose}>
-                              {item.title}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    </>
-                  ) : (
-                    <Link
-                      href={`${menuItem.path}`}
-                      className={
-                        pathUrl === menuItem.path
-                          ? "text-primary hover:text-primary"
-                          : "hover:text-primary"
-                      }
-                      onClick={handleMenuClose}
-                    >
-                      {menuItem.title}
-                    </Link>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </nav>
-
-          <div className="mt-7 flex items-center gap-6 xl:mt-0">
-            <ThemeToggler />
-            <Link
-              href="/auth/signin"
-              className="text-regular font-medium text-waterloo hover:text-primary"
-              onClick={handleMenuClose}
-            >
-              {t.nav.signIn}
-            </Link>
-            <Link
-              href="#pricing"
-              className="flex items-center justify-center rounded-full bg-primary px-7.5 py-2.5 text-regular text-white duration-300 ease-in-out hover:bg-primaryho"
-              onClick={handleMenuClose}
-            >
-              {t.hero.reserveButton}
-            </Link>
+            <div className="mt-0 flex items-center gap-6">
+              <ThemeToggler />
+              <Link
+                href="/auth/signin"
+                className="text-regular font-medium text-waterloo hover:text-primary"
+                onClick={handleMenuClose}
+              >
+                {t.nav.signIn}
+              </Link>
+              <Link
+                href="#pricing"
+                className="flex items-center justify-center rounded-full bg-primary px-7.5 py-2.5 text-regular text-white duration-300 ease-in-out hover:bg-primaryho"
+                onClick={handleMenuClose}
+              >
+                {t.hero.reserveButton}
+              </Link>
+            </div>
           </div>
         </div>
       </div>

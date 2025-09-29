@@ -1,4 +1,4 @@
-export interface Database {
+﻿export interface Database {
   public: {
     Tables: {
       users: {
@@ -221,6 +221,41 @@ export interface Database {
           updated_at?: string;
         };
       };
+      tutor_student_assignments: {
+        Row: {
+          id: string;
+          tutor_id: string;
+          student_id: string;
+          assigned_by: string | null;
+          assigned_at: string;
+          is_active: boolean;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tutor_id: string;
+          student_id: string;
+          assigned_by?: string | null;
+          assigned_at?: string;
+          is_active?: boolean;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          tutor_id?: string;
+          student_id?: string;
+          assigned_by?: string | null;
+          assigned_at?: string;
+          is_active?: boolean;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       user_credentials: {
         Row: {
           id: string;
@@ -256,3 +291,5 @@ export interface Database {
     };
   };
 }
+
+

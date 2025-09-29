@@ -203,11 +203,14 @@ export default function StudentProfile() {
                     <label className="block text-sm font-medium text-black dark:text-white mb-2">
                       Niveau scolaire
                     </label>
-                    <select className="w-full p-3 border border-stroke rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:border-strokedark dark:bg-blacksection">
-                      <option value="3eme" selected={profile.level === '3eme'}>3ème</option>
-                      <option value="2nde" selected={profile.level === '2nde'}>2nde</option>
-                      <option value="1ere" selected={profile.level === '1ere'}>1ère</option>
-                      <option value="terminale" selected={profile.level === 'terminale' || profile.level === 'Terminale'}>Terminale</option>
+                    <select 
+                      className="w-full p-3 border border-stroke rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:border-strokedark dark:bg-blacksection"
+                      defaultValue={profile.level === 'Terminale' ? 'terminale' : profile.level}
+                    >
+                      <option value="3eme">3ème</option>
+                      <option value="2nde">2nde</option>
+                      <option value="1ere">1ère</option>
+                      <option value="terminale">Terminale</option>
                     </select>
                   </div>
                   

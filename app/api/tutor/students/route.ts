@@ -1,61 +1,71 @@
 import { NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
+import { canAccessTutorFeatures } from '@/lib/admin-permissions';
 
 export async function GET() {
   try {
     const user = await getUserSession();
-    if (!user || user.role !== 'TUTOR') {
+    if (!user || !canAccessTutorFeatures(user)) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    // Find distinct student_ids from sessions for this tutor
-    const { data: sessions, error } = await (supabaseAdmin as any)
-      .from('sessions')
-      .select('student_id, subject, level, started_at, status')
-      .eq('tutor_id', user.id)
-      .order('started_at', { ascending: false });
+    const tutorId = user.id;
 
-    if (error) {
-      console.error('Erreur récupération élèves tuteur:', error);
-      return NextResponse.json({ error: 'Erreur récupération élèves' }, { status: 500 });
-    }
-
-    const studentIdToSessions: Record<string, any[]> = {};
-    for (const s of sessions || []) {
-      if (!s.student_id) continue;
-      if (!studentIdToSessions[s.student_id]) studentIdToSessions[s.student_id] = [];
-      studentIdToSessions[s.student_id].push(s);
-    }
-
-    const studentIds = Object.keys(studentIdToSessions);
-    if (studentIds.length === 0) {
-      return NextResponse.json({ students: [] });
-    }
-
-    // Fetch student user info
-    const { data: users } = await (supabaseAdmin as any)
-      .from('users')
-      .select('id, first_name, last_name')
-      .in('id', studentIds);
-
-    const usersMap: Map<string, any> = new Map((users || []).map((u: any) => [u.id, u]));
-
-    const students = studentIds.map((id) => {
-      const u = usersMap.get(id) as any;
-      const list = studentIdToSessions[id] || [];
-      const last = list[0];
-      return {
+    // Récupérer les étudiants attribués à ce tuteur via les assignations
+    const { data: assignments, error: assignmentsError } = await supabaseAdmin
+      .from('tutor_student_assignments')
+      .select(`
         id,
-        name: `${u?.first_name || ''} ${u?.last_name || ''}`.trim() || 'Élève',
-        level: last?.level || '—',
-        subject: last?.subject || '—',
-        status: last?.status || '—',
-        lastSessionAt: last?.started_at || null,
+        student_id,
+        assigned_at,
+        notes,
+        users!tutor_student_assignments_student_id_fkey(
+          id,
+          first_name,
+          last_name,
+          email,
+          avatar_url,
+          students(
+            user_id,
+            grade_level,
+            academic_goals
+          )
+        )
+      `)
+      .eq('tutor_id', tutorId)
+      .eq('is_active', true)
+      .order('assigned_at', { ascending: false });
+
+    if (assignmentsError) {
+      console.error('Erreur lors de la récupération des étudiants attribués:', assignmentsError);
+      return NextResponse.json({ error: 'Erreur lors de la récupération des étudiants' }, { status: 500 });
+    }
+
+    // Transformer les données pour l'affichage
+    const assignedStudents = (assignments as any)?.map((assignment: any) => {
+      const student = assignment.users;
+      const studentProfile = student.students?.[0] || {};
+      
+      return {
+        id: student.id,
+        name: `${student.first_name} ${student.last_name}`,
+        email: student.email,
+        avatar_url: student.avatar_url || '/images/user/user-01.png',
+        level: studentProfile.grade_level || 'Débutant',
+        bio: '', // Pas de bio dans la table students
+        academic_goals: studentProfile.academic_goals || '',
+        assignedAt: assignment.assigned_at,
+        notes: assignment.notes || '',
+        assignmentId: assignment.id
       };
+    }) || [];
+
+    return NextResponse.json({ 
+      students: assignedStudents,
+      count: assignedStudents.length 
     });
 
-    return NextResponse.json({ students });
   } catch (error) {
     console.error('❌ Erreur API élèves tuteur:', error);
     return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });

@@ -67,7 +67,12 @@ function redirectToRoleSpace(user: User, request: NextRequest): NextResponse {
 function checkRouteAccess(user: User, pathname: string, request: NextRequest): NextResponse | null {
   for (const [route, requiredRole] of Object.entries(PROTECTED_ROUTES)) {
     if (pathname.startsWith(route)) {
-      if (user.role !== requiredRole) {
+      // Vérifier si le rôle de l'utilisateur est autorisé
+      const isAuthorized = Array.isArray(requiredRole) 
+        ? requiredRole.includes(user.role)
+        : user.role === requiredRole;
+      
+      if (!isAuthorized) {
         console.log(`🔒 Middleware: Accès refusé à ${route} pour ${user.role}`);
         return redirectToRoleSpace(user, request);
       }

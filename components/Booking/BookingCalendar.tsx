@@ -89,13 +89,13 @@ const BookingCalendar = () => {
                   {formatDate(date)}
                 </h3>
                 
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+                <div className="-mx-1 grid grid-cols-2 gap-2 sm:mx-0 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
                   {slots.map((slot, index) => (
                     <button
                       key={index}
                       onClick={() => slot.available && handleTimeSelect(date, slot.time)}
                       disabled={!slot.available}
-                      className={`rounded-lg border p-3 text-center transition-all ${
+                      className={`rounded-lg border px-3 py-2 text-center text-sm sm:text-base transition-all ${
                         slot.available
                           ? selectedDate === date && selectedTime === slot.time
                             ? "border-primary bg-primary text-white"
@@ -103,7 +103,7 @@ const BookingCalendar = () => {
                           : "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed dark:border-gray-700 dark:bg-gray-800 dark:text-gray-600"
                       }`}
                     >
-                      <div className="text-sm font-medium">
+                      <div className="font-medium">
                         {slot.time}
                       </div>
                       {!slot.available && (
