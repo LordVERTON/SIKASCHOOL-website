@@ -50,8 +50,9 @@ export default function AssignmentTable({ assignments, showActions = true }: Ass
   };
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-stroke bg-white shadow-solid-10 dark:border-strokedark dark:bg-blacksection">
-      <table className="w-full text-left text-para2">
+    <div className="rounded-lg border border-stroke bg-white shadow-solid-10 dark:border-strokedark dark:bg-blacksection">
+      {/* Table (desktop) */}
+      <table className="hidden w-full text-left text-para2 md:table">
         <thead>
           <tr className="border-b border-stroke dark:border-strokedark text-waterloo dark:text-manatee">
             <th className="py-3 px-6">Devoir</th>
@@ -120,6 +121,43 @@ export default function AssignmentTable({ assignments, showActions = true }: Ass
           ))}
         </tbody>
       </table>
+
+      {/* Cards (mobile) */}
+      <div className="block md:hidden divide-y divide-stroke dark:divide-strokedark">
+        {assignments.map((a) => (
+          <div key={a.id} className="p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="font-medium text-black dark:text-white truncate">{a.title}</div>
+                <div className="text-xs text-waterloo dark:text-manatee truncate">{a.instructions}</div>
+              </div>
+              <span className={`shrink-0 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(a.status)}`}>{getStatusText(a.status)}</span>
+            </div>
+            <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+              <div className="text-waterloo dark:text-manatee">Matière</div>
+              <div className="text-right text-black dark:text-white">{a.course}</div>
+              <div className="text-waterloo dark:text-manatee">Date limite</div>
+              <div className={`text-right ${isOverdue(a.dueDate, a.status) ? 'text-red-600' : 'text-black dark:text-white'}`}>
+                {formatDate(a.dueDate)}
+                {isOverdue(a.dueDate, a.status) && <span className="ml-1 text-xs">(En retard)</span>}
+              </div>
+              <div className="text-waterloo dark:text-manatee">Note</div>
+              <div className="text-right text-black dark:text-white">
+                {a.grade ? `${a.grade}/${a.maxScore} (${((a.grade / a.maxScore) * 100).toFixed(0)}%)` : '-'}
+              </div>
+            </div>
+            {showActions && (
+              <div className="mt-3 flex justify-end">
+                {a.status === 'pending' ? (
+                  <button className="rounded-md border border-stroke px-3 py-1.5 text-primary transition hover:opacity-90 dark:border-strokedark">Rendre</button>
+                ) : (
+                  <button className="rounded-md border border-stroke px-3 py-1.5 text-primary transition hover:opacity-90 dark:border-strokedark">Voir</button>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

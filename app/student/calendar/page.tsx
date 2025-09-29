@@ -128,8 +128,8 @@ export default function StudentCalendar() {
                 </div>
               </div>
 
-              {/* Calendar Grid */}
-              <div className="grid grid-cols-7 gap-1">
+              {/* Calendar Grid (desktop) */}
+              <div className="hidden grid-cols-7 gap-1 lg:grid">
                 {/* Day headers */}
                 {dayNames.map((day) => (
                   <div key={day} className="p-2 text-center text-sm font-medium text-waterloo dark:text-manatee">
@@ -171,6 +171,34 @@ export default function StudentCalendar() {
                     )}
                   </div>
                 ))}
+              </div>
+
+              {/* Mobile agenda list */}
+              <div className="block lg:hidden">
+                <div className="space-y-4">
+                  {[...sessionsByDay.keys()].sort().map((key) => (
+                    <div key={key} className="rounded-lg border border-stroke dark:border-strokedark p-3">
+                      <div className="mb-2 text-sm font-semibold text-black dark:text-white">
+                        {key.split('-').reverse().join('/')}
+                      </div>
+                      <div className="space-y-2">
+                        {(sessionsByDay.get(key) || []).map((s, idx) => (
+                          <div key={idx} className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium text-black dark:text-white truncate" title={`${s.subject} • ${s.tutor}`}>
+                                {s.subject} • {s.tutor}
+                              </div>
+                              <div className="text-xs text-waterloo dark:text-manatee">
+                                {s.started_at.split('T')[1]?.split(':').slice(0,2).join(':')} • {s.type}
+                              </div>
+                            </div>
+                            <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full ${s.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' : s.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>{s.status}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
