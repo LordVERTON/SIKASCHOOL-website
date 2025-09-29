@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { setUserSession } from '@/lib/auth-simple';
 import bcrypt from 'bcryptjs';
 
 export async function POST(request: NextRequest) {
@@ -13,7 +14,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { firstName, lastName, email, password } = await request.json();
+    const { firstName, lastName, email, password, phone } = await request.json();
 
     // Validation des données
     if (!firstName || !lastName || !email || !password) {
@@ -57,6 +58,7 @@ export async function POST(request: NextRequest) {
     // Hasher le mot de passe
     const saltRounds = 12;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const normalizedPhone = typeof phone === 'string' ? phone.trim() : null;
 
     // Créer l'utilisateur dans la base de données
     
@@ -67,6 +69,7 @@ export async function POST(request: NextRequest) {
         password_hash: hashedPassword, // Ajouter le mot de passe hashé
         first_name: firstName,
         last_name: lastName,
+        phone: normalizedPhone,
         role: 'STUDENT',
         is_active: true,
         email_verified: false,
@@ -84,8 +87,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Compte étudiant créé avec succès
+    // Créer un profil étudiant minimal (ignorer erreur si déjà présent)
+    const { error: _studentProfileError } = await (supabaseAdmin as any)
+      .from('students')
+      .insert({
+        user_id: newUser.id,
+        phone: normalizedPhone || null,
+        grade_level: 'Non spécifié',
+        academic_goals: 'Non spécifié',
+        is_active: true
+      } as any)
+      .select()
+      .single();
+    // On ignore volontairement studentProfileError
 
+    // Définir la session pour garder l'utilisateur connecté
+    await setUserSession({
+      id: newUser.id,
+      email: newUser.email,
+      name: `${newUser.first_name} ${newUser.last_name}`,
+      role: newUser.role
+    });
+
+    // Compte étudiant créé avec succès
     return NextResponse.json({
       success: true,
       message: 'Compte créé avec succès',

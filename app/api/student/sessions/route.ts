@@ -14,7 +14,8 @@ export async function GET(request: NextRequest) {
     const start = url.searchParams.get('start'); // ISO date string
     const end = url.searchParams.get('end'); // ISO date string
 
-    let query: any = supabaseAdmin
+    // 1) Sessions où l'étudiant est le titulaire (legacy)
+    let baseQuery: any = (supabaseAdmin as any)
       .from('sessions')
       .select(`
         id,
@@ -32,24 +33,68 @@ export async function GET(request: NextRequest) {
         student_rating,
         created_at
       `)
-      .eq('student_id', user.id)
-      .order('started_at', { ascending: false });
+      .eq('student_id', user.id);
 
     if (status && ['COMPLETED','IN_PROGRESS','SCHEDULED','CANCELLED'].includes(status)) {
-      query = query.eq('status', status);
+      baseQuery = baseQuery.eq('status', status);
     }
-    if (start) {
-      query = query.gte('started_at', start);
-    }
-    if (end) {
-      query = query.lte('started_at', end);
-    }
+    if (start) baseQuery = baseQuery.gte('started_at', start);
+    if (end) baseQuery = baseQuery.lte('started_at', end);
 
-    const { data: sessions, error } = await query;
-    if (error) {
-      console.error('Erreur récupération sessions:', error);
+    const { data: ownSessions, error: ownErr } = await baseQuery.order('started_at', { ascending: false });
+    if (ownErr) {
+      console.error('Erreur sessions (own):', ownErr);
       return NextResponse.json({ error: 'Erreur récupération sessions' }, { status: 500 });
     }
+
+    // 2) Sessions où l'étudiant est participant
+    const { data: participantLinks, error: partErr } = await (supabaseAdmin as any)
+      .from('session_participants')
+      .select('session_id')
+      .eq('student_id', user.id);
+    if (partErr) {
+      console.error('Erreur participants:', partErr);
+      return NextResponse.json({ error: 'Erreur récupération participants' }, { status: 500 });
+    }
+
+    let participantSessions: any[] = [];
+    const participantSessionIds = Array.from(new Set((participantLinks || []).map((p: any) => p.session_id)));
+    if (participantSessionIds.length > 0) {
+      let partQuery: any = (supabaseAdmin as any)
+        .from('sessions')
+        .select(`
+          id,
+          student_id,
+          tutor_id,
+          subject,
+          level,
+          type,
+          status,
+          started_at,
+          completed_at,
+          duration_minutes,
+          topics_covered,
+          homework_assigned,
+          student_rating,
+          created_at
+        `)
+        .in('id', participantSessionIds);
+      if (status && ['COMPLETED','IN_PROGRESS','SCHEDULED','CANCELLED'].includes(status)) partQuery = partQuery.eq('status', status);
+      if (start) partQuery = partQuery.gte('started_at', start);
+      if (end) partQuery = partQuery.lte('started_at', end);
+      const { data: partSessions, error: partSessionsErr } = await partQuery.order('started_at', { ascending: false });
+      if (partSessionsErr) {
+        console.error('Erreur sessions (participants):', partSessionsErr);
+      } else {
+        participantSessions = partSessions || [];
+      }
+    }
+
+    // 3) Fusionner et dédupliquer
+    const byId = new Map<string, any>();
+    for (const s of (ownSessions || [])) byId.set(s.id, s);
+    for (const s of (participantSessions || [])) byId.set(s.id, s);
+    const sessions = Array.from(byId.values()).sort((a: any, b: any) => (a.started_at > b.started_at ? -1 : 1));
 
     // Fetch tutors minimal info
     const tutorIds = [...new Set((sessions || []).map((s: any) => s.tutor_id).filter(Boolean))];

@@ -44,8 +44,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Erreur récupération sessions' }, { status: 500 });
     }
 
-    // Fetch students minimal info
-    const studentIds = [...new Set((sessions || []).map((s: any) => s.student_id).filter(Boolean))];
+    // Fetch participants
+    const sessionIds = (sessions || []).map((s: any) => s.id);
+    const participantsBySession = new Map<string, string[]>();
+    const allStudentIds = new Set<string>((sessions || []).map((s: any) => s.student_id).filter(Boolean));
+    if (sessionIds.length > 0) {
+      const { data: participants } = await (supabaseAdmin as any)
+        .from('session_participants')
+        .select('session_id, student_id')
+        .in('session_id', sessionIds);
+      (participants || []).forEach((p: any) => {
+        const list = participantsBySession.get(p.session_id) || [];
+        list.push(p.student_id);
+        participantsBySession.set(p.session_id, list);
+        allStudentIds.add(p.student_id);
+      });
+    }
+
+    const studentIds = [...allStudentIds];
     let studentsMap = new Map<string, any>();
     if (studentIds.length > 0) {
       const { data: students } = await (supabaseAdmin as any)
@@ -56,7 +72,10 @@ export async function GET(request: NextRequest) {
     }
 
     const mapped = (sessions || []).map((s: any) => {
-      const student = studentsMap.get(s.student_id);
+      const direct = studentsMap.get(s.student_id);
+      const partIds = participantsBySession.get(s.id) || [];
+      const participantUsers = partIds.map((sid) => studentsMap.get(sid)).filter(Boolean);
+      const names = [direct, ...participantUsers].filter(Boolean).map((u: any) => `${u.first_name || ''} ${u.last_name || ''}`.trim());
       return {
         id: s.id,
         started_at: s.started_at,
@@ -64,8 +83,8 @@ export async function GET(request: NextRequest) {
         type: s.type || 'INDIVIDUAL',
         level: s.level || 'Niveau',
         studentId: s.student_id || null,
-        student: student ? `${student.first_name || ''} ${student.last_name || ''}`.trim() : 'Élève',
-        studentAvatar: student?.avatar_url || '/images/user/user-01.png',
+        participants: names,
+        studentAvatar: direct?.avatar_url || '/images/user/user-01.png',
         duration: s.duration_minutes || 60,
         status: s.status,
         topics: Array.isArray(s.topics_covered)

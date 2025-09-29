@@ -10,6 +10,7 @@ export default function SimpleSignin() {
     password: "",
     firstName: "",
     lastName: "",
+    phone: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -30,6 +31,11 @@ export default function SimpleSignin() {
           setError('Prénom et nom requis pour l\'inscription');
           return;
         }
+        // Validation simple du téléphone (optionnelle)
+        if (!data.phone || data.phone.replace(/\D/g, '').length < 8) {
+          setError('Numéro de téléphone invalide');
+          return;
+        }
         
         response = await fetch('/api/auth/register', {
           method: 'POST',
@@ -41,6 +47,7 @@ export default function SimpleSignin() {
             password: data.password,
             firstName: data.firstName,
             lastName: data.lastName,
+            phone: data.phone,
             role: 'STUDENT' // Rôle par défaut
           }),
         });
@@ -167,6 +174,20 @@ export default function SimpleSignin() {
                     onChange={(e) => setData({ ...data, lastName: e.target.value })}
                     required={isSignup}
                     className="w-full border-b border-stroke bg-white! pb-3.5 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:bg-black! dark:focus:border-manatee dark:focus:placeholder:text-white lg:w-1/2"
+                  />
+                </div>
+              )}
+
+              {isSignup && (
+                <div className="mb-7.5">
+                  <input
+                    type="tel"
+                    placeholder="Votre numéro de téléphone"
+                    name="phone"
+                    value={data.phone}
+                    onChange={(e) => setData({ ...data, phone: e.target.value })}
+                    required={isSignup}
+                    className="w-full border-b border-stroke bg-white! pb-3.5 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:bg-black! dark:focus:border-manatee dark:focus:placeholder:text-white"
                   />
                 </div>
               )}

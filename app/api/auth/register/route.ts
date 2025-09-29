@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
+import { setUserSession } from '@/lib/auth-simple';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -8,7 +9,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, firstName, lastName, role = 'STUDENT' } = await request.json();
+    const { email, password, firstName, lastName, phone, role = 'STUDENT' } = await request.json();
 
     if (!email || !password || !firstName || !lastName) {
       return NextResponse.json(
@@ -16,6 +17,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+    // Optionally validate phone format if provided
+    const normalizedPhone = typeof phone === 'string' ? phone.trim() : null;
 
     // Vérifier si l'utilisateur existe déjà
     const { data: existingUser, error: checkError } = await supabase
@@ -50,6 +53,7 @@ export async function POST(request: NextRequest) {
         password_hash: hashedPassword,
         first_name: firstName,
         last_name: lastName,
+        phone: normalizedPhone,
         role,
         is_active: true
       })
@@ -72,6 +76,7 @@ export async function POST(request: NextRequest) {
           user_id: newUser.id,
           grade_level: 'Non spécifié',
           academic_goals: 'Non spécifié',
+          phone: normalizedPhone || null,
           is_active: true
         });
 
@@ -96,6 +101,14 @@ export async function POST(request: NextRequest) {
         // Ne pas faire échouer l'inscription pour cela
       }
     }
+
+    // Set session so user stays logged in immediately after signup
+    await setUserSession({
+      id: newUser.id,
+      email: newUser.email,
+      name: `${newUser.first_name} ${newUser.last_name}`,
+      role: newUser.role
+    });
 
     return NextResponse.json({
       success: true,

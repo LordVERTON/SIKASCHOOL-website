@@ -8,6 +8,7 @@ export const dynamic = 'force-dynamic';
 
 const CreateSessionSchema = z.object({
   studentId: z.string().optional(),
+  studentIds: z.array(z.string()).optional(),
   tutorId: z.string().optional(),
   subject: z.string().min(1, 'Subject is required'),
   duration: z.number().min(30).max(240),
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
     }
 
-    const { studentId, tutorId, subject, duration, startedAt } = parsed.data;
+    const { studentId, studentIds, tutorId, subject, duration, startedAt } = parsed.data;
 
     let student_id: string;
     let tutor_id: string;
@@ -104,6 +105,18 @@ export async function POST(req: NextRequest) {
     if (error) {
       console.error('Session creation error:', error);
       return NextResponse.json({ error: 'Failed to create session' }, { status: 500 });
+    }
+
+    // Insert additional participants if provided
+    const extraStudentIds = (studentIds || []).filter((id) => id !== student_id);
+    if (extraStudentIds.length > 0) {
+      const rows = extraStudentIds.map((sid) => ({ session_id: data.id, student_id: sid }));
+      const { error: partErr } = await (supabaseAdmin as any)
+        .from('session_participants')
+        .insert(rows as any);
+      if (partErr) {
+        console.error('Failed to add session participants:', partErr);
+      }
     }
 
     return NextResponse.json({ id: data.id, message: 'Session created successfully' });

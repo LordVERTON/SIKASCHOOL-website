@@ -7,7 +7,7 @@ export default function TutorCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
-  const [sessions, setSessions] = useState<Array<{ id: string; started_at: string; course: string; type: string; status: string; student: string }>>([]);
+  const [sessions, setSessions] = useState<Array<{ id: string; started_at: string; course: string; type: string; status: string; participants: string[] }>>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createDate, setCreateDate] = useState<string | null>(null);
@@ -42,7 +42,7 @@ export default function TutorCalendar() {
           course: s.course,
           type: s.type,
           status: s.status,
-          student: s.student,
+          participants: Array.isArray(s.participants) ? s.participants : (s.student ? [s.student] : []),
         })));
       }
     };
@@ -122,7 +122,7 @@ export default function TutorCalendar() {
                         <div className={`text-sm font-medium mb-1 ${isToday(day) ? 'text-primary' : 'text-black dark:text-white'}`}>{day}</div>
                         <div className="space-y-1">
                           {(sessionsByDay.get(`${currentYear}-${String(currentMonth + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`) || []).slice(0,2).map((s, idx) => (
-                            <div key={idx} className={`text-xs p-1 rounded text-white truncate ${s.status === 'SCHEDULED' ? 'bg-blue-500' : s.status === 'IN_PROGRESS' ? 'bg-yellow-600' : 'bg-green-600'}`} title={`${s.course} • ${s.student}`}>
+                            <div key={idx} className={`text-xs p-1 rounded text-white truncate ${s.status === 'SCHEDULED' ? 'bg-blue-500' : s.status === 'IN_PROGRESS' ? 'bg-yellow-600' : 'bg-green-600'}`} title={`${s.course} • ${(s.participants || []).join(', ')}`}>
                               {s.started_at.split('T')[1]?.split(':').slice(0,2).join(':')} {s.course}
                             </div>
                           ))}
@@ -147,7 +147,7 @@ export default function TutorCalendar() {
                     <div key={s.id} className="flex items-start gap-3">
                       <div className={`w-3 h-3 rounded-full mt-1.5 ${s.status === 'SCHEDULED' ? 'bg-blue-500' : s.status === 'IN_PROGRESS' ? 'bg-yellow-600' : 'bg-green-600'}`}></div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-black dark:text-white truncate">{s.course} • {s.student}</p>
+                        <p className="text-sm font-medium text-black dark:text-white truncate">{s.course} • {(s.participants || []).join(', ')}</p>
                         <p className="text-xs text-waterloo dark:text-manatee">{s.started_at.split('T')[0].split('-').reverse().join('/')} • {s.started_at.split('T')[1]?.split(':').slice(0,2).join(':')}</p>
                       </div>
                     </div>
@@ -193,7 +193,7 @@ export default function TutorCalendar() {
                 return (sessionsByDay.get(key) || []).map((s, idx) => (
                   <div key={idx} className="rounded-lg border border-stroke dark:border-strokedark p-3">
                     <div className="flex items-center justify-between">
-                      <div className="text-sm text-black dark:text-white font-medium">{s.course} • {s.student}</div>
+                      <div className="text-sm text-black dark:text-white font-medium">{s.course} • {(s.participants || []).join(', ')}</div>
                       <span className={`text-xs px-2 py-0.5 rounded-full ${s.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' : s.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>{s.status}</span>
                     </div>
                     <div className="text-xs text-waterloo dark:text-manatee mt-1">{s.started_at.split('T')[1]?.split(':').slice(0,2).join(':')}</div>
@@ -238,7 +238,7 @@ export default function TutorCalendar() {
                   course: s.course,
                   type: s.type,
                   status: s.status,
-                  student: s.student,
+                  participants: Array.isArray(s.participants) ? s.participants : (s.student ? [s.student] : []),
                 })));
               });
           }}
@@ -255,7 +255,7 @@ function CreateSessionModal({ date, students, onClose, onSuccess }: {
   onSuccess: () => void;
 }) {
   const [formData, setFormData] = useState({
-    studentId: '',
+    selectedStudentIds: [] as string[],
     subject: '',
     duration: 60,
     sessionDate: date || '',
@@ -275,7 +275,8 @@ function CreateSessionModal({ date, students, onClose, onSuccess }: {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          studentId: formData.studentId,
+          studentId: formData.selectedStudentIds[0],
+          studentIds: formData.selectedStudentIds,
           subject: formData.subject,
           duration: formData.duration,
           startedAt: startedAt,
@@ -303,24 +304,28 @@ function CreateSessionModal({ date, students, onClose, onSuccess }: {
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-black dark:text-white mb-1">Élève</label>
+            <label className="block text-sm font-medium text-black dark:text-white mb-1">Élèves (multi-sélection)</label>
             {students.length === 0 ? (
               <div className="w-full rounded-md border border-stroke bg-gray-50 px-3 py-2 text-sm text-gray-500 dark:border-strokedark dark:bg-gray-800 dark:text-gray-400">
                 Aucun élève assigné. Contactez l'administration pour obtenir des assignations.
               </div>
             ) : (
               <select
-                value={formData.studentId}
-                onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
-                className="w-full rounded-md border border-stroke bg-transparent px-3 py-2 text-sm dark:border-strokedark"
+                multiple
+                value={formData.selectedStudentIds}
+                onChange={(e) => {
+                  const options = Array.from(e.target.selectedOptions).map(o => o.value);
+                  setFormData({ ...formData, selectedStudentIds: options });
+                }}
+                className="w-full rounded-md border border-stroke bg-transparent px-3 py-2 text-sm dark:border-strokedark min-h-[120px]"
                 required
               >
-                <option value="">Sélectionner un élève</option>
                 {students.map(s => (
                   <option key={s.id} value={s.id}>{s.name}</option>
                 ))}
               </select>
             )}
+            <p className="mt-1 text-xs text-waterloo dark:text-manatee">Astuce: Maintenez Ctrl/Cmd pour sélectionner plusieurs élèves.</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-black dark:text-white mb-1">Matière</label>
