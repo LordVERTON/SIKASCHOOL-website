@@ -184,14 +184,14 @@ const Contact = () => {
                 <h3 className="mb-4 text-metatitle3 font-medium text-black dark:text-white">
                   {t.contact.locationTitle}
                 </h3>
-                <p>290 Maryam Springs 260, Courbevoie, Paris, France</p>
+                <p>290 Rue Clément Adler, Lausanne, Suisse</p>
               </div>
               <div className="5 mb-7">
                 <h3 className="mb-4 text-metatitle3 font-medium text-black dark:text-white">
                   {t.contact.emailTitle}
                 </h3>
                 <p>
-                  <a href="#">yourmail@domainname.com</a>
+                  <a href="#">contact@sikaschool.com</a>
                 </p>
               </div>
               <div>
@@ -199,7 +199,7 @@ const Contact = () => {
                   {t.contact.phoneTitle}
                 </h4>
                 <p>
-                  <a href="#">+33 6 26 81 75 78</a>
+                  <a href="#">+41 78 447 78 21</a>
                 </p>
               </div>
             </motion.div>

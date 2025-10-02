@@ -57,6 +57,9 @@ export function removeStorageItem(key: string): boolean {
  */
 export const STORAGE_KEYS = {
   SELECTED_TUTOR: 'selectedTutor',
+  SELECTED_LEVEL: 'selectedLevel',
+  SELECTED_SUBJECT: 'selectedSubject',
+  LEAD_FORM: 'leadForm',
   USER_PREFERENCES: 'userPreferences',
   THEME: 'theme',
   LANGUAGE: 'language',

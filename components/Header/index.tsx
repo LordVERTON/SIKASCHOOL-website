@@ -17,6 +17,13 @@ const Header = () => {
 
   const pathUrl = usePathname();
 
+  const openLeadModal = () => {
+    try {
+      // Fire a custom event listened by Hero to open the lead modal
+      window.dispatchEvent(new CustomEvent('lead:open'));
+    } catch {}
+  };
+
   // Function to close mobile menu when a link is clicked
   const handleMenuClose = () => {
     setNavigationOpen(false);
@@ -241,13 +248,12 @@ const Header = () => {
                 >
                   {t.nav.signIn}
                 </Link>
-                <Link
-                  href="#pricing"
+                <button
+                  onClick={() => { openLeadModal(); handleMenuClose(); }}
                   className="flex items-center justify-center rounded-full bg-primary px-7.5 py-2.5 text-regular text-white duration-300 ease-in-out hover:bg-primaryho"
-                  onClick={handleMenuClose}
                 >
                   {t.hero.reserveButton}
-                </Link>
+                </button>
               </div>
             </div>
           </div>
@@ -313,13 +319,12 @@ const Header = () => {
               >
                 {t.nav.signIn}
               </Link>
-              <Link
-                href="#pricing"
+              <button
+                onClick={() => { openLeadModal(); handleMenuClose(); }}
                 className="flex items-center justify-center rounded-full bg-primary px-7.5 py-2.5 text-regular text-white duration-300 ease-in-out hover:bg-primaryho"
-                onClick={handleMenuClose}
               >
                 {t.hero.reserveButton}
-              </Link>
+              </button>
             </div>
           </div>
         </div>

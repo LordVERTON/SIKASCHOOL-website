@@ -1,8 +1,9 @@
 "use client";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import TutorSelectionModal from "../Booking/TutorSelectionModal";
+import LeadCaptureModal from "../Booking/LeadCaptureModal";
 import { validateEmail, sanitizeString } from "@/lib/validation";
 import { setStorageItem, STORAGE_KEYS } from "@/lib/storage";
 import { useLanguage } from "@/context/LanguageContext";
@@ -10,6 +11,14 @@ import { useLanguage } from "@/context/LanguageContext";
 const Hero = () => {
   const [email, setEmail] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLeadOpen, setIsLeadOpen] = useState(false);
+  
+  // Listen to header CTA to open lead modal
+  useEffect(() => {
+    const handler = () => setIsLeadOpen(true);
+    window.addEventListener('lead:open' as any, handler);
+    return () => window.removeEventListener('lead:open' as any, handler);
+  }, []);
   const router = useRouter();
   const { t } = useLanguage();
 
@@ -23,7 +32,8 @@ const Hero = () => {
       return;
     }
     
-    setIsModalOpen(true);
+    // Open lead capture first per new requirement
+    setIsLeadOpen(true);
   };
 
   const handleSelectTutor = (tutorId: string) => {
@@ -140,6 +150,12 @@ const Hero = () => {
       </section>
 
       {/* Tutor Selection Modal */}
+      <LeadCaptureModal
+        isOpen={isLeadOpen}
+        onClose={() => setIsLeadOpen(false)}
+        onSubmitted={() => setIsModalOpen(true)}
+      />
+
       <TutorSelectionModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
