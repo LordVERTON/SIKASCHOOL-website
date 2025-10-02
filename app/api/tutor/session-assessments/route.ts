@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
       .eq('status', 'IN_PROGRESS');
 
     return NextResponse.json({ assessment: upserted });
-  } catch (_e) {
+  } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

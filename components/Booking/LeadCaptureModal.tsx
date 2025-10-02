@@ -83,14 +83,14 @@ export default function LeadCaptureModal({ isOpen, onClose, onSubmitted }: LeadC
             <div className="grid grid-cols-2 gap-y-3">
               {LEVELS.map((lv) => (
                 <label key={lv} className="flex items-center gap-3">
-                  <input type="radio" name="level" value={lv} checked={level===lv} onChange={(e)=>setLevel(e.target.value)} className="h-4 w-4 text-primary focus:ring-primary" />
+                  <input type="radio" name="level" value={lv} checked={level===lv} onChange={(e) => setLevel(e.target.value)} className="h-4 w-4 text-primary focus:ring-primary" />
                   <span className="text-black dark:text-white">{lv}</span>
                 </label>
               ))}
             </div>
 
             <h3 className="mt-6 mb-2 text-xl font-semibold text-black dark:text-white">Matière</h3>
-            <select value={subject} onChange={(e)=>setSubject(e.target.value)} className="w-full rounded-md border border-stroke px-3 py-2 dark:border-strokedark dark:bg-black">
+            <select value={subject} onChange={(e) => setSubject(e.target.value)} className="w-full rounded-md border border-stroke px-3 py-2 dark:border-strokedark dark:bg-black">
               <option value="">Sélectionner une matière</option>
               {SUBJECTS.map((s) => (
                 <option key={s} value={s}>{s}</option>
@@ -99,14 +99,14 @@ export default function LeadCaptureModal({ isOpen, onClose, onSubmitted }: LeadC
             {subject === "Préparation à un concours" && (
               <input
                 value={contest}
-                onChange={(e)=>setContest(e.target.value)}
+                onChange={(e) => setContest(e.target.value)}
                 placeholder="Quel concours ? (ex: Passerelle, BCE, ingénieur, etc.)"
                 className="mt-3 w-full rounded-md border border-stroke px-3 py-2 dark:border-strokedark dark:bg-black"
               />
             )}
 
             <h3 className="mt-6 mb-2 text-xl font-semibold text-black dark:text-white">Objectif</h3>
-            <select value={goal} onChange={(e)=>setGoal(e.target.value)} className="w-full rounded-md border border-stroke px-3 py-2 dark:border-strokedark dark:bg-black">
+            <select value={goal} onChange={(e) => setGoal(e.target.value)} className="w-full rounded-md border border-stroke px-3 py-2 dark:border-strokedark dark:bg-black">
               <option value="">Sélectionner un objectif</option>
               {GOALS.map((g) => (
                 <option key={g} value={g}>{g}</option>
@@ -115,7 +115,7 @@ export default function LeadCaptureModal({ isOpen, onClose, onSubmitted }: LeadC
             {goal === "Autre" && (
               <input
                 value={goalOther}
-                onChange={(e)=>setGoalOther(e.target.value)}
+                onChange={(e) => setGoalOther(e.target.value)}
                 placeholder="Préciser votre objectif"
                 className="mt-3 w-full rounded-md border border-stroke px-3 py-2 dark:border-strokedark dark:bg-black"
               />
@@ -128,16 +128,16 @@ export default function LeadCaptureModal({ isOpen, onClose, onSubmitted }: LeadC
             <h3 className="mb-4 text-xl font-semibold text-black dark:text-white">Vos coordonnées</h3>
 
             <div className="space-y-3">
-              <select value={civility} onChange={(e)=>setCivility(e.target.value)} className="w-full rounded-full bg-white px-4 py-2 text-black">
+              <select value={civility} onChange={(e) => setCivility(e.target.value)} className="w-full rounded-full bg-white px-4 py-2 text-black">
                 <option value="">Sélectionner une civilité</option>
                 <option value="Mme">Mme</option>
                 <option value="M.">M.</option>
               </select>
-              <input value={lastName} onChange={(e)=>setLastName(e.target.value)} placeholder="Nom" className="w-full rounded-full bg-white px-4 py-2 text-black" />
-              <input value={firstName} onChange={(e)=>setFirstName(e.target.value)} placeholder="Prénom" className="w-full rounded-full bg-white px-4 py-2 text-black" />
-              <input value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="Email" type="email" className="w-full rounded-full bg-white px-4 py-2 text-black" />
-              <input value={phone} onChange={(e)=>setPhone(e.target.value)} placeholder="Téléphone" className="w-full rounded-full bg-white px-4 py-2 text-black" />
-              <input value={zip} onChange={(e)=>setZip(e.target.value)} placeholder="Code postal" className="w-full rounded-full bg-white px-4 py-2 text-black" />
+              <input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Nom" className="w-full rounded-full bg-white px-4 py-2 text-black" />
+              <input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Prénom" className="w-full rounded-full bg-white px-4 py-2 text-black" />
+              <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" type="email" className="w-full rounded-full bg-white px-4 py-2 text-black" />
+              <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Téléphone" className="w-full rounded-full bg-white px-4 py-2 text-black" />
+              <input value={zip} onChange={(e) => setZip(e.target.value)} placeholder="Code postal" className="w-full rounded-full bg-white px-4 py-2 text-black" />
             </div>
 
             <div className="mt-6 text-xs text-black/70">
