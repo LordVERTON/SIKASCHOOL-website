@@ -58,7 +58,7 @@ export async function GET() {
     ];
 
     return NextResponse.json({ stats, upcomingSessions: upcoming, recentSessions: recent, quickActions });
-  } catch (e) {
+  } catch (_e) {
     return NextResponse.json({ error: 'Erreur interne' }, { status: 500 });
   }
 }

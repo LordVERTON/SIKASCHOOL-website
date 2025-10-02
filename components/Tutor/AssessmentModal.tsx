@@ -8,9 +8,10 @@ interface AssessmentModalProps {
   sessionId: string | null;
   studentId: string | null;
   sessionLabel?: string;
+  onSuccess?: () => void;
 }
 
-export default function AssessmentModal({ open, onClose, sessionId, studentId, sessionLabel }: AssessmentModalProps) {
+export default function AssessmentModal({ open, onClose, sessionId, studentId, sessionLabel, onSuccess }: AssessmentModalProps) {
   const [form, setForm] = useState({
     concentration: 3,
     participation: 3,
@@ -55,6 +56,7 @@ export default function AssessmentModal({ open, onClose, sessionId, studentId, s
       });
       if (!res.ok) throw new Error('Échec de l’enregistrement');
       onClose();
+      onSuccess && onSuccess();
     } catch (e: any) {
       setError(e.message);
     } finally {

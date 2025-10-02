@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     } = parsed.data;
 
     // Verify session ownership
-    const { data: session, error: sessionError } = await supabaseAdmin
+    const { data: session, error: sessionError } = await (supabaseAdmin as any)
       .from('sessions')
       .select('id, tutor_id, student_id')
       .eq('id', sessionId)
@@ -46,7 +46,8 @@ export async function POST(request: NextRequest) {
     if (sessionError || !session) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
-    if (session.tutor_id !== user.id || session.student_id !== studentId) {
+    const sessionData = session as any;
+    if (sessionData.tutor_id !== user.id || sessionData.student_id !== studentId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -76,14 +77,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Optionally mark session as completed if not already
-    await supabaseAdmin
+    await (supabaseAdmin as any)
       .from('sessions')
       .update({ status: 'COMPLETED', completed_at: new Date().toISOString() } as any)
       .eq('id', sessionId)
       .eq('status', 'IN_PROGRESS');
 
     return NextResponse.json({ assessment: upserted });
-  } catch (e) {
+  } catch (_e) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

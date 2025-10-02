@@ -637,7 +637,7 @@ function filterAssessmentsByPeriod(list: any[], period: 'session' | 'week' | 'mo
     return [list[0]];
   }
   const now = new Date();
-  let from = new Date(now);
+  const from = new Date(now);
   if (period === 'week') from.setDate(now.getDate() - 7);
   if (period === 'month') from.setDate(now.getDate() - 30);
   if (period === 'year') from.setDate(now.getDate() - 365);

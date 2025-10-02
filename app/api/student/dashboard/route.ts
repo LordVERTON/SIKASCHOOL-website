@@ -138,22 +138,23 @@ export async function GET() {
       return arr.reduce((a, b) => a + b, 0) / arr.length;
     }
 
+    const assessmentsList = (assessments ?? []) as any[];
     const metrics = {
-      concentration: average((assessments || []).map((a: any) => a.concentration)),
-      participation: average((assessments || []).map((a: any) => a.participation)),
-      preparation: average((assessments || []).map((a: any) => a.preparation)),
-      improvement: average((assessments || []).map((a: any) => a.improvement)),
-      retention: average((assessments || []).map((a: any) => a.retention)),
-      comprehension: average((assessments || []).map((a: any) => a.comprehension)),
-      time_management: average((assessments || []).map((a: any) => a.time_management)),
-      collaboration: average((assessments || []).map((a: any) => a.collaboration))
+      concentration: average(assessmentsList.map((a: any) => Number(a.concentration) || 0)),
+      participation: average(assessmentsList.map((a: any) => Number(a.participation) || 0)),
+      preparation: average(assessmentsList.map((a: any) => Number(a.preparation) || 0)),
+      improvement: average(assessmentsList.map((a: any) => Number(a.improvement) || 0)),
+      retention: average(assessmentsList.map((a: any) => Number(a.retention) || 0)),
+      comprehension: average(assessmentsList.map((a: any) => Number(a.comprehension) || 0)),
+      time_management: average(assessmentsList.map((a: any) => Number(a.time_management) || 0)),
+      collaboration: average(assessmentsList.map((a: any) => Number(a.collaboration) || 0))
     };
 
-    const last = assessments?.[0];
-    const prev = assessments?.[1];
+    const last = assessmentsList[0] as any | undefined;
+    const prev = assessmentsList[1] as any | undefined;
     const deltas = last && prev ? {
-      improvement: (last.improvement as number) - (prev.improvement as number),
-      retention: (last.retention as number) - (prev.retention as number)
+      improvement: (Number(last?.improvement) || 0) - (Number(prev?.improvement) || 0),
+      retention: (Number(last?.retention) || 0) - (Number(prev?.retention) || 0)
     } : { improvement: 0, retention: 0 };
 
     const dashboardData = {
