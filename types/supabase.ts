@@ -180,6 +180,59 @@
           updated_at?: string;
         };
       };
+      session_assessments: {
+        Row: {
+          id: string;
+          session_id: string;
+          student_id: string;
+          tutor_id: string;
+          concentration: number;
+          participation: number;
+          preparation: number;
+          improvement: number;
+          retention: number;
+          comprehension: number;
+          time_management: number;
+          collaboration: number;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          session_id: string;
+          student_id: string;
+          tutor_id: string;
+          concentration: number;
+          participation: number;
+          preparation: number;
+          improvement: number;
+          retention: number;
+          comprehension: number;
+          time_management: number;
+          collaboration: number;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          session_id?: string;
+          student_id?: string;
+          tutor_id?: string;
+          concentration?: number;
+          participation?: number;
+          preparation?: number;
+          improvement?: number;
+          retention?: number;
+          comprehension?: number;
+          time_management?: number;
+          collaboration?: number;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       session_payments: {
         Row: {
           id: string;

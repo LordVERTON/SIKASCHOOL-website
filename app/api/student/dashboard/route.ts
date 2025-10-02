@@ -77,12 +77,6 @@ export async function GET() {
     const _totalSessions = (sessions as any)?.length || 0;
     const completedSessions = (sessions as any)?.filter((s: any) => s.status === 'COMPLETED').length || 0;
     const totalHours = (sessions as any)?.reduce((acc: number, s: any) => acc + (s.duration_minutes || 0), 0) / 60 || 0;
-    // Calculer le montant total basé sur la durée et un tarif moyen (35€/h)
-    const totalSpent = (sessions as any)?.reduce((acc: number, s: any) => {
-      const hours = (s.duration_minutes || 0) / 60;
-      return acc + (hours * 35); // 35€ par heure
-    }, 0) || 0;
-    
     // Statistiques calculées
     
     // Calculer la note moyenne
@@ -132,6 +126,36 @@ export async function GET() {
     const mainTutorId = Object.keys(tutorStats).reduce((a, b) => tutorStats[a] > tutorStats[b] ? a : b, '');
     const mainTutor = tutorsMap.get(mainTutorId);
 
+    // Load assessments and compute learning metrics
+    const { data: assessments } = await supabaseAdmin
+      .from('session_assessments')
+      .select('*')
+      .eq('student_id', studentId)
+      .order('created_at', { ascending: false });
+
+    function average(arr: number[]) {
+      if (!arr || arr.length === 0) return 0;
+      return arr.reduce((a, b) => a + b, 0) / arr.length;
+    }
+
+    const metrics = {
+      concentration: average((assessments || []).map((a: any) => a.concentration)),
+      participation: average((assessments || []).map((a: any) => a.participation)),
+      preparation: average((assessments || []).map((a: any) => a.preparation)),
+      improvement: average((assessments || []).map((a: any) => a.improvement)),
+      retention: average((assessments || []).map((a: any) => a.retention)),
+      comprehension: average((assessments || []).map((a: any) => a.comprehension)),
+      time_management: average((assessments || []).map((a: any) => a.time_management)),
+      collaboration: average((assessments || []).map((a: any) => a.collaboration))
+    };
+
+    const last = assessments?.[0];
+    const prev = assessments?.[1];
+    const deltas = last && prev ? {
+      improvement: (last.improvement as number) - (prev.improvement as number),
+      retention: (last.retention as number) - (prev.retention as number)
+    } : { improvement: 0, retention: 0 };
+
     const dashboardData = {
       stats: [
         {
@@ -159,6 +183,10 @@ export async function GET() {
           icon: '⭐'
         }
       ],
+      learningMetrics: {
+        averages: metrics,
+        deltas
+      },
       quickActions: [
         {
           title: 'Réserver une séance',
@@ -229,7 +257,6 @@ export async function GET() {
       tutorStats: {
         totalSessions: completedSessions,
         totalHours: totalHours,
-        totalSpent: totalSpent,
         averageRating: averageRating,
         mainTutor: mainTutor ? `${mainTutor.first_name || ''} ${mainTutor.last_name || ''}`.trim() : 'Aucun'
       }
@@ -305,7 +332,6 @@ export async function GET() {
       tutorStats: {
         totalSessions: 0,
         totalHours: 0,
-        totalSpent: 0,
         averageRating: 'N/A',
         mainTutor: 'Aucun'
       }

@@ -13,6 +13,22 @@ interface DashboardData {
     color: string;
     icon: string;
   }>;
+  learningMetrics?: {
+    averages: {
+      concentration: number;
+      participation: number;
+      preparation: number;
+      improvement: number;
+      retention: number;
+      comprehension: number;
+      time_management: number;
+      collaboration: number;
+    };
+    deltas: {
+      improvement: number;
+      retention: number;
+    };
+  };
   recentSessions: Array<{
     id: string;
     type: string;
@@ -44,7 +60,6 @@ interface DashboardData {
   tutorStats: {
     totalSessions: number;
     totalHours: number;
-    totalSpent: number;
     averageRating: string;
     mainTutor: string;
   };
@@ -73,6 +88,9 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(true);
   const [showCreateSession, setShowCreateSession] = useState(false);
   const [tutors, setTutors] = useState<Array<{ id: string; name: string }>>([]);
+  const [assessments, setAssessments] = useState<any[]>([]);
+  const [period, setPeriod] = useState<'session' | 'week' | 'month' | 'year'>('month');
+  const [globalNote, setGlobalNote] = useState<number | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -131,6 +149,46 @@ export default function StudentDashboard() {
     fetchDashboardData();
   }, [user]);
 
+  // Charger les évaluations pour le graphe
+  useEffect(() => {
+    const loadAssessments = async () => {
+      if (!user) return;
+      try {
+        const res = await fetch('/api/student/assessments', { credentials: 'include' });
+        if (!res.ok) return;
+        const json = await res.json();
+        setAssessments(json.assessments || []);
+      } catch {}
+    };
+    loadAssessments();
+  }, [user]);
+
+  // Calcul de la note globale selon le filtre
+  useEffect(() => {
+    if (!assessments || assessments.length === 0) {
+      setGlobalNote(null);
+      return;
+    }
+    const filtered = filterAssessmentsByPeriod(assessments, period);
+    if (filtered.length === 0) {
+      setGlobalNote(null);
+      return;
+    }
+    const metricsKeys: Array<keyof typeof filtered[number]> = [
+      'concentration',
+      'participation',
+      'preparation',
+      'improvement',
+      'retention',
+      'comprehension',
+      'time_management',
+      'collaboration',
+    ];
+    const averages = metricsKeys.map((k) => average(filtered.map((a: any) => a[k] as number)));
+    const overall = average(averages);
+    setGlobalNote(Number.isFinite(overall) ? overall : null);
+  }, [assessments, period]);
+
   // Charger les tuteurs attribués
   useEffect(() => {
     const fetchTutors = async () => {
@@ -181,6 +239,41 @@ export default function StudentDashboard() {
               Veuillez patienter pendant que nous vérifions vos droits d'accès.
             </p>
           </div>
+        </div>
+
+        {/* Nouveaux indicateurs d'apprentissage */}
+        {dashboardData?.learningMetrics && (
+          <div className="mt-10 animate_top rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection">
+            <h2 className="text-xl font-semibold text-black dark:text-white mb-6">Indicateurs d'apprentissage</h2>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              <Metric label="Niveau de concentration" value={dashboardData.learningMetrics.averages.concentration} />
+              <Metric label="Participation" value={dashboardData.learningMetrics.averages.participation} />
+              <Metric label="Niveau de préparation" value={dashboardData.learningMetrics.averages.preparation} />
+              <Metric label="Amélioration (vs dernière)" value={dashboardData.learningMetrics.averages.improvement} delta={dashboardData.learningMetrics.deltas.improvement} />
+              <Metric label="Rétention d’information (vs dernière)" value={dashboardData.learningMetrics.averages.retention} delta={dashboardData.learningMetrics.deltas.retention} />
+              <Metric label="Compréhension globale" value={dashboardData.learningMetrics.averages.comprehension} />
+              <Metric label="Gestion du temps" value={dashboardData.learningMetrics.averages.time_management} />
+              <Metric label="Collaboration (en groupe)" value={dashboardData.learningMetrics.averages.collaboration} />
+            </div>
+          </div>
+        )}
+
+        {/* Diagramme en barres filtrable */}
+        <div className="mt-10 animate_top rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-black dark:text-white">Évolution des indicateurs</h2>
+            <select
+              value={period}
+              onChange={(e) => setPeriod(e.target.value as any)}
+              className="border border-stroke dark:border-strokedark bg-transparent rounded px-2 py-1 text-sm"
+            >
+              <option value="session">Par séance</option>
+              <option value="week">Par semaine</option>
+              <option value="month">Par mois</option>
+              <option value="year">Par année</option>
+            </select>
+          </div>
+          <BarChart assessments={assessments} period={period} />
         </div>
       </main>
     );
@@ -429,14 +522,10 @@ export default function StudentDashboard() {
               <div className="text-sm text-waterloo dark:text-manatee">Heures de cours</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600 mb-2">{dashboardData.tutorStats.totalSpent.toFixed(0)}€</div>
-              <div className="text-sm text-waterloo dark:text-manatee">Total investi</div>
-            </div>
-            <div className="text-center">
               <div className="text-3xl font-bold text-yellow-600 mb-2">
-                {dashboardData.tutorStats.averageRating || 'N/A'}
+                {globalNote !== null ? `${globalNote.toFixed(1)}/5` : (dashboardData.tutorStats.averageRating || 'N/A')}
               </div>
-              <div className="text-sm text-waterloo dark:text-manatee">Note moyenne</div>
+              <div className="text-sm text-waterloo dark:text-manatee">Note globale (selon filtre)</div>
             </div>
           </div>
         </div>
@@ -452,4 +541,122 @@ export default function StudentDashboard() {
       )}
     </main>
   );
+}
+
+function Metric({ label, value, delta }: { label: string; value: number; delta?: number }) {
+  const formatted = Number.isFinite(value) && value > 0 ? value.toFixed(1) + '/5' : 'N/A';
+  const hasDelta = typeof delta === 'number' && delta !== 0;
+  return (
+    <div className="text-center">
+      <div className="text-sm text-waterloo dark:text-manatee mb-1">{label}</div>
+      <div className="text-2xl font-bold text-black dark:text-white">{formatted}</div>
+      {hasDelta && (
+        <div className={`text-xs mt-1 ${delta! > 0 ? 'text-green-600' : 'text-red-600'}`}>
+          {delta! > 0 ? '↗' : '↘'} {Math.abs(delta!).toFixed(1)} vs dernière séance
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BarChart({ assessments, period }: { assessments: any[]; period: 'session' | 'week' | 'month' | 'year' }) {
+  const buckets = groupAssessments(assessments, period);
+  const categories = [
+    { key: 'concentration', label: 'Concentration' },
+    { key: 'participation', label: 'Participation' },
+    { key: 'preparation', label: 'Préparation' },
+    { key: 'improvement', label: 'Amélioration' },
+    { key: 'retention', label: 'Rétention' },
+    { key: 'comprehension', label: 'Compréhension' },
+    { key: 'time_management', label: 'Gestion du temps' },
+    { key: 'collaboration', label: 'Collaboration' },
+  ] as const;
+
+  return (
+    <div className="overflow-x-auto">
+      <div className="min-w-[720px]">
+        {Object.keys(buckets).length === 0 ? (
+          <div className="text-waterloo dark:text-manatee text-sm">Aucune donnée disponible.</div>
+        ) : (
+          Object.entries(buckets).map(([label, items]) => (
+            <div key={label} className="mb-6">
+              <div className="text-sm text-waterloo dark:text-manatee mb-2">{label}</div>
+              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+                {categories.map((cat) => {
+                  const avg = average(items.map((a: any) => a[cat.key] as number));
+                  return (
+                    <div key={cat.key} className="p-3 rounded border border-stroke dark:border-strokedark">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm">{cat.label}</span>
+                        <span className="text-sm font-medium">{avg.toFixed(1)}/5</span>
+                      </div>
+                      <Bar value={avg} />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Bar({ value }: { value: number }) {
+  const pct = Math.max(0, Math.min(100, (value / 5) * 100));
+  return (
+    <div className="h-3 w-full bg-gray-200 dark:bg-gray-700 rounded">
+      <div
+        className="h-3 bg-primary rounded"
+        style={{ width: `${pct}%` }}
+      />
+    </div>
+  );
+}
+
+function groupAssessments(list: any[], period: 'session' | 'week' | 'month' | 'year') {
+  const map: Record<string, any[]> = {};
+  for (const a of list) {
+    const dt = new Date(a.created_at || a.updated_at || Date.now());
+    let key = '';
+    if (period === 'session') key = new Date(dt).toLocaleString('fr-FR');
+    if (period === 'week') key = `${dt.getFullYear()}-S${getWeek(dt)}`;
+    if (period === 'month') key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
+    if (period === 'year') key = `${dt.getFullYear()}`;
+    if (!map[key]) map[key] = [];
+    map[key].push(a);
+  }
+  return map;
+}
+
+function filterAssessmentsByPeriod(list: any[], period: 'session' | 'week' | 'month' | 'year') {
+  if (!list || list.length === 0) return [];
+  if (period === 'session') {
+    // dernière séance évaluée
+    return [list[0]];
+  }
+  const now = new Date();
+  let from = new Date(now);
+  if (period === 'week') from.setDate(now.getDate() - 7);
+  if (period === 'month') from.setDate(now.getDate() - 30);
+  if (period === 'year') from.setDate(now.getDate() - 365);
+  return list.filter((a) => {
+    const dt = new Date(a.created_at || a.updated_at || Date.now());
+    return dt >= from && dt <= now;
+  });
+}
+
+function getWeek(date: Date) {
+  const target = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = target.getUTCDay() || 7;
+  target.setUTCDate(target.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(target.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((target as any) - (yearStart as any)) / 86400000 + 1) / 7);
+  return weekNo;
+}
+
+function average(arr: number[]) {
+  if (!arr || arr.length === 0) return 0;
+  return arr.reduce((a, b) => a + b, 0) / arr.length;
 }

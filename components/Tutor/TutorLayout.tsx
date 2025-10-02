@@ -115,6 +115,16 @@ export default function TutorLayout({ children }: TutorLayoutProps) {
               Notifications
             </Link>
             <Link
+              href="/tutor/history"
+              className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-waterloo hover:bg-gray-50 hover:text-black dark:text-manatee dark:hover:bg-gray-800 dark:hover:text-white"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <svg className="mr-3 h-5 w-5 text-waterloo group-hover:text-black dark:text-manatee dark:group-hover:text-white" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+              </svg>
+              Historique
+            </Link>
+            <Link
               href="/tutor/disponibilites"
               className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-waterloo hover:bg-gray-50 hover:text-black dark:text-manatee dark:hover:bg-gray-800 dark:hover:text-white"
               onClick={() => setSidebarOpen(false)}
@@ -198,6 +208,17 @@ export default function TutorLayout({ children }: TutorLayoutProps) {
                         <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                       </svg>
                       Calendrier
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/tutor/history"
+                      className="group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold text-waterloo hover:text-black hover:bg-gray-50 dark:text-manatee dark:hover:text-white dark:hover:bg-gray-800"
+                    >
+                      <svg className="h-6 w-6 shrink-0 text-waterloo group-hover:text-black dark:text-manatee dark:group-hover:text-white" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                      </svg>
+                      Historique
                     </Link>
                   </li>
               <li>

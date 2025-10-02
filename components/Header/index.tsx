@@ -165,10 +165,23 @@ const Header = () => {
               className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${navigationOpen ? "opacity-100" : "opacity-0"}`}
               onClick={handleMenuClose}
             />
-            {/* Sliding panel */}
+            {/* Sliding left drawer */}
             <div
-              className={`navbar absolute left-0 right-0 top-0 z-10 max-h-[90vh] overflow-y-auto rounded-b-xl bg-white p-7.5 shadow-solid-5 transition-transform duration-300 ease-out dark:bg-blacksection ${navigationOpen ? "translate-y-0" : "-translate-y-6"}`}
+              className={`navbar absolute left-0 top-0 z-10 h-full w-80 max-w-[85%] overflow-y-auto bg-white p-7.5 shadow-solid-5 transition-transform duration-300 ease-out dark:bg-blacksection ${navigationOpen ? "translate-x-0" : "-translate-x-full"}`}
             >
+              <div className="mb-5 flex items-center justify-between">
+                <span className="text-base font-semibold text-black dark:text-white">Menu</span>
+                <button
+                  aria-label="Fermer le menu"
+                  onClick={handleMenuClose}
+                  className="text-waterloo hover:text-black dark:text-manatee dark:hover:text-white"
+                >
+                  <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
               <nav>
                 <ul className="flex flex-col gap-5">
                   {getMenuData(t).map((menuItem, key) => (

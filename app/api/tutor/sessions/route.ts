@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const start = url.searchParams.get('start');
     const end = url.searchParams.get('end');
+    const status = url.searchParams.get('status');
 
     let query: any = (supabaseAdmin as any)
       .from('sessions')
@@ -37,6 +38,7 @@ export async function GET(request: NextRequest) {
 
     if (start) query = query.gte('started_at', start);
     if (end) query = query.lte('started_at', end);
+    if (status) query = query.eq('status', status);
 
     const { data: sessions, error } = await query;
     if (error) {
@@ -82,7 +84,8 @@ export async function GET(request: NextRequest) {
         course: s.subject || 'Cours',
         type: s.type || 'INDIVIDUAL',
         level: s.level || 'Niveau',
-        studentId: s.student_id || null,
+        student_id: s.student_id || null,
+        student_name: names[0] || 'Étudiant',
         participants: names,
         studentAvatar: direct?.avatar_url || '/images/user/user-01.png',
         duration: s.duration_minutes || 60,
