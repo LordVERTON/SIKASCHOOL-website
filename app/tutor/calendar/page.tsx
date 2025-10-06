@@ -2,6 +2,8 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 // Link not used on this page
 import { useEffect, useMemo, useState } from "react";
+import ConfirmationModal from "@/components/ConfirmationModal";
+import AlertModal from "@/components/AlertModal";
 
 export default function TutorCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -12,6 +14,14 @@ export default function TutorCalendar() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createDate, setCreateDate] = useState<string | null>(null);
   const [students, setStudents] = useState<Array<{ id: string; name: string }>>([]);
+  const [actingSessionId, setActingSessionId] = useState<string | null>(null);
+  const [cancellingSessionId, setCancellingSessionId] = useState<string | null>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showAlertModal, setShowAlertModal] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertType, setAlertType] = useState<'success' | 'error' | 'warning' | 'info'>('info');
+  const [sessionToCancel, setSessionToCancel] = useState<string | null>(null);
 
   const monthNames = [
     "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
@@ -76,6 +86,118 @@ export default function TutorCalendar() {
     return day === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
   };
 
+  const canCancelSession = (sessionStartTime: string) => {
+    const startTime = new Date(sessionStartTime);
+    const now = new Date();
+    const timeDifference = startTime.getTime() - now.getTime();
+    const hoursUntilSession = timeDifference / (1000 * 60 * 60);
+    return hoursUntilSession >= 24;
+  };
+
+  const handleSessionAction = async (sessionId: string, action: 'ACCEPT' | 'REJECT') => {
+    try {
+      setActingSessionId(sessionId);
+      
+      const res = await fetch('/api/tutor/sessions/action', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ sessionId, action }),
+      });
+
+      if (res.ok) {
+        // Reload sessions
+        const start = new Date(currentYear, currentMonth, 1);
+        const end = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999);
+        const startISO = start.toISOString();
+        const endISO = end.toISOString();
+        const loadRes = await fetch(`/api/tutor/sessions?start=${encodeURIComponent(startISO)}&end=${encodeURIComponent(endISO)}`, { credentials: 'include' });
+        if (loadRes.ok) {
+          const data = await loadRes.json();
+          setSessions((data.sessions || []).map((s: any) => ({
+            id: s.id,
+            started_at: s.started_at,
+            course: s.course,
+            type: s.type,
+            status: s.status,
+            participants: Array.isArray(s.participants) ? s.participants : (s.student ? [s.student] : []),
+          })));
+        }
+      } else {
+        console.error('Error updating session status');
+      }
+    } catch (error) {
+      console.error('Error handling session action:', error);
+    } finally {
+      setActingSessionId(null);
+    }
+  };
+
+  const handleCancelSession = (sessionId: string) => {
+    setSessionToCancel(sessionId);
+    setShowConfirmModal(true);
+  };
+
+  const confirmCancelSession = async () => {
+    if (!sessionToCancel) return;
+
+    try {
+      setCancellingSessionId(sessionToCancel);
+      
+      const res = await fetch('/api/sessions/cancel', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ sessionId: sessionToCancel }),
+      });
+
+      if (res.ok) {
+        // Reload sessions
+        const start = new Date(currentYear, currentMonth, 1);
+        const end = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999);
+        const startISO = start.toISOString();
+        const endISO = end.toISOString();
+        const loadRes = await fetch(`/api/tutor/sessions?start=${encodeURIComponent(startISO)}&end=${encodeURIComponent(endISO)}`, { credentials: 'include' });
+        if (loadRes.ok) {
+          const data = await loadRes.json();
+          setSessions((data.sessions || []).map((s: any) => ({
+            id: s.id,
+            started_at: s.started_at,
+            course: s.course,
+            type: s.type,
+            status: s.status,
+            participants: Array.isArray(s.participants) ? s.participants : (s.student ? [s.student] : []),
+          })));
+        }
+        setAlertTitle('Succès');
+        setAlertMessage('Séance annulée avec succès. Les participants ont été notifiés.');
+        setAlertType('success');
+        setShowAlertModal(true);
+      } else {
+        const data = await res.json();
+        if (data.hoursUntilSession) {
+          setAlertTitle('Impossible d\'annuler');
+          setAlertMessage(`Il reste moins de 24h avant le début (${data.hoursUntilSession}h restantes).`);
+          setAlertType('warning');
+        } else {
+          setAlertTitle('Erreur');
+          setAlertMessage(`Erreur lors de l'annulation: ${data.error}`);
+          setAlertType('error');
+        }
+        setShowAlertModal(true);
+      }
+    } catch (error) {
+      console.error('Error cancelling session:', error);
+      setAlertTitle('Erreur');
+      setAlertMessage('Une erreur est survenue lors de l\'annulation.');
+      setAlertType('error');
+      setShowAlertModal(true);
+    } finally {
+      setCancellingSessionId(null);
+      setSessionToCancel(null);
+    }
+  };
+
   return (
     <main className="pb-20 pt-15 lg:pb-25 xl:pb-30">
       <div className="mx-auto max-w-c-1315 px-4 md:px-8 xl:px-0">
@@ -122,8 +244,10 @@ export default function TutorCalendar() {
                       <>
                         <div className={`text-sm font-medium mb-1 ${isToday(day) ? 'text-primary' : 'text-black dark:text-white'}`}>{day}</div>
                         <div className="space-y-1">
-                          {(sessionsByDay.get(`${currentYear}-${String(currentMonth + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`) || []).slice(0,2).map((s, idx) => (
-                            <div key={idx} className={`text-xs p-1 rounded text-white truncate ${s.status === 'SCHEDULED' ? 'bg-blue-500' : s.status === 'IN_PROGRESS' ? 'bg-yellow-600' : 'bg-green-600'}`} title={`${s.course} • ${(s.participants || []).join(', ')}`}>
+                          {(sessionsByDay.get(`${currentYear}-${String(currentMonth + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`) || [])
+                            .sort((a, b) => new Date(a.started_at).getTime() - new Date(b.started_at).getTime()) // Tri chronologique
+                            .slice(0,2).map((s, idx) => (
+                            <div key={idx} className={`text-xs p-1 rounded text-white truncate ${s.status === 'PENDING' ? 'bg-red-300' : s.status === 'SCHEDULED' ? 'bg-blue-500' : s.status === 'IN_PROGRESS' ? 'bg-yellow-600' : 'bg-green-600'}`} title={`${s.course} • ${(s.participants || []).join(', ')}`}>
                               {s.started_at.split('T')[1]?.split(':').slice(0,2).join(':')} {s.course}
                             </div>
                           ))}
@@ -146,7 +270,9 @@ export default function TutorCalendar() {
                         {key.split('-').reverse().join('/')}
                       </div>
                       <div className="space-y-2">
-                        {(sessionsByDay.get(key) || []).map((s, idx) => (
+                        {(sessionsByDay.get(key) || [])
+                          .sort((a, b) => new Date(a.started_at).getTime() - new Date(b.started_at).getTime()) // Tri chronologique
+                          .map((s, idx) => (
                           <div key={idx} className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
                               <div className="text-sm font-medium text-black dark:text-white truncate" title={`${s.course} • ${(s.participants || []).join(', ')}`}>
@@ -156,7 +282,7 @@ export default function TutorCalendar() {
                                 {s.started_at.split('T')[1]?.split(':').slice(0,2).join(':')} • {s.type}
                               </div>
                             </div>
-                            <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full ${s.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' : s.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>{s.status}</span>
+                            <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full ${s.status === 'PENDING' ? 'bg-red-100 text-red-700' : s.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' : s.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>{s.status}</span>
                           </div>
                         ))}
                       </div>
@@ -174,7 +300,7 @@ export default function TutorCalendar() {
                 <div className="space-y-3">
                   {sessions.filter(s => new Date(s.started_at) >= new Date()).sort((a,b) => new Date(a.started_at).getTime() - new Date(b.started_at).getTime()).slice(0,4).map((s) => (
                     <div key={s.id} className="flex items-start gap-3">
-                      <div className={`w-3 h-3 rounded-full mt-1.5 ${s.status === 'SCHEDULED' ? 'bg-blue-500' : s.status === 'IN_PROGRESS' ? 'bg-yellow-600' : 'bg-green-600'}`}></div>
+                      <div className={`w-3 h-3 rounded-full mt-1.5 ${s.status === 'PENDING' ? 'bg-red-300' : s.status === 'SCHEDULED' ? 'bg-blue-500' : s.status === 'IN_PROGRESS' ? 'bg-yellow-600' : 'bg-green-600'}`}></div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-black dark:text-white truncate">{s.course} • {(s.participants || []).join(', ')}</p>
                         <p className="text-xs text-waterloo dark:text-manatee">{s.started_at.split('T')[0].split('-').reverse().join('/')} • {s.started_at.split('T')[1]?.split(':').slice(0,2).join(':')}</p>
@@ -187,6 +313,7 @@ export default function TutorCalendar() {
               <div className="animate_top rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection">
                 <h3 className="text-lg font-semibold text-black dark:text-white mb-4">Légende</h3>
                 <div className="space-y-2">
+                  <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-red-300"></div><span className="text-sm text-black dark:text-white">En attente</span></div>
                   <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-blue-500"></div><span className="text-sm text-black dark:text-white">Programmée</span></div>
                   <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-yellow-600"></div><span className="text-sm text-black dark:text-white">En cours</span></div>
                   <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-green-600"></div><span className="text-sm text-black dark:text-white">Terminée</span></div>
@@ -219,20 +346,62 @@ export default function TutorCalendar() {
               {(() => {
                 const d = new Date(selectedDate);
                 const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-                return (sessionsByDay.get(key) || []).map((s, idx) => (
+                return (sessionsByDay.get(key) || [])
+                  .sort((a, b) => new Date(a.started_at).getTime() - new Date(b.started_at).getTime()) // Tri chronologique
+                  .map((s, idx) => (
                   <div key={idx} className="rounded-lg border border-stroke dark:border-strokedark p-3">
                     <div className="flex items-center justify-between">
                       <div className="text-sm text-black dark:text-white font-medium">{s.course} • {(s.participants || []).join(', ')}</div>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${s.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' : s.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>{s.status}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${s.status === 'PENDING' ? 'bg-red-100 text-red-700' : s.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' : s.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>{s.status}</span>
                     </div>
                     <div className="text-xs text-waterloo dark:text-manatee mt-1">{s.started_at.split('T')[1]?.split(':').slice(0,2).join(':')}</div>
-                    <div className="mt-3 flex justify-end">
-                      <a
-                        href={`/live/${s.id}`}
-                        className="inline-flex items-center rounded-md bg-primary px-3 py-1 text-xs font-medium text-white hover:opacity-90"
-                      >
-                        Rejoindre
-                      </a>
+                    <div className="mt-3 flex justify-end gap-2">
+                      {s.status === 'PENDING' ? (
+                        <>
+                          <button
+                            disabled={actingSessionId === s.id}
+                            onClick={() => handleSessionAction(s.id, 'ACCEPT')}
+                            className="inline-flex items-center rounded-md bg-green-600 px-3 py-1 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50"
+                          >
+                            {actingSessionId === s.id ? 'Traitement...' : 'Accepter'}
+                          </button>
+                          <button
+                            disabled={actingSessionId === s.id}
+                            onClick={() => handleSessionAction(s.id, 'REJECT')}
+                            className="inline-flex items-center rounded-md bg-red-600 px-3 py-1 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50"
+                          >
+                            {actingSessionId === s.id ? 'Traitement...' : 'Refuser'}
+                          </button>
+                        </>
+                      ) : s.status === 'SCHEDULED' ? (
+                        <>
+                          <button
+                            disabled={cancellingSessionId === s.id || !canCancelSession(s.started_at)}
+                            onClick={() => handleCancelSession(s.id)}
+                            className={`inline-flex items-center rounded-md px-3 py-1 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50 ${
+                              canCancelSession(s.started_at) 
+                                ? 'bg-red-600' 
+                                : 'bg-gray-400 cursor-not-allowed'
+                            }`}
+                            title={!canCancelSession(s.started_at) ? 'Impossible d\'annuler moins de 24h avant le début' : ''}
+                          >
+                            {cancellingSessionId === s.id ? 'Annulation...' : 'Annuler'}
+                          </button>
+                          <a
+                            href={`/live/${s.id}`}
+                            className="inline-flex items-center rounded-md bg-primary px-3 py-1 text-xs font-medium text-white hover:opacity-90"
+                          >
+                            Rejoindre
+                          </a>
+                        </>
+                      ) : s.status === 'IN_PROGRESS' ? (
+                        <a
+                          href={`/live/${s.id}`}
+                          className="inline-flex items-center rounded-md bg-primary px-3 py-1 text-xs font-medium text-white hover:opacity-90"
+                        >
+                          Rejoindre
+                        </a>
+                      ) : null}
                     </div>
                   </div>
                 ));
@@ -273,6 +442,27 @@ export default function TutorCalendar() {
           }}
         />
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={confirmCancelSession}
+        title="Annuler la séance"
+        message="Êtes-vous sûr de vouloir annuler cette séance ?"
+        confirmText="Annuler"
+        cancelText="Garder"
+        type="warning"
+      />
+
+      {/* Alert Modal */}
+      <AlertModal
+        isOpen={showAlertModal}
+        onClose={() => setShowAlertModal(false)}
+        title={alertTitle}
+        message={alertMessage}
+        type={alertType}
+      />
     </main>
   );
 }

@@ -14,7 +14,6 @@ export default function LiveClassPage({ params }: PageProps) {
   const [token, setToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
-  const [egressId, setEgressId] = useState<string | null>(null);
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
 
   const serverUrl = process.env.NEXT_PUBLIC_LIVEKIT_SERVER_URL;
@@ -91,45 +90,6 @@ export default function LiveClassPage({ params }: PageProps) {
     );
   }
 
-  const canRecord = role === 'instructor';
-
-  const handleStartRecording = async () => {
-    try {
-      const res = await fetch('/api/livekit/recording/start', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ classId }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || 'Unable to start recording');
-      }
-      const data = await res.json();
-      setEgressId(data.egressId);
-    } catch (e: any) {
-      setError(e?.message || 'Erreur en démarrant l\'enregistrement');
-    }
-  };
-
-  const handleStopRecording = async () => {
-    try {
-      if (!egressId) return;
-      const res = await fetch('/api/livekit/recording/stop', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ classId, egressId }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || 'Unable to stop recording');
-      }
-      setEgressId(null);
-    } catch (e: any) {
-      setError(e?.message || 'Erreur en arrêtant l\'enregistrement');
-    }
-  };
 
   return (
     <div className="h-screen w-full relative">
@@ -142,20 +102,6 @@ export default function LiveClassPage({ params }: PageProps) {
         </div>
       )}
       
-      {/* Boutons d'enregistrement */}
-      {canRecord && (
-        <div className="absolute top-4 right-4 z-50 flex gap-2">
-          {!egressId ? (
-            <button onClick={handleStartRecording} className="rounded-md bg-red-600 px-3 py-1 text-xs font-medium text-white hover:opacity-90">
-              Démarrer l'enregistrement
-            </button>
-          ) : (
-            <button onClick={handleStopRecording} className="rounded-md bg-red-600 px-3 py-1 text-xs font-medium text-white hover:opacity-90">
-              Arrêter l'enregistrement
-            </button>
-          )}
-        </div>
-      )}
       
       <LiveClass serverUrl={serverUrl} token={token} onLeavePath={onLeavePath} />
     </div>

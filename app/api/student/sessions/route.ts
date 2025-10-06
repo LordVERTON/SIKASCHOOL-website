@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
         tutor_id,
         subject,
         level,
-        type,
+        session_type,
         status,
         started_at,
         completed_at,
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
       `)
       .eq('student_id', user.id);
 
-    if (status && ['COMPLETED','IN_PROGRESS','SCHEDULED','CANCELLED'].includes(status)) {
+    if (status && ['COMPLETED','IN_PROGRESS','SCHEDULED','CANCELLED','PENDING'].includes(status)) {
       baseQuery = baseQuery.eq('status', status);
     }
     if (start) baseQuery = baseQuery.gte('started_at', start);
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
           tutor_id,
           subject,
           level,
-          type,
+          session_type,
           status,
           started_at,
           completed_at,
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
           created_at
         `)
         .in('id', participantSessionIds);
-      if (status && ['COMPLETED','IN_PROGRESS','SCHEDULED','CANCELLED'].includes(status)) partQuery = partQuery.eq('status', status);
+      if (status && ['COMPLETED','IN_PROGRESS','SCHEDULED','CANCELLED','PENDING'].includes(status)) partQuery = partQuery.eq('status', status);
       if (start) partQuery = partQuery.gte('started_at', start);
       if (end) partQuery = partQuery.lte('started_at', end);
       const { data: partSessions, error: partSessionsErr } = await partQuery.order('started_at', { ascending: false });

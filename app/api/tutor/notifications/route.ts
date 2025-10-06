@@ -72,77 +72,74 @@ export async function PATCH(request: NextRequest) {
       .eq('id', notificationId)
       .eq('user_id', user.id);
 
+    // Get notification data
+    const data = (notif as any).data || {};
+
     if (action === 'DECLINE') {
+      // Update session status to CANCELLED
+      const { error: updateError } = await (supabaseAdmin as any)
+        .from('sessions')
+        .update({ status: 'CANCELLED' })
+        .eq('id', data.session_id);
+
+      if (updateError) {
+        console.error('Error updating session status:', updateError);
+        return NextResponse.json({ error: 'Failed to update session' }, { status: 500 });
+      }
+
+      // Create notification for student
+      const { error: notificationError } = await (supabaseAdmin as any)
+        .from('notifications')
+        .insert({
+          user_id: data.student_id,
+          type: 'BOOKING',
+          title: 'Séance refusée',
+          message: `Votre demande de séance de ${data.subject} le ${new Date(data.started_at).toLocaleDateString('fr-FR')} a été refusée par votre tuteur.`,
+          data: {
+            session_id: data.session_id,
+            action: 'REJECTED'
+          }
+        });
+
+      if (notificationError) {
+        console.error('Error creating notification:', notificationError);
+        // Don't fail the request if notification fails
+      }
+
       return NextResponse.json({ success: true, declined: true });
     }
 
-    // For CONFIRM: create a session based on notification data
-    // Expected notif.data: { student_id, scheduled_at, duration_minutes, session_type, level, course_id }
-    const data = (notif as any).data || {};
-    const studentId: string | undefined = data.student_id;
-    const scheduledAt: string | undefined = data.scheduled_at;
-    const durationMinutes: number = Number(data.duration_minutes || 60);
-    const sessionType: string = data.session_type || 'TODA';
-    const level: string = data.level || 'Lycée';
-    const courseId: string | null = data.course_id || null;
-
-    if (!studentId || !scheduledAt) {
-      return NextResponse.json({ error: 'Données de réservation manquantes' }, { status: 400 });
-    }
-
-    const startedAtIso = new Date(scheduledAt).toISOString();
-
-    // Try to confirm an existing scheduled session first
-    const { data: existing, error: findErr } = await (supabaseAdmin as any)
+    // For CONFIRM: update existing PENDING session to SCHEDULED
+    const { error: updateError } = await (supabaseAdmin as any)
       .from('sessions')
-      .select('id, status')
-      .eq('student_id', studentId)
-      .eq('tutor_id', user.id)
-      .eq('started_at', startedAtIso)
-      .limit(1)
-      .maybeSingle();
+      .update({ status: 'SCHEDULED' })
+      .eq('id', data.session_id);
 
-    if (findErr) {
-      return NextResponse.json({ error: 'Erreur recherche session' }, { status: 500 });
+    if (updateError) {
+      console.error('Error updating session status:', updateError);
+      return NextResponse.json({ error: 'Failed to update session' }, { status: 500 });
     }
 
-    if (existing?.id) {
-      const { error: updErr } = await (supabaseAdmin as any)
-        .from('sessions')
-        .update({ status: 'CONFIRMED' } as any)
-        .eq('id', existing.id);
+    // Create notification for student
+    const { error: notificationError } = await (supabaseAdmin as any)
+      .from('notifications')
+      .insert({
+        user_id: data.student_id,
+        type: 'BOOKING',
+        title: 'Séance confirmée',
+        message: `Votre demande de séance de ${data.subject} le ${new Date(data.started_at).toLocaleDateString('fr-FR')} à ${new Date(data.started_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} a été acceptée par votre tuteur.`,
+        data: {
+          session_id: data.session_id,
+          action: 'ACCEPTED'
+        }
+      });
 
-      if (updErr) {
-        return NextResponse.json({ error: 'Confirmation de la session impossible' }, { status: 500 });
-      }
-
-      return NextResponse.json({ success: true, confirmed: true, sessionId: existing.id });
+    if (notificationError) {
+      console.error('Error creating notification:', notificationError);
+      // Don't fail the request if notification fails
     }
 
-    // Otherwise create a confirmed session
-    const { data: created, error: insertErr } = await (supabaseAdmin as any)
-      .from('sessions')
-      .insert([
-        {
-          booking_id: data.booking_id || null,
-          student_id: studentId,
-          tutor_id: user.id,
-          course_id: courseId,
-          session_type: sessionType,
-          level,
-          started_at: startedAtIso,
-          duration_minutes: durationMinutes,
-          status: 'CONFIRMED',
-        } as any,
-      ])
-      .select('id')
-      .single();
-
-    if (insertErr) {
-      return NextResponse.json({ error: 'Création de la session impossible' }, { status: 500 });
-    }
-
-    return NextResponse.json({ success: true, created: true, sessionId: created?.id });
+    return NextResponse.json({ success: true, confirmed: true, sessionId: data.session_id });
       } catch {
     return NextResponse.json({ error: 'Erreur lors du traitement' }, { status: 500 });
   }

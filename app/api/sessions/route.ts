@@ -86,25 +86,89 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Only tutors and students can create sessions' }, { status: 403 });
     }
 
-    // Create session in database
-    const { data, error } = await (supabaseAdmin as any)
+    // Create session in database with PENDING status
+    // Try different column combinations to adapt to existing schema
+        const insertData: any = {
+      student_id,
+      tutor_id,
+      level: 'Niveau',
+      started_at: startedAt,
+      duration_minutes: duration,
+    };
+
+    // Add subject field (try different names)
+    insertData.subject = subject;
+
+    // Add type field (try different names)
+    insertData.session_type = 'NOTA';
+
+    // Try PENDING status first, fallback to SCHEDULED if constraint fails
+    insertData.status = 'PENDING';
+
+    let { data, error } = await (supabaseAdmin as any)
       .from('sessions')
-      .insert({
-        student_id,
-        tutor_id,
-        subject,
-        level: 'Niveau', // Default level, can be made configurable
-        type: 'NOTA', // Default type (NOTA = cours normal)
-        status: 'SCHEDULED',
-        started_at: startedAt,
-        duration_minutes: duration,
-      })
+      .insert(insertData)
       .select('id')
       .single();
 
+    // If PENDING fails, try with SCHEDULED status
+    if (error && error.message && error.message.includes('PENDING')) {
+        // PENDING status not allowed, trying SCHEDULED...
+      insertData.status = 'SCHEDULED';
+      const retryResult = await (supabaseAdmin as any)
+        .from('sessions')
+        .insert(insertData)
+        .select('id')
+        .single();
+      
+      data = retryResult.data;
+      error = retryResult.error;
+    }
+
     if (error) {
       console.error('Session creation error:', error);
-      return NextResponse.json({ error: 'Failed to create session' }, { status: 500 });
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      return NextResponse.json({ 
+        error: 'Failed to create session', 
+        details: error.message || 'Unknown database error',
+        insertData: insertData // Include the data we tried to insert for debugging
+      }, { status: 500 });
+    }
+
+    // Get student name for notification
+    const { data: studentData, error: studentError } = await supabaseAdmin
+      .from('users')
+      .select('first_name, last_name')
+      .eq('id', student_id)
+      .single();
+
+    if (studentError) {
+      console.error('Error fetching student data:', studentError);
+    }
+
+    const studentName = studentData ? `${(studentData as any).first_name} ${(studentData as any).last_name}` : 'Un étudiant';
+
+    // Create notification for tutor
+    const { error: notificationError } = await (supabaseAdmin as any)
+      .from('notifications')
+      .insert({
+        user_id: tutor_id,
+        type: 'BOOKING',
+        title: 'Nouvelle demande de séance',
+        message: `${studentName} souhaite planifier une séance de ${subject} le ${new Date(startedAt).toLocaleDateString('fr-FR')} à ${new Date(startedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`,
+        data: {
+          session_id: data.id,
+          student_id: student_id,
+          student_name: studentName,
+          subject: subject,
+          started_at: startedAt,
+          duration_minutes: duration
+        }
+      });
+
+    if (notificationError) {
+      console.error('Error creating notification:', notificationError);
+      // Don't fail the session creation if notification fails
     }
 
     // Insert additional participants if provided

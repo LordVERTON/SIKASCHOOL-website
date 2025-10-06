@@ -2,7 +2,7 @@
 
 import { LiveKitRoom, VideoConference } from '@livekit/components-react';
 import '@livekit/components-styles';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 type LiveClassProps = {
@@ -23,6 +23,65 @@ export default function LiveClass({ serverUrl, token, className, onLeavePath }: 
     }),
     []
   );
+
+  // Fonction pour rediriger vers le calendrier
+  const redirectToCalendar = useCallback(() => {
+    if (onLeavePath) {
+      window.location.href = onLeavePath;
+    } else {
+      router.back();
+    }
+  }, [onLeavePath, router]);
+
+  // Intercepter le bouton Leave de LiveKit
+  useEffect(() => {
+    const handleLeaveButton = () => {
+      // Attendre que les éléments LiveKit soient chargés
+      const checkForLeaveButton = () => {
+        const leaveButtons = document.querySelectorAll(
+          'button[aria-label*="Leave"], button[aria-label*="leave"], button[title*="Leave"], button[title*="leave"], .lk-button[aria-label*="Leave"], .lk-button[aria-label*="leave"]'
+        );
+        
+        leaveButtons.forEach(button => {
+          // Supprimer les anciens event listeners
+          const newButton = button.cloneNode(true) as HTMLElement;
+          button.parentNode?.replaceChild(newButton, button);
+          
+          // Ajouter le nouvel event listener
+          newButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            redirectToCalendar();
+          });
+        });
+      };
+
+      // Vérifier immédiatement
+      checkForLeaveButton();
+      
+      // Observer les changements dans le DOM pour capturer les boutons qui apparaissent plus tard
+      const observer = new MutationObserver(() => {
+        checkForLeaveButton();
+      });
+      
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true
+      });
+      
+      // Nettoyer l'observer après 30 secondes pour éviter les fuites mémoire
+      setTimeout(() => {
+        observer.disconnect();
+      }, 30000);
+    };
+
+    // Démarrer l'interception après un court délai pour laisser LiveKit se charger
+    const timeoutId = setTimeout(handleLeaveButton, 1000);
+    
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [onLeavePath, router, redirectToCalendar]);
 
   return (
     <div className={className ?? 'h-screen w-full'}>
@@ -97,28 +156,9 @@ export default function LiveClass({ serverUrl, token, className, onLeavePath }: 
           onConnected={() => {
             setConnectionError(null);
           }}
-          onDisconnected={(reason) => {
-            // LiveKit disconnected
-            
-            // Redirection vers le calendrier pour toutes les déconnexions volontaires
-            const isVoluntaryDisconnect = reason?.toString() === 'CLIENT_INITIATED' || 
-                                        reason?.toString() === 'PARTICIPANT_REMOVED' ||
-                                        reason?.toString() === 'SERVER_SHUTDOWN';
-            
-            if (isVoluntaryDisconnect) {
-              // Déconnexion volontaire ou serveur - rediriger vers le calendrier
-              // Redirection vers le calendrier
-              if (onLeavePath) {
-                // Utiliser window.location pour une redirection plus robuste
-                window.location.href = onLeavePath;
-              } else {
-                // Fallback vers la page précédente
-                router.back();
-              }
-            } else {
-              // Autres déconnexions (problème réseau, etc.)
-              setConnectionError('Connexion perdue. Veuillez réessayer.');
-            }
+                  onDisconnected={(_reason) => {
+            // LiveKit disconnected - toujours rediriger vers le calendrier
+            redirectToCalendar();
           }}
           onError={(error) => {
             // LiveKit error
