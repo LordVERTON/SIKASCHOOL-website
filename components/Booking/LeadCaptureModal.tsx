@@ -68,8 +68,8 @@ export default function LeadCaptureModal({ isOpen, onClose, onSubmitted }: LeadC
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-99999 flex items-center justify-center bg-black/50 p-4">
-      <div className="relative w-full max-w-3xl rounded-lg bg-white p-6 shadow-2xl dark:bg-blacksection">
+    <div className="fixed inset-0 z-99999 flex items-center justify-center bg-black/50 p-4" onTouchMove={(e) => e.preventDefault()}>
+      <div className="relative w-full max-w-3xl rounded-lg bg-white p-6 shadow-2xl dark:bg-blacksection max-h-[80vh] overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
         {/* Close */}
         <button onClick={onClose} className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
           <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>

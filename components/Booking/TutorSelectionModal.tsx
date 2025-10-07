@@ -79,8 +79,8 @@ const TutorSelectionModal = ({ isOpen, onClose, onSelectTutor }: TutorSelectionM
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-99999 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-2xl dark:bg-blacksection">
+    <div className="fixed inset-0 z-99999 flex items-center justify-center bg-black bg-opacity-50 p-4" onTouchMove={(e) => e.preventDefault()}>
+      <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-2xl dark:bg-blacksection max-h-[80vh] overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
         {/* Close Button */}
         <button
           onClick={onClose}

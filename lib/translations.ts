@@ -155,7 +155,7 @@ export const translations: Record<Language, Translations> = {
       aboutUs: 'Qui sommes nous ?',
       sessionPacks: 'Packs de séances',
       perSession: 'A la séance',
-      signIn: 'Se connecter',
+      signIn: 'Connexion',
     },
     hero: {
       title: 'Atteignez vos objectifs académiques',
@@ -254,7 +254,7 @@ export const translations: Record<Language, Translations> = {
         passwordPlaceholder: 'Mot de passe',
         keepSignedIn: 'Rester connecté',
         forgotPassword: 'Mot de passe oublié ?',
-        submit: 'Se connecter',
+        submit: 'Connexion',
         noAccount: "Vous n'avez pas de compte ?",
         signUpLink: "S'inscrire",
       },

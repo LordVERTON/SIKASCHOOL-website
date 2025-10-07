@@ -65,8 +65,8 @@ export default function AssignmentModal({
   const targetRoleLabel = isTutor ? 'étudiant' : 'tuteur';
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onTouchMove={(e) => e.preventDefault()}>
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white">
             Gestion des assignations - {user.first_name} {user.last_name}

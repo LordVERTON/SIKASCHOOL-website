@@ -55,8 +55,8 @@ export default function AlertModal({
   const { icon, color, bgColor } = getIconAndColor();
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className={`${bgColor} rounded-lg p-6 w-full max-w-md mx-4 border`}>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onTouchMove={(e) => e.preventDefault()}>
+      <div className={`${bgColor} rounded-lg p-6 w-full max-w-md mx-4 border max-h-[80vh] overflow-y-auto overscroll-contain`} style={{ WebkitOverflowScrolling: 'touch' }}>
         <div className="flex items-center gap-3 mb-4">
           <span className="text-2xl">{icon}</span>
           <h3 className={`text-lg font-semibold ${color}`}>{title}</h3>

@@ -315,11 +315,35 @@ export default function StudentMessages() {
 // Simple inline modal implementation
 // Placed after default export to keep file self-contained
 function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
+  // Prevent background scroll when modal is open
+  useEffect(() => {
+    if (!open) return;
+    const { body } = document;
+    const previousOverflow = body.style.overflow;
+    const previousTouchAction = body.style.touchAction as string;
+    body.style.overflow = 'hidden';
+    body.style.touchAction = 'none';
+    return () => {
+      body.style.overflow = previousOverflow;
+      body.style.touchAction = previousTouchAction || '';
+    };
+  }, [open]);
+
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-xl rounded-lg border border-stroke bg-white p-6 shadow-solid-10 dark:border-strokedark dark:bg-blacksection">
+      <div
+        className="absolute inset-0 bg-black/50"
+        onClick={onClose}
+        onTouchMove={(e) => {
+          // Prevent background from scrolling on mobile while allowing modal content to scroll
+          e.preventDefault();
+        }}
+      />
+      <div
+        className="relative z-10 w-full max-w-xl rounded-lg border border-stroke bg-white p-6 shadow-solid-10 dark:border-strokedark dark:bg-blacksection max-h-[80vh] overflow-y-auto overscroll-contain"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         {children}
       </div>
     </div>

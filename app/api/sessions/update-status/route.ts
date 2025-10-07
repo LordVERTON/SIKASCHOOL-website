@@ -85,21 +85,35 @@ export async function POST(_request: NextRequest) {
     if (pastSessionsError) {
       console.error('Error fetching past sessions:', pastSessionsError);
     } else if (pastSessions && pastSessions.length > 0) {
-      // Marquer toutes les sessions passées comme COMPLETED
-      const pastSessionIds = pastSessions.map((s: any) => s.id);
-      const { error: cleanupError } = await (supabaseAdmin as any)
-        .from('sessions')
-        .update({ 
-          status: 'COMPLETED',
-          completed_at: now.toISOString(),
-          updated_at: now.toISOString()
-        })
-        .in('id', pastSessionIds);
+      // Marquer les sessions passées selon le cas: 
+      // - Si leur fin est dépassée, COMPLETED
+      // - Si leur début est dépassé mais qu'elles n'ont jamais démarré (PENDING/SCHEDULED) et aucune évaluation: CANCELLED
+      const toComplete: string[] = [];
+      const toCancel: string[] = [];
+      for (const s of pastSessions as any[]) {
+        const startTime = new Date(s.started_at);
+        const endTime = new Date(startTime.getTime() + (s.duration_minutes || 60) * 60000);
+        if (now > endTime) {
+          toComplete.push(s.id);
+        } else if (now > startTime && (s.status === 'PENDING' || s.status === 'SCHEDULED')) {
+          toCancel.push(s.id);
+        }
+      }
 
-      if (cleanupError) {
-        console.error('Error cleaning up past sessions:', cleanupError);
-      } else {
-        // Cleaned up past sessions
+      if (toComplete.length > 0) {
+        const { error: completeErr } = await (supabaseAdmin as any)
+          .from('sessions')
+          .update({ status: 'COMPLETED', completed_at: now.toISOString(), updated_at: now.toISOString() })
+          .in('id', toComplete);
+        if (completeErr) console.error('Error completing past sessions:', completeErr);
+      }
+
+      if (toCancel.length > 0) {
+        const { error: cancelErr } = await (supabaseAdmin as any)
+          .from('sessions')
+          .update({ status: 'CANCELLED', updated_at: now.toISOString() })
+          .in('id', toCancel);
+        if (cancelErr) console.error('Error cancelling past sessions:', cancelErr);
       }
     }
 

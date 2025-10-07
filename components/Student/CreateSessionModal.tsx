@@ -75,8 +75,8 @@ export default function CreateSessionModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white dark:bg-blacksection rounded-lg p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose} onTouchMove={(e) => e.preventDefault()}>
+      <div className="bg-white dark:bg-blacksection rounded-lg p-6 w-full max-w-md max-h-[80vh] overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-black dark:text-white">Demander une séance</h3>
           <button className="text-waterloo dark:text-manatee" onClick={onClose}>✕</button>

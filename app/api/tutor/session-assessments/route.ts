@@ -89,3 +89,45 @@ export async function POST(request: NextRequest) {
   }
 }
 
+export async function GET(request: NextRequest) {
+  try {
+    const user = await getUserSession();
+    if (!user || user.role !== 'TUTOR') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const studentId = searchParams.get('studentId');
+    if (!studentId) {
+      return NextResponse.json({ error: 'studentId is required' }, { status: 400 });
+    }
+
+    // Ensure tutor has sessions with this student for access
+    const { error: sessErr } = await (supabaseAdmin as any)
+      .from('sessions')
+      .select('id')
+      .eq('tutor_id', user.id)
+      .eq('student_id', studentId);
+
+    if (sessErr) {
+      return NextResponse.json({ error: 'Failed to verify access' }, { status: 500 });
+    }
+
+    // Fetch assessments for this student authored by this tutor
+    const { data: assessments, error } = await (supabaseAdmin as any)
+      .from('session_assessments')
+      .select('*')
+      .eq('student_id', studentId)
+      .eq('tutor_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      return NextResponse.json({ error: 'Failed to fetch assessments' }, { status: 500 });
+    }
+
+    return NextResponse.json({ assessments: assessments || [] });
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+

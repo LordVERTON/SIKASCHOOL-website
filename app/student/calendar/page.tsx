@@ -187,9 +187,9 @@ export default function StudentCalendar() {
           </p>
         </div>
 
-        <div className="mt-10 grid gap-7.5 lg:grid-cols-4">
+        <div className="mt-10 grid gap-7.5 grid-cols-1">
           {/* Calendar */}
-          <div className="lg:col-span-3">
+          <div className="col-span-1">
             <div className="animate_top rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection">
               {/* Calendar Header */}
               <div className="flex items-center justify-between mb-6">
@@ -260,6 +260,20 @@ export default function StudentCalendar() {
               {/* Mobile agenda list */}
               <div className="block lg:hidden">
                 <div className="space-y-4">
+                  <div className="sticky top-0 z-10 -mx-3 mb-2 px-3 pt-2 bg-white/80 backdrop-blur dark:bg-blacksection/80">
+                    <button
+                      onClick={() => {
+                        const today = new Date();
+                        const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+                        setSelectedDate(dateStr);
+                        setCreateDate(dateStr);
+                        setShowCreateModal(true);
+                      }}
+                      className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+                    >
+                      Nouvelle séance
+                    </button>
+                  </div>
                   {[...sessionsByDay.keys()].sort().map((key) => (
                     <div key={key} className="rounded-lg border border-stroke dark:border-strokedark p-3">
                       <div className="mb-2 text-sm font-semibold text-black dark:text-white">
@@ -268,25 +282,38 @@ export default function StudentCalendar() {
                       <div className="space-y-2">
                         {(sessionsByDay.get(key) || [])
                           .sort((a, b) => new Date(a.started_at).getTime() - new Date(b.started_at).getTime()) // Tri chronologique
-                          .map((s, idx) => (
-                          <div key={idx} className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="text-sm font-medium text-black dark:text-white truncate" title={`${s.subject} • ${s.tutor}`}>
-                                {s.subject} • {s.tutor}
+                      .map((s, idx) => (
+                          <div key={idx} className="w-full rounded-lg border border-stroke dark:border-strokedark p-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="text-sm font-medium text-black dark:text-white truncate" title={`${s.subject} • ${s.tutor}`}>
+                                  {s.subject} • {s.tutor}
+                                </div>
+                                <div className="text-xs text-waterloo dark:text-manatee">
+                                  {s.started_at.split('T')[1]?.split(':').slice(0,2).join(':')} • {s.type}
+                                </div>
                               </div>
-                              <div className="text-xs text-waterloo dark:text-manatee">
-                                {s.started_at.split('T')[1]?.split(':').slice(0,2).join(':')} • {s.type}
+                              <div className="shrink-0 flex items-center gap-2">
+                                <span className={`text-xs px-2 py-0.5 rounded-full ${s.status === 'PENDING' ? 'bg-red-100 text-red-700' : s.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' : s.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>{s.status}</span>
                               </div>
                             </div>
-                            <div className="shrink-0 flex items-center gap-2">
-                              <span className={`text-xs px-2 py-0.5 rounded-full ${s.status === 'PENDING' ? 'bg-red-100 text-red-700' : s.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' : s.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>{s.status}</span>
+                            <div className="mt-3 flex items-center justify-end gap-2">
                               {(s.status === 'SCHEDULED' || s.status === 'IN_PROGRESS') && (
                                 <a
                                   href={`/live/${s.id}`}
-                                  className="inline-flex items-center rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-white hover:opacity-90"
+                                  className="inline-flex items-center rounded-md bg-primary px-3 py-1 text-xs font-medium text-white hover:opacity-90"
                                 >
                                   Rejoindre
                                 </a>
+                              )}
+                              {(s.status === 'PENDING' || s.status === 'SCHEDULED') && (
+                                <button
+                                  disabled={!canCancelSession(s.started_at) || cancellingSessionId === s.id}
+                                  onClick={() => handleCancelSession(s.id)}
+                                  className={`inline-flex items-center rounded-md px-3 py-1 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50 ${canCancelSession(s.started_at) ? 'bg-red-600' : 'bg-gray-400'}`}
+                                >
+                                  {cancellingSessionId === s.id ? 'Annulation...' : 'Annuler'}
+                                </button>
                               )}
                             </div>
                           </div>
@@ -299,8 +326,8 @@ export default function StudentCalendar() {
             </div>
           </div>
 
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
+          {/* Sidebar (now stacked below on all sizes) */}
+          <div className="col-span-1">
             <div className="space-y-6">
               {/* Upcoming Sessions */}
               <div className="animate_top rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection">
@@ -449,10 +476,12 @@ export default function StudentCalendar() {
           onClose={() => {
             setShowCreateModal(false);
             setCreateDate(null);
+            setSelectedDate(null);
           }}
           onSuccess={() => {
             setShowCreateModal(false);
             setCreateDate(null);
+            setSelectedDate(null);
             // Reload sessions
             const start = new Date(currentYear, currentMonth, 1);
             const end = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999);

@@ -265,7 +265,7 @@ export default function SimpleSignin() {
                   disabled={isLoading}
                   className="inline-flex items-center gap-2.5 rounded-full bg-black px-6 py-3 font-medium text-white duration-300 ease-in-out hover:bg-blackho dark:bg-btndark dark:hover:bg-blackho disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isLoading ? (isSignup ? "Inscription..." : "Connexion...") : (isSignup ? "S'inscrire" : "Se connecter")}
+                  {isLoading ? (isSignup ? "Inscription..." : "Connexion...") : (isSignup ? "S'inscrire" : "Connexion")}
                   <svg
                     className="fill-white"
                     width="14"

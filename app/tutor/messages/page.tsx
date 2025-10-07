@@ -319,11 +319,35 @@ export default function TutorMessagesPage() {
 }
 
 function TutorModal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
+  // Prevent background scroll when modal is open
+  useEffect(() => {
+    if (!open) return;
+    const { body } = document;
+    const previousOverflow = body.style.overflow;
+    const previousTouchAction = (body.style as any).touchAction as string;
+    body.style.overflow = 'hidden';
+    (body.style as any).touchAction = 'none';
+    return () => {
+      body.style.overflow = previousOverflow;
+      (body.style as any).touchAction = previousTouchAction || '';
+    };
+  }, [open]);
+
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-xl rounded-lg bg-white p-6 shadow-sm border border-gray-200">
+      <div
+        className="absolute inset-0 bg-black/50"
+        onClick={onClose}
+        onTouchMove={(e) => {
+          // Prevent background scroll while allowing modal content to scroll
+          e.preventDefault();
+        }}
+      />
+      <div
+        className="relative z-10 w-full max-w-xl rounded-lg bg-white p-6 shadow-sm border border-gray-200 max-h-[80vh] overflow-y-auto overscroll-contain"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         {children}
       </div>
     </div>

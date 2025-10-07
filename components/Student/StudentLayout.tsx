@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import StudentSidebar from "./StudentSidebar";
@@ -12,11 +12,28 @@ interface StudentLayoutProps {
 
 export default function StudentLayout({ children }: StudentLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [hideLogo, setHideLogo] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const current = window.scrollY || 0;
+      const isDown = current > lastScrollY;
+      if (current > 80 && isDown) {
+        setHideLogo(true);
+      } else {
+        setHideLogo(false);
+      }
+      setLastScrollY(current);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [lastScrollY]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-black">
-      {/* Logo SikaSchool en haut à droite */}
-      <div className="fixed top-4 right-4 z-50">
+      {/* Logo SikaSchool en haut à droite (auto-hide on scroll) */}
+      <div className={`fixed top-4 right-4 z-50 transition-transform duration-300 ${hideLogo ? '-translate-y-20' : 'translate-y-0'}`}>
         <Image
           src="/images/logo/logo-light.svg"
           alt="SikaSchool Logo"

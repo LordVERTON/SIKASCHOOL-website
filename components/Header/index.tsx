@@ -16,6 +16,7 @@ const Header = () => {
   // Removed NextAuth session - using custom auth
 
   const pathUrl = usePathname();
+  const _isHome = pathUrl === "/";
 
   const openLeadModal = () => {
     try {
@@ -174,10 +175,10 @@ const Header = () => {
             />
             {/* Sliding left drawer */}
             <div
-              className={`navbar absolute left-0 top-0 z-10 h-full w-80 max-w-[85%] overflow-y-auto bg-white p-7.5 shadow-solid-5 transition-transform duration-300 ease-out dark:bg-blacksection ${navigationOpen ? "translate-x-0" : "-translate-x-full"}`}
+              className={`navbar absolute left-0 top-0 z-10 h-full w-screen max-w-none overflow-y-auto bg-white p-7.5 shadow-solid-5 transition-transform duration-300 ease-out dark:bg-blacksection ${navigationOpen ? "translate-x-0" : "-translate-x-full"}`}
             >
               <div className="mb-5 flex items-center justify-between">
-                <span className="text-base font-semibold text-black dark:text-white">Menu</span>
+                <span className="font-semibold text-black dark:text-white text-[clamp(14px,3.8vw,18px)]">Menu</span>
                 <button
                   aria-label="Fermer le menu"
                   onClick={handleMenuClose}
@@ -190,7 +191,7 @@ const Header = () => {
                 </button>
               </div>
               <nav>
-                <ul className="flex flex-col gap-5">
+                <ul className="flex flex-col items-center gap-5 text-center text-[clamp(14px,3.6vw,18px)] leading-snug">
                   {getMenuData(t).map((menuItem, key) => (
                     <li key={key} className={menuItem.submenu && "group relative"}>
                       {menuItem.submenu ? (
@@ -211,7 +212,7 @@ const Header = () => {
                             </span>
                           </button>
 
-                          <ul className={`dropdown ${dropdownToggler ? "flex" : ""}`}>
+                          <ul className={`dropdown ${dropdownToggler ? "flex" : ""} items-center justify-center text-center`}>
                             {menuItem.submenu.map((item, key) => (
                               <li key={key} className="hover:text-primary">
                                 <Link href={item.path || "#"} onClick={handleMenuClose}>
@@ -239,7 +240,7 @@ const Header = () => {
                 </ul>
               </nav>
 
-              <div className="mt-7 flex items-center gap-6">
+              <div className="mt-7 flex items-center justify-center gap-6">
                 <ThemeToggler />
                 <Link
                   href="/auth/signin"
