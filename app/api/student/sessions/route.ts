@@ -124,8 +124,7 @@ export async function GET(request: NextRequest) {
           : (s.topics_covered ? String(s.topics_covered).split(',').map((t: string) => t.trim()) : []),
         homework: s.homework_assigned || '',
         studentRating: s.student_rating || 0,
-        tutorRating: 0,
-        price: Math.round(((s.duration_minutes || 60) / 60) * 35)
+        tutorRating: 0
       };
     });
 

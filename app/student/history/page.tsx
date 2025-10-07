@@ -20,7 +20,6 @@ interface Session {
   studentRating: number;
   tutorRating: number;
   course: string;
-  price: number;
 }
 
 export default function HistoryPage() {
@@ -181,9 +180,6 @@ export default function HistoryPage() {
                     <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(session.status)}`}>
                       {getStatusText(session.status)}
                     </span>
-                    <div className="mt-2 text-lg font-semibold text-primary">
-                      {session.price}€
-                    </div>
                   </div>
                 </div>
 
@@ -255,11 +251,6 @@ export default function HistoryPage() {
                   </div>
                   
                   <div className="flex space-x-2">
-                    {session.status === 'COMPLETED' && !session.studentRating && (
-                      <button className="px-4 py-2 bg-primary text-white rounded-lg hover:opacity-90 transition text-sm">
-                        Noter la séance
-                      </button>
-                    )}
                     <button className="px-4 py-2 border border-stroke dark:border-strokedark text-black dark:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition text-sm">
                       Voir détails
                     </button>

@@ -56,6 +56,7 @@ interface DashboardData {
     course: string;
     meetingUrl: string;
     notes: string;
+    status: string;
   }>;
   tutorStats: {
     totalSessions: number;
@@ -78,6 +79,15 @@ interface DashboardData {
     sender: string;
     subject: string;
   }>;
+  recentNotifications: Array<{
+    id: string;
+    title: string;
+    message: string;
+    type: string;
+    date: string;
+    time: string;
+    data: any;
+  }>;
 }
 
 
@@ -86,10 +96,9 @@ export default function StudentDashboard() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [userInfo, setUserInfo] = useState<{ firstName: string; name: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showCreateSession, setShowCreateSession] = useState(false);
   const [tutors, setTutors] = useState<Array<{ id: string; name: string }>>([]);
-  const [assessments, setAssessments] = useState<any[]>([]);
-  const [period, setPeriod] = useState<'session' | 'week' | 'month' | 'year'>('month');
   const [globalNote, setGlobalNote] = useState<number | null>(null);
 
   useEffect(() => {
@@ -109,37 +118,168 @@ export default function StudentDashboard() {
       }
       
       try {
-        console.warn('🔄 Récupération des données du dashboard pour:', user);
+        setError(null);
+        console.warn('🔄 Récupération des sessions pour le dashboard:', user);
         console.warn('👤 Utilisateur:', { id: user.id, name: user.name, role: user.role });
         
-        // Récupérer les données du dashboard
-        const dashboardResponse = await fetch('/api/student/dashboard', {
+        // Récupérer toutes les sessions (même logique que /student/history)
+        const sessionsResponse = await fetch('/api/student/sessions', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
           },
-          credentials: 'include', // Important pour les cookies de session
+          credentials: 'include',
         });
         
-        console.warn('📡 Réponse API:', dashboardResponse.status, dashboardResponse.statusText);
+        console.warn('📡 Réponse API sessions:', sessionsResponse.status, sessionsResponse.statusText);
         
-        if (dashboardResponse.ok) {
-          const data = await dashboardResponse.json();
-          console.warn('📊 Données reçues:', data);
-          setDashboardData(data);
-        } else {
-          const errorData = await dashboardResponse.json().catch(() => ({}));
-          console.warn('❌ Erreur API:', dashboardResponse.status, errorData);
+        if (sessionsResponse.ok) {
+          const sessionsData = await sessionsResponse.json();
+          console.warn('📊 Sessions reçues:', sessionsData);
           
-          // Si erreur 401, l'utilisateur n'est pas authentifié
-          if (dashboardResponse.status === 401) {
-            console.warn('🔐 Problème d\'authentification - redirection vers la connexion');
-            // Optionnel: rediriger vers la page de connexion
-            // window.location.href = '/auth/signin';
+          // Calculer les statistiques côté client
+          const sessions = sessionsData.sessions || [];
+          const now = new Date();
+          
+          // Statistiques de base
+          const completedSessions = sessions.filter((s: any) => s.status === 'COMPLETED');
+          const scheduledSessions = sessions.filter((s: any) => s.status === 'SCHEDULED');
+          const pendingSessions = sessions.filter((s: any) => s.status === 'PENDING');
+          const _inProgressSessions = sessions.filter((s: any) => s.status === 'IN_PROGRESS');
+          
+          // Heures totales (seulement les sessions terminées)
+          const totalHours = completedSessions.reduce((acc: number, s: any) => acc + (s.duration || 0), 0) / 60;
+          
+          // Note moyenne (sessions notées par l'étudiant)
+          const ratedSessions = completedSessions.filter((s: any) => s.studentRating && s.studentRating > 0);
+          const averageRating = ratedSessions.length > 0 
+            ? (ratedSessions.reduce((acc: number, s: any) => acc + s.studentRating, 0) / ratedSessions.length).toFixed(1)
+            : 'N/A';
+          
+          // Séances à venir (prochaines 7 jours)
+          const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+          const upcomingSessions = sessions.filter((s: any) => {
+            const sessionDate = new Date(s.started_at);
+            return sessionDate >= now && sessionDate <= nextWeek && 
+                   (s.status === 'SCHEDULED' || s.status === 'PENDING' || s.status === 'IN_PROGRESS');
+          }).sort((a: any, b: any) => new Date(a.started_at).getTime() - new Date(b.started_at).getTime());
+          
+          // Séances récentes (dernières 5 sessions terminées)
+          const recentSessions = completedSessions
+            .sort((a: any, b: any) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime())
+            .slice(0, 5);
+          
+          // Créer les données du dashboard
+          const dashboardData = {
+            stats: [
+              {
+                label: 'Séances terminées',
+                value: completedSessions.length.toString(),
+                color: 'text-blue-600',
+                icon: '📚'
+              },
+              {
+                label: 'Heures de cours',
+                value: `${Math.round(totalHours * 10) / 10}h`,
+                color: 'text-green-600',
+                icon: '⏰'
+              },
+              {
+                label: 'Séances à venir',
+                value: (scheduledSessions.length + pendingSessions.length).toString(),
+                color: 'text-purple-600',
+                icon: '📅'
+              },
+              {
+                label: 'Note moyenne',
+                value: averageRating,
+                color: 'text-yellow-600',
+                icon: '⭐'
+              }
+            ],
+            upcomingSessions: upcomingSessions.map((session: any) => ({
+              id: session.id,
+              course: session.course || 'Cours',
+              type: session.type || 'INDIVIDUAL',
+              tutor: session.tutor || 'Tuteur',
+              tutorAvatar: session.tutorAvatar || '/images/user/user-01.png',
+              date: new Date(session.started_at).toLocaleDateString('fr-FR'),
+              time: new Date(session.started_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+              duration: session.duration || 60,
+              meetingUrl: `/live/${session.id}`,
+              notes: '',
+              status: session.status
+            })),
+            recentSessions: recentSessions.map((session: any) => ({
+              id: session.id,
+              course: session.course || 'Cours',
+              type: session.type || 'INDIVIDUAL',
+              level: 'Niveau',
+              date: new Date(session.started_at).toLocaleDateString('fr-FR'),
+              time: new Date(session.started_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+              duration: session.duration || 60,
+              status: session.status,
+              topics: session.topics || [],
+              homework: session.homework || '',
+              tutor: session.tutor || 'Tuteur',
+              tutorAvatar: session.tutorAvatar || '/images/user/user-01.png',
+              studentRating: session.studentRating || 0,
+              tutorRating: session.tutorRating || 0
+            })),
+            recentMessages: [],
+            recentNotifications: [],
+            tutorStats: {
+              totalSessions: completedSessions.length,
+              totalHours: totalHours,
+              averageRating: averageRating,
+              mainTutor: 'Tuteur principal'
+            },
+            quickActions: [
+              {
+                title: 'Réserver une séance',
+                description: 'Planifier un nouveau cours',
+                action: 'booking',
+                icon: '📅',
+                color: 'bg-blue-600 hover:bg-blue-700'
+              },
+              {
+                title: 'Mes tuteurs',
+                description: 'Voir tous les tuteurs',
+                action: 'tutors',
+                icon: '👨‍🏫',
+                color: 'bg-green-600 hover:bg-green-700'
+              },
+              {
+                title: 'Historique',
+                description: 'Séances passées',
+                action: 'history',
+                icon: '📋',
+                color: 'bg-purple-600 hover:bg-purple-700'
+              },
+              {
+                title: 'Messages',
+                description: 'Communiquer',
+                action: 'messages',
+                icon: '💬',
+                color: 'bg-orange-600 hover:bg-orange-700'
+              }
+            ]
+          };
+          
+          setDashboardData(dashboardData);
+        } else {
+          const errorData = await sessionsResponse.json().catch(() => ({}));
+          console.warn('❌ Erreur API sessions:', sessionsResponse.status, errorData);
+          
+          if (sessionsResponse.status === 401) {
+            setError('Problème d\'authentification. Veuillez vous reconnecter.');
+          } else {
+            setError(`Erreur lors du chargement des sessions: ${errorData.error || 'Erreur inconnue'}`);
           }
         }
       } catch (error) {
         console.warn('❌ Erreur réseau:', error);
+        setError('Erreur de connexion. Veuillez vérifier votre connexion internet.');
       } finally {
         console.warn('✅ Fin du chargement');
         setLoading(false);
@@ -149,45 +289,21 @@ export default function StudentDashboard() {
     fetchDashboardData();
   }, [user]);
 
-  // Charger les évaluations pour le graphe
+  // Calcul de la note globale
   useEffect(() => {
-    const loadAssessments = async () => {
-      if (!user) return;
-      try {
-        const res = await fetch('/api/student/assessments', { credentials: 'include' });
-        if (!res.ok) return;
-        const json = await res.json();
-        setAssessments(json.assessments || []);
-      } catch {}
-    };
-    loadAssessments();
-  }, [user]);
-
-  // Calcul de la note globale selon le filtre
-  useEffect(() => {
-    if (!assessments || assessments.length === 0) {
+    if (dashboardData?.learningMetrics?.averages) {
+      const metrics = dashboardData.learningMetrics.averages;
+      const values = Object.values(metrics).filter(v => typeof v === 'number' && v > 0);
+      if (values.length > 0) {
+        const overall = values.reduce((a, b) => a + b, 0) / values.length;
+        setGlobalNote(Number.isFinite(overall) ? overall : null);
+      } else {
+        setGlobalNote(null);
+      }
+    } else {
       setGlobalNote(null);
-      return;
     }
-    const filtered = filterAssessmentsByPeriod(assessments, period);
-    if (filtered.length === 0) {
-      setGlobalNote(null);
-      return;
-    }
-    const metricsKeys: Array<keyof typeof filtered[number]> = [
-      'concentration',
-      'participation',
-      'preparation',
-      'improvement',
-      'retention',
-      'comprehension',
-      'time_management',
-      'collaboration',
-    ];
-    const averages = metricsKeys.map((k) => average(filtered.map((a: any) => a[k] as number)));
-    const overall = average(averages);
-    setGlobalNote(Number.isFinite(overall) ? overall : null);
-  }, [assessments, period]);
+  }, [dashboardData]);
 
   // Charger les tuteurs attribués
   useEffect(() => {
@@ -258,23 +374,6 @@ export default function StudentDashboard() {
           </div>
         )}
 
-        {/* Diagramme en barres filtrable */}
-        <div className="mt-10 animate_top rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-black dark:text-white">Évolution des indicateurs</h2>
-            <select
-              value={period}
-              onChange={(e) => setPeriod(e.target.value as any)}
-              className="border border-stroke dark:border-strokedark bg-transparent rounded px-2 py-1 text-sm"
-            >
-              <option value="session">Par séance</option>
-              <option value="week">Par semaine</option>
-              <option value="month">Par mois</option>
-              <option value="year">Par année</option>
-            </select>
-          </div>
-          <BarChart assessments={assessments} period={period} />
-        </div>
       </main>
     );
   }
@@ -299,9 +398,48 @@ export default function StudentDashboard() {
     );
   }
 
-  // Si pas de données, ne rien afficher (design original sans fallback étendu)
+  if (error) {
+    return (
+      <main className="pb-20 pt-15 lg:pb-25 xl:pb-30">
+        <div className="mx-auto max-w-c-1315 px-4 md:px-8 xl:px-0">
+          <div className="animate_top mx-auto text-center">
+            <h1 className="text-3xl font-bold text-red-600 dark:text-red-400 xl:text-sectiontitle3">
+              Erreur de chargement
+            </h1>
+            <p className="mt-4 text-para2 text-waterloo dark:text-manatee">
+              {error}
+            </p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:opacity-90 transition"
+            >
+              Réessayer
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // Si pas de données, afficher un message informatif
   if (!dashboardData) {
-    return null;
+    return (
+      <main className="pb-20 pt-15 lg:pb-25 xl:pb-30">
+        <div className="mx-auto max-w-c-1315 px-4 md:px-8 xl:px-0">
+          <div className="animate_top mx-auto text-center">
+            <h1 className="text-3xl font-bold text-black dark:text-white xl:text-sectiontitle3">
+              Bienvenue{userInfo?.firstName ? ` ${userInfo.firstName}` : ''} !
+            </h1>
+            <p className="mt-4 text-para2 text-waterloo dark:text-manatee">
+              Votre tableau de bord se charge...
+            </p>
+            <div className="mt-8 flex justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   return (
@@ -315,6 +453,7 @@ export default function StudentDashboard() {
             Suivez vos séances, communiquez avec vos tuteurs et gérez votre apprentissage.
           </p>
         </div>
+
       
         {/* Stats Cards */}
         <div className="mt-10 grid gap-7.5 md:grid-cols-2 lg:grid-cols-4">
@@ -342,6 +481,25 @@ export default function StudentDashboard() {
               </div>
             );
           })}
+        </div>
+
+        {/* Vos statistiques détaillées */}
+        <div className="mt-10 animate_top rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection">
+          <h2 className="text-xl font-semibold text-black dark:text-white mb-6">Vos statistiques</h2>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="rounded-lg border border-stroke bg-gray-50 p-4 text-center dark:border-strokedark dark:bg-gray-800">
+              <div className="text-2xl font-bold text-blue-600">{dashboardData.tutorStats.totalSessions}</div>
+              <div className="text-sm text-waterloo dark:text-manatee">Sessions terminées</div>
+            </div>
+            <div className="rounded-lg border border-stroke bg-gray-50 p-4 text-center dark:border-strokedark dark:bg-gray-800">
+              <div className="text-2xl font-bold text-green-600">{Math.round(dashboardData.tutorStats.totalHours * 10) / 10}h</div>
+              <div className="text-sm text-waterloo dark:text-manatee">Heures totales</div>
+            </div>
+            <div className="rounded-lg border border-stroke bg-gray-50 p-4 text-center dark:border-strokedark dark:bg-gray-800">
+              <div className="text-2xl font-bold text-yellow-600">{dashboardData.tutorStats.averageRating}/5</div>
+              <div className="text-sm text-waterloo dark:text-manatee">Note moyenne</div>
+            </div>
+          </div>
         </div>
 
         {/* Actions rapides */}
@@ -392,9 +550,22 @@ export default function StudentDashboard() {
                       <span className="text-primary font-semibold text-sm">{session.time}</span>
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-medium text-black dark:text-white">
-                        Séance {session.type} - {session.course}
-                      </h3>
+                      <div className="flex items-center justify-between mb-1">
+                        <h3 className="font-medium text-black dark:text-white">
+                          Séance {session.type} - {session.course}
+                        </h3>
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          session.status === 'PENDING' ? 'bg-red-100 text-red-700' :
+                          session.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' :
+                          session.status === 'IN_PROGRESS' ? 'bg-green-100 text-green-700' :
+                          'bg-gray-100 text-gray-700'
+                        }`}>
+                          {session.status === 'PENDING' ? 'En attente' :
+                           session.status === 'SCHEDULED' ? 'Confirmée' :
+                           session.status === 'IN_PROGRESS' ? 'En cours' :
+                           session.status}
+                        </span>
+                      </div>
                       <p className="text-sm text-waterloo dark:text-manatee">
                         avec {session.tutor} • {session.duration}min
                       </p>
@@ -402,14 +573,20 @@ export default function StudentDashboard() {
                         {session.date}
                       </p>
                     </div>
-                    {session.meetingUrl && (
-                      <Link
-                        href={session.meetingUrl}
-                        className="ml-4 px-3 py-1 bg-primary text-white rounded-md hover:opacity-90 transition text-sm"
-                      >
-                        Rejoindre
-                      </Link>
-                    )}
+                    <div className="ml-4 flex gap-2">
+                      {session.status === 'IN_PROGRESS' || session.status === 'SCHEDULED' ? (
+                        <Link
+                          href={session.meetingUrl}
+                          className="px-3 py-1 bg-primary text-white rounded-md hover:opacity-90 transition text-sm"
+                        >
+                          Rejoindre
+                        </Link>
+                      ) : session.status === 'PENDING' ? (
+                        <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-md text-sm">
+                          En attente
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
                 ))
               ) : (
@@ -462,9 +639,18 @@ export default function StudentDashboard() {
                           {session.status === 'COMPLETED' ? 'Terminée' : 
                            session.status === 'IN_PROGRESS' ? 'En cours' : session.status}
                         </div>
-                        {session.studentRating && (
+                        {session.studentRating > 0 && (
                           <div className="text-xs text-yellow-500 mt-1">
-                            {'★'.repeat(session.studentRating)}
+                            {'★'.repeat(Math.floor(session.studentRating))}
+                            {session.studentRating % 1 !== 0 && '☆'}
+                            <span className="ml-1 text-gray-600">({session.studentRating}/5)</span>
+                          </div>
+                        )}
+                        {session.tutorRating > 0 && (
+                          <div className="text-xs text-blue-500 mt-1">
+                            Tuteur: {'★'.repeat(Math.floor(session.tutorRating))}
+                            {session.tutorRating % 1 !== 0 && '☆'}
+                            <span className="ml-1 text-gray-600">({session.tutorRating}/5)</span>
                           </div>
                         )}
                       </div>
@@ -500,6 +686,45 @@ export default function StudentDashboard() {
                       </p>
                       <p className="text-xs text-waterloo dark:text-manatee mt-2">
                         {message.sender} • {message.date} à {message.time}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Notifications récentes */}
+        {dashboardData.recentNotifications && dashboardData.recentNotifications.length > 0 && (
+          <div className="mt-10 animate_top rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-black dark:text-white">Notifications récentes</h2>
+              <Link href="/student/notifications" className="text-primary hover:underline text-sm">
+                Voir tout
+              </Link>
+            </div>
+            <div className="space-y-4">
+              {dashboardData.recentNotifications.slice(0, 3).map((notification) => (
+                <div key={notification.id} className="p-4 rounded-lg border border-stroke dark:border-strokedark">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          notification.type === 'BOOKING' ? 'bg-blue-100 text-blue-700' :
+                          notification.type === 'SESSION' ? 'bg-green-100 text-green-700' :
+                          notification.type === 'PAYMENT' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-gray-100 text-gray-700'
+                        }`}>
+                          {notification.type}
+                        </span>
+                        <h3 className="font-medium text-black dark:text-white">{notification.title}</h3>
+                      </div>
+                      <p className="text-sm text-waterloo dark:text-manatee mt-1 line-clamp-2">
+                        {notification.message}
+                      </p>
+                      <p className="text-xs text-waterloo dark:text-manatee mt-2">
+                        {notification.date} à {notification.time}
                       </p>
                     </div>
                   </div>
@@ -559,104 +784,3 @@ function Metric({ label, value, delta }: { label: string; value: number; delta?:
   );
 }
 
-function BarChart({ assessments, period }: { assessments: any[]; period: 'session' | 'week' | 'month' | 'year' }) {
-  const buckets = groupAssessments(assessments, period);
-  const categories = [
-    { key: 'concentration', label: 'Concentration' },
-    { key: 'participation', label: 'Participation' },
-    { key: 'preparation', label: 'Préparation' },
-    { key: 'improvement', label: 'Amélioration' },
-    { key: 'retention', label: 'Rétention' },
-    { key: 'comprehension', label: 'Compréhension' },
-    { key: 'time_management', label: 'Gestion du temps' },
-    { key: 'collaboration', label: 'Collaboration' },
-  ] as const;
-
-  return (
-    <div className="overflow-x-auto">
-      <div className="min-w-[720px]">
-        {Object.keys(buckets).length === 0 ? (
-          <div className="text-waterloo dark:text-manatee text-sm">Aucune donnée disponible.</div>
-        ) : (
-          Object.entries(buckets).map(([label, items]) => (
-            <div key={label} className="mb-6">
-              <div className="text-sm text-waterloo dark:text-manatee mb-2">{label}</div>
-              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-                {categories.map((cat) => {
-                  const avg = average(items.map((a: any) => a[cat.key] as number));
-                  return (
-                    <div key={cat.key} className="p-3 rounded border border-stroke dark:border-strokedark">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm">{cat.label}</span>
-                        <span className="text-sm font-medium">{avg.toFixed(1)}/5</span>
-                      </div>
-                      <Bar value={avg} />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
-}
-
-function Bar({ value }: { value: number }) {
-  const pct = Math.max(0, Math.min(100, (value / 5) * 100));
-  return (
-    <div className="h-3 w-full bg-gray-200 dark:bg-gray-700 rounded">
-      <div
-        className="h-3 bg-primary rounded"
-        style={{ width: `${pct}%` }}
-      />
-    </div>
-  );
-}
-
-function groupAssessments(list: any[], period: 'session' | 'week' | 'month' | 'year') {
-  const map: Record<string, any[]> = {};
-  for (const a of list) {
-    const dt = new Date(a.created_at || a.updated_at || Date.now());
-    let key = '';
-    if (period === 'session') key = new Date(dt).toLocaleString('fr-FR');
-    if (period === 'week') key = `${dt.getFullYear()}-S${getWeek(dt)}`;
-    if (period === 'month') key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
-    if (period === 'year') key = `${dt.getFullYear()}`;
-    if (!map[key]) map[key] = [];
-    map[key].push(a);
-  }
-  return map;
-}
-
-function filterAssessmentsByPeriod(list: any[], period: 'session' | 'week' | 'month' | 'year') {
-  if (!list || list.length === 0) return [];
-  if (period === 'session') {
-    // dernière séance évaluée
-    return [list[0]];
-  }
-  const now = new Date();
-  const from = new Date(now);
-  if (period === 'week') from.setDate(now.getDate() - 7);
-  if (period === 'month') from.setDate(now.getDate() - 30);
-  if (period === 'year') from.setDate(now.getDate() - 365);
-  return list.filter((a) => {
-    const dt = new Date(a.created_at || a.updated_at || Date.now());
-    return dt >= from && dt <= now;
-  });
-}
-
-function getWeek(date: Date) {
-  const target = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = target.getUTCDay() || 7;
-  target.setUTCDate(target.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(target.getUTCFullYear(), 0, 1));
-  const weekNo = Math.ceil((((target as any) - (yearStart as any)) / 86400000 + 1) / 7);
-  return weekNo;
-}
-
-function average(arr: number[]) {
-  if (!arr || arr.length === 0) return 0;
-  return arr.reduce((a, b) => a + b, 0) / arr.length;
-}

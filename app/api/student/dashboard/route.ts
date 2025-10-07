@@ -15,8 +15,9 @@ export async function GET() {
 
     // Récupérer les données réelles de Supabase
 
-    // 1. Récupérer les sessions de l'étudiant
-    const { data: sessions, error: sessionsError } = await supabaseAdmin
+    // 1. Récupérer les sessions de l'étudiant (même logique que l'agenda)
+    // Sessions où l'étudiant est le titulaire (legacy)
+    const { data: ownSessions, error: ownSessionsError } = await supabaseAdmin
       .from('sessions')
       .select(`
         id,
@@ -24,7 +25,7 @@ export async function GET() {
         tutor_id,
         subject,
         level,
-        type,
+        session_type,
         status,
         started_at,
         completed_at,
@@ -32,15 +33,65 @@ export async function GET() {
         topics_covered,
         homework_assigned,
         student_rating,
+        tutor_rating,
         created_at,
         updated_at
       `)
       .eq('student_id', studentId)
       .order('started_at', { ascending: false });
 
-    if (sessionsError) {
-      throw sessionsError;
+    if (ownSessionsError) {
+      throw ownSessionsError;
     }
+
+    // Sessions où l'étudiant est participant
+    const { data: participantLinks, error: participantError } = await supabaseAdmin
+      .from('session_participants')
+      .select('session_id')
+      .eq('student_id', studentId);
+
+    if (participantError) {
+      console.error('Erreur participants:', participantError);
+    }
+
+    let participantSessions: any[] = [];
+    const participantSessionIds = Array.from(new Set((participantLinks || []).map((p: any) => p.session_id)));
+    if (participantSessionIds.length > 0) {
+      const { data: partSessions, error: partSessionsError } = await supabaseAdmin
+        .from('sessions')
+        .select(`
+          id,
+          student_id,
+          tutor_id,
+          subject,
+          level,
+          session_type,
+          status,
+          started_at,
+          completed_at,
+          duration_minutes,
+          topics_covered,
+          homework_assigned,
+          student_rating,
+          tutor_rating,
+          created_at,
+          updated_at
+        `)
+        .in('id', participantSessionIds)
+        .order('started_at', { ascending: false });
+
+      if (partSessionsError) {
+        console.error('Erreur sessions participants:', partSessionsError);
+      } else {
+        participantSessions = partSessions || [];
+      }
+    }
+
+    // Fusionner et dédupliquer les sessions
+    const byId = new Map<string, any>();
+    for (const s of (ownSessions as any || [])) byId.set(s.id, s);
+    for (const s of (participantSessions as any || [])) byId.set(s.id, s);
+    const sessions = Array.from(byId.values()).sort((a: any, b: any) => (a.started_at > b.started_at ? -1 : 1));
 
     // 2. Récupérer les informations des tuteurs
     const tutorIds = [...new Set((sessions as any)?.map((s: any) => s.tutor_id).filter(Boolean) || [])];
@@ -49,7 +100,7 @@ export async function GET() {
     if (tutorIds.length > 0) {
       const { data: tutors, error: tutorsError } = await supabaseAdmin
         .from('users')
-        .select('id, first_name, last_name, avatar_url')
+        .select('id, first_name, last_name, avatar_url, email')
         .in('id', tutorIds);
       
       if (!tutorsError && tutors) {
@@ -57,29 +108,78 @@ export async function GET() {
       }
     }
 
-    // 3. Récupérer des messages récents (fallback simple basé sur l'expéditeur)
+    // 3. Récupérer les informations de l'étudiant
+    const { data: studentProfile, error: studentError } = await supabaseAdmin
+      .from('users')
+      .select(`
+        id,
+        first_name,
+        last_name,
+        email,
+        avatar_url,
+        students(grade_level, academic_goals, created_at)
+      `)
+      .eq('id', studentId)
+      .single();
+
+    if (studentError) {
+      console.error('Error fetching student profile:', studentError);
+    }
+
+    // Informations de l'étudiant pour le dashboard
+    const studentInfo = studentProfile ? {
+      id: (studentProfile as any).id,
+      firstName: (studentProfile as any).first_name,
+      lastName: (studentProfile as any).last_name,
+      email: (studentProfile as any).email,
+      avatarUrl: (studentProfile as any).avatar_url,
+      gradeLevel: (studentProfile as any).students?.[0]?.grade_level || 'Non spécifié',
+      academicGoals: (studentProfile as any).students?.[0]?.academic_goals || 'Non spécifiés',
+      memberSince: (studentProfile as any).students?.[0]?.created_at || (studentProfile as any).created_at
+    } : null;
+
+    // 4. Récupérer des messages récents et notifications
     let messages: any[] = [];
+    let notifications: any[] = [];
+    
     try {
-      const { data, error } = await supabaseAdmin
+      // Messages récents
+      const { data: messagesData, error: messagesError } = await supabaseAdmin
         .from('messages')
-        .select('id, content, created_at, sender_id, thread_id')
+        .select('id, content, created_at, sender_id, thread_id, subject')
         .or(`sender_id.eq.${studentId}`)
         .order('created_at', { ascending: false })
         .limit(3);
-      if (!error && data) {
-        messages = data as any[];
+      if (!messagesError && messagesData) {
+        messages = messagesData as any[];
+      }
+      
+      // Notifications récentes
+      const { data: notificationsData, error: notificationsError } = await supabaseAdmin
+        .from('notifications')
+        .select('id, title, message, type, created_at, data')
+        .eq('user_id', studentId)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      if (!notificationsError && notificationsData) {
+        notifications = notificationsData as any[];
       }
     } catch {
-      // ignorer les erreurs de messages pour ne pas bloquer le dashboard
+      // ignorer les erreurs de messages/notifications pour ne pas bloquer le dashboard
     }
 
-    // Calculer les statistiques
+    // Calculer les statistiques détaillées
     const _totalSessions = (sessions as any)?.length || 0;
     const completedSessions = (sessions as any)?.filter((s: any) => s.status === 'COMPLETED').length || 0;
-    const totalHours = (sessions as any)?.reduce((acc: number, s: any) => acc + (s.duration_minutes || 0), 0) / 60 || 0;
-    // Statistiques calculées
+    const pendingSessions = (sessions as any)?.filter((s: any) => s.status === 'PENDING').length || 0;
+    const scheduledSessions = (sessions as any)?.filter((s: any) => s.status === 'SCHEDULED').length || 0;
+    const _cancelledSessions = (sessions as any)?.filter((s: any) => s.status === 'CANCELLED').length || 0;
     
-    // Calculer la note moyenne
+    // Calculer les heures totales (seulement les sessions terminées)
+    const totalHours = (sessions as any)?.filter((s: any) => s.status === 'COMPLETED')
+      .reduce((acc: number, s: any) => acc + (s.duration_minutes || 0), 0) / 60 || 0;
+    
+    // Calculer la note moyenne (sessions notées par l'étudiant)
     const ratedSessions = (sessions as any)?.filter((s: any) => s.student_rating && s.student_rating > 0) || [];
     const averageRating = ratedSessions.length > 0 
       ? (ratedSessions.reduce((acc: number, s: any) => acc + s.student_rating, 0) / ratedSessions.length).toFixed(1)
@@ -87,25 +187,31 @@ export async function GET() {
 
     // Tuteurs uniques
     const uniqueTutors = new Set((sessions as any)?.map((s: any) => s.tutor_id).filter(Boolean) || []);
-    const activeTutors = uniqueTutors.size;
+    const _activeTutors = uniqueTutors.size;
 
-    // Séances à venir (prochaines 7 jours)
+    // Sessions en cours (IN_PROGRESS)
+    const _inProgressSessions = (sessions as any)?.filter((s: any) => s.status === 'IN_PROGRESS').length || 0;
+
+    // Séances à venir (prochaines 7 jours) - inclure PENDING et SCHEDULED
     const now = new Date();
     const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     const upcomingSessions = (sessions as any)?.filter((s: any) => {
       const sessionDate = new Date(s.started_at);
-      return sessionDate >= now && sessionDate <= nextWeek && s.status === 'SCHEDULED';
-    }).slice(0, 3) || [];
+      return sessionDate >= now && sessionDate <= nextWeek && 
+             (s.status === 'SCHEDULED' || s.status === 'PENDING' || s.status === 'IN_PROGRESS');
+    })
+    .sort((a: any, b: any) => new Date(a.started_at).getTime() - new Date(b.started_at).getTime())
+    .slice(0, 5) || [];
 
-    // Séances récentes (dernières 3) — uniquement les séances passées pour cet élève
+    // Séances récentes (dernières 5) — uniquement les séances terminées
     const recentSessions = (sessions as any)?.filter((s: any) => {
       const sessionDate = new Date(s.started_at);
-      return sessionDate <= now; // séance passée
+      return sessionDate <= now && s.status === 'COMPLETED'; // séance passée et terminée
     })
     .sort((a: any, b: any) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime())
-    .slice(0, 3) || [];
+    .slice(0, 5) || [];
 
-    // Messages récents
+    // Messages récents et notifications
     const recentMessages = (messages as any)?.map((msg: any) => ({
       id: msg.id,
       content: msg.content,
@@ -113,6 +219,17 @@ export async function GET() {
       time: new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
       sender: 'Vous',
       subject: msg.subject || 'Message'
+    })) || [];
+
+    // Notifications récentes
+    const recentNotifications = (notifications as any)?.map((notif: any) => ({
+      id: notif.id,
+      title: notif.title,
+      message: notif.message,
+      type: notif.type,
+      date: new Date(notif.created_at).toLocaleDateString('fr-FR'),
+      time: new Date(notif.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+      data: notif.data
     })) || [];
 
     // Tuteur principal (celui avec le plus de séances)
@@ -158,6 +275,7 @@ export async function GET() {
     } : { improvement: 0, retention: 0 };
 
     const dashboardData = {
+      studentInfo: studentInfo,
       stats: [
         {
           label: 'Séances terminées',
@@ -172,10 +290,10 @@ export async function GET() {
           icon: '⏰'
         },
         {
-          label: 'Tuteur(s) actif(s)',
-          value: activeTutors.toString(),
+          label: 'Séances à venir',
+          value: (scheduledSessions + pendingSessions).toString(),
           color: 'text-purple-600',
-          icon: '👨‍🏫'
+          icon: '📅'
         },
         {
           label: 'Note moyenne',
@@ -223,14 +341,15 @@ export async function GET() {
         return {
           id: session.id,
           course: session.subject || 'Cours',
-          type: session.type || 'INDIVIDUAL',
+          type: session.session_type || session.type || 'INDIVIDUAL',
           tutor: tutor ? `${tutor.first_name} ${tutor.last_name}` : 'Tuteur',
           tutorAvatar: tutor?.avatar_url || '/images/user/user-01.png',
           date: new Date(session.started_at).toLocaleDateString('fr-FR'),
           time: new Date(session.started_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
           duration: session.duration_minutes || 60,
-          meetingUrl: '#', // À implémenter si nécessaire
-          notes: session.tutor_notes || ''
+          meetingUrl: `/live/${session.id}`, // Lien vers la session en direct
+          notes: session.tutor_notes || '',
+          status: session.status
         };
       }),
       recentSessions: recentSessions.map((session: any) => {
@@ -238,7 +357,7 @@ export async function GET() {
         return {
           id: session.id,
           course: session.subject || 'Cours',
-          type: session.type || 'INDIVIDUAL',
+          type: session.session_type || session.type || 'INDIVIDUAL',
           level: session.level || 'Niveau',
           tutor: tutor ? `${tutor.first_name} ${tutor.last_name}` : 'Tuteur',
           tutorAvatar: tutor?.avatar_url || '/images/user/user-01.png',
@@ -251,10 +370,11 @@ export async function GET() {
             : (session.topics_covered ? String(session.topics_covered).split(',').map((t: string) => t.trim()) : []),
           homework: session.homework_assigned || '',
           studentRating: session.student_rating || 0,
-          tutorRating: 0
+          tutorRating: session.tutor_rating || 0
         };
       }),
       recentMessages: recentMessages,
+      recentNotifications: recentNotifications,
       tutorStats: {
         totalSessions: completedSessions,
         totalHours: totalHours,
@@ -267,7 +387,8 @@ export async function GET() {
 
     return NextResponse.json(dashboardData);
 
-      } catch {
+      } catch (error) {
+    console.error('❌ Erreur API dashboard étudiant:', error);
     
     // Retourner des données par défaut en cas d'erreur pour éviter un écran vide
     const fallbackData = {
@@ -285,10 +406,10 @@ export async function GET() {
           icon: '⏰'
         },
         {
-          label: 'Tuteurs actifs',
+          label: 'Séances à venir',
           value: '0',
           color: 'text-purple-600',
-          icon: '👨‍🏫'
+          icon: '📅'
         },
         {
           label: 'Note moyenne',
