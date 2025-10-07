@@ -187,3 +187,87 @@ export async function POST(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ threadId: string }> }
+) {
+  try {
+    const { threadId } = await params;
+    const body = await request.json();
+    const { tutorId, subject } = body;
+
+    if (!tutorId || !subject) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // Vérifier participation
+    const { data: participant, error: participantError } = await (supabaseAdmin as any)
+      .from('message_thread_participants')
+      .select('thread_id')
+      .eq('thread_id', threadId)
+      .eq('user_id', tutorId)
+      .single();
+
+    if (participantError || !participant) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const { data: updated, error: updateError } = await (supabaseAdmin as any)
+      .from('message_threads')
+      .update({ subject })
+      .eq('id', threadId)
+      .select('id, subject')
+      .single();
+
+    if (updateError) {
+      return NextResponse.json({ error: 'Failed to update' }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, thread: updated });
+  } catch (error) {
+    logger.error('Error in tutor thread update API:', { error: error instanceof Error ? error.message : String(error) });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ threadId: string }> }
+) {
+  try {
+    const { threadId } = await params;
+    const { searchParams } = new URL(request.url);
+    const tutorId = searchParams.get('tutorId');
+
+    if (!tutorId) {
+      return NextResponse.json({ error: 'Tutor ID is required' }, { status: 400 });
+    }
+
+    // Vérifier participation
+    const { data: participant, error: participantError } = await (supabaseAdmin as any)
+      .from('message_thread_participants')
+      .select('thread_id')
+      .eq('thread_id', threadId)
+      .eq('user_id', tutorId)
+      .single();
+
+    if (participantError || !participant) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const { error: deleteError } = await (supabaseAdmin as any)
+      .from('message_threads')
+      .delete()
+      .eq('id', threadId);
+
+    if (deleteError) {
+      return NextResponse.json({ error: 'Failed to delete' }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    logger.error('Error in tutor thread delete API:', { error: error instanceof Error ? error.message : String(error) });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}

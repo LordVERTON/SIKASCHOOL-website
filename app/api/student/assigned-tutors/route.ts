@@ -24,10 +24,7 @@ export async function GET() {
           first_name,
           last_name,
           email,
-          avatar_url,
-          bio,
-          subjects,
-          experience_years
+          avatar_url
         )
       `)
       .eq('student_id', studentId)
@@ -48,9 +45,6 @@ export async function GET() {
         lastName: tutor.last_name,
         email: tutor.email,
         avatar: tutor.avatar_url || '/images/user/user-01.png',
-        bio: tutor.bio || 'Aucune biographie disponible',
-        subjects: tutor.subjects || [],
-        experienceYears: tutor.experience_years || 0,
         assignedAt: assignment.assigned_at,
         isActive: assignment.is_active
       };

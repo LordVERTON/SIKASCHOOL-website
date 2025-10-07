@@ -278,7 +278,17 @@ export default function StudentCalendar() {
                                 {s.started_at.split('T')[1]?.split(':').slice(0,2).join(':')} • {s.type}
                               </div>
                             </div>
-                            <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full ${s.status === 'PENDING' ? 'bg-red-100 text-red-700' : s.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' : s.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>{s.status}</span>
+                            <div className="shrink-0 flex items-center gap-2">
+                              <span className={`text-xs px-2 py-0.5 rounded-full ${s.status === 'PENDING' ? 'bg-red-100 text-red-700' : s.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' : s.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>{s.status}</span>
+                              {(s.status === 'SCHEDULED' || s.status === 'IN_PROGRESS') && (
+                                <a
+                                  href={`/live/${s.id}`}
+                                  className="inline-flex items-center rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-white hover:opacity-90"
+                                >
+                                  Rejoindre
+                                </a>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -311,6 +321,14 @@ export default function StudentCalendar() {
                           {s.started_at.split('T')[0].split('-').reverse().join('/')} • {s.started_at.split('T')[1]?.split(':').slice(0,2).join(':')}
                         </p>
                       </div>
+                      {(s.status === 'SCHEDULED' || s.status === 'IN_PROGRESS') && (
+                        <a
+                          href={`/live/${s.id}`}
+                          className="shrink-0 inline-flex items-center rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-white hover:opacity-90"
+                        >
+                          Rejoindre
+                        </a>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -407,7 +425,7 @@ export default function StudentCalendar() {
                         {cancellingSessionId === s.id ? 'Annulation...' : 'Annuler'}
                       </button>
                     ) : null}
-                    {s.status === 'IN_PROGRESS' && (
+                    {(s.status === 'SCHEDULED' || s.status === 'IN_PROGRESS') && (
                       <a
                         href={`/live/${s.id}`}
                         className="inline-flex items-center rounded-md bg-primary px-3 py-1 text-xs font-medium text-white hover:opacity-90"

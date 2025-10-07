@@ -85,6 +85,16 @@ export default function TutorLayout({ children }: TutorLayoutProps) {
               Tableau de bord
             </Link>
             <Link
+              href="/tutor/messages"
+              className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-waterloo hover:bg-gray-50 hover:text-black dark:text-manatee dark:hover:bg-gray-800 dark:hover:text-white"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <svg className="mr-3 h-5 w-5 text-waterloo group-hover:text-black dark:text-manatee dark:group-hover:text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M18 13a1 1 0 01-1 1H7l-4 4V4a1 1 0 011-1h13a1 1 0 011 1v9z" />
+              </svg>
+              Messages
+            </Link>
+            <Link
               href="/tutor/eleves"
               className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-waterloo hover:bg-gray-50 hover:text-black dark:text-manatee dark:hover:bg-gray-800 dark:hover:text-white"
               onClick={() => setSidebarOpen(false)}
@@ -186,6 +196,17 @@ export default function TutorLayout({ children }: TutorLayoutProps) {
                         <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
                       </svg>
                       Tableau de bord
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/tutor/messages"
+                      className="group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold text-waterloo hover:text-black hover:bg-gray-50 dark:text-manatee dark:hover:text-white dark:hover:bg-gray-800"
+                    >
+                      <svg className="h-6 w-6 shrink-0 text-waterloo group-hover:text-black dark:text-manatee dark:group-hover:text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M18 13a1 1 0 01-1 1H7l-4 4V4a1 1 0 011-1h13a1 1 0 011 1v9z" />
+                      </svg>
+                      Messages
                     </Link>
                   </li>
                   <li>

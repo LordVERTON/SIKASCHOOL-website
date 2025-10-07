@@ -37,6 +37,9 @@ export default function TutorThreadPage({ params }: { params: Promise<{ threadId
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [threadId, setThreadId] = useState<string>('');
+  const [editingSubject, setEditingSubject] = useState(false);
+  const [subjectInput, setSubjectInput] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const loadThreadId = async () => {
@@ -121,6 +124,46 @@ export default function TutorThreadPage({ params }: { params: Promise<{ threadId
     });
   };
 
+  const handleEditSubject = async () => {
+    if (!thread || !user?.id) return;
+    if (!subjectInput.trim()) return;
+    try {
+      const res = await fetch(`/api/tutor/messages/${threadId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tutorId: user.id, subject: subjectInput.trim() })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setThread((prev) => prev ? { ...prev, subject: data.thread.subject } : prev);
+        setEditingSubject(false);
+      } else {
+        setError('Erreur lors de la mise à jour du sujet');
+      }
+    } catch {
+      setError('Erreur lors de la mise à jour du sujet');
+    }
+  };
+
+  const handleDeleteThread = async () => {
+    if (!user?.id) return;
+    try {
+      setDeleting(true);
+      const res = await fetch(`/api/tutor/messages/${threadId}?tutorId=${user.id}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        router.push('/tutor/messages');
+      } else {
+        setError('Erreur lors de la suppression de la conversation');
+      }
+    } catch {
+      setError('Erreur lors de la suppression de la conversation');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -156,7 +199,37 @@ export default function TutorThreadPage({ params }: { params: Promise<{ threadId
         >
           ← Retour aux messages
         </button>
-        <h1 className="text-2xl font-bold text-gray-900">{thread.subject}</h1>
+        {!editingSubject ? (
+          <h1 className="text-2xl font-bold text-gray-900">{thread.subject}</h1>
+        ) : (
+          <div className="flex items-center gap-2">
+            <input
+              value={subjectInput}
+              onChange={(e) => setSubjectInput(e.target.value)}
+              className="px-3 py-2 border rounded-md"
+              placeholder="Sujet de la conversation"
+            />
+            <button onClick={handleEditSubject} className="px-3 py-2 bg-primary text-white rounded-md">Enregistrer</button>
+            <button onClick={() => setEditingSubject(false)} className="px-3 py-2 border rounded-md">Annuler</button>
+          </div>
+        )}
+        <div className="mt-3 flex items-center gap-3">
+          {!editingSubject && (
+            <button
+              onClick={() => { setSubjectInput(thread.subject); setEditingSubject(true); }}
+              className="px-4 py-2 border rounded-md hover:bg-gray-50"
+            >
+              Modifier le sujet
+            </button>
+          )}
+          <button
+            onClick={handleDeleteThread}
+            disabled={deleting}
+            className="px-4 py-2 border border-red-600 text-red-600 rounded-md hover:bg-red-50 disabled:opacity-50"
+          >
+            {deleting ? 'Suppression...' : 'Supprimer'}
+          </button>
+        </div>
       </div>
 
       {/* Messages */}

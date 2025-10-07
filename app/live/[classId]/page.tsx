@@ -17,6 +17,35 @@ export default function LiveClassPage({ params }: PageProps) {
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
 
   const serverUrl = process.env.NEXT_PUBLIC_LIVEKIT_SERVER_URL;
+  const toWebsocketUrl = (raw?: string | null): string | null => {
+    if (!raw) return null;
+    const url = String(raw).trim();
+    try {
+      // If already ws/wss, keep as-is
+      if (url.startsWith('ws://') || url.startsWith('wss://')) {
+        // If page is https and url is ws://, upgrade to wss:// to avoid mixed content
+        if (typeof window !== 'undefined' && window.location.protocol === 'https:' && url.startsWith('ws://')) {
+          return url.replace(/^ws:/, 'wss:');
+        }
+        return url;
+      }
+      // Support protocol-relative (//host)
+      if (url.startsWith('//')) {
+        return (typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss:' : 'ws:') + url;
+      }
+      // Prepend scheme if missing
+      const hasScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url);
+      const u = new URL(hasScheme ? url : `https://${url}`);
+      // On https pages, always use wss to avoid mixed-content blocks
+      const shouldUseSecure = (typeof window !== 'undefined' && window.location.protocol === 'https:') || u.protocol === 'https:';
+      u.protocol = shouldUseSecure ? 'wss:' : 'ws:';
+      return u.toString();
+    } catch {
+      // As a last resort, prefix wss://
+      return `wss://${url.replace(/^\/*/, '')}`;
+    }
+  };
+  const websocketUrl = toWebsocketUrl(serverUrl || null);
   
   // Déterminer le chemin de retour basé sur le rôle de l'utilisateur
   const onLeavePath = role === 'instructor' ? '/tutor/calendar' : '/student/calendar';
@@ -31,8 +60,10 @@ export default function LiveClassPage({ params }: PageProps) {
           body: JSON.stringify({ classId }),
         });
         if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data.error || "Impossible d'obtenir le token LiveKit");
+          const text = await res.text().catch(() => "");
+          let reason = "";
+          try { reason = JSON.parse(text)?.error || text; } catch { reason = text; }
+          throw new Error(reason || `Impossible d'obtenir le token LiveKit (HTTP ${res.status})`);
         }
         const data = await res.json();
         setToken(data.token);
@@ -58,7 +89,7 @@ export default function LiveClassPage({ params }: PageProps) {
     );
   }
 
-  if (!serverUrl) {
+  if (!websocketUrl) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <div className="rounded-lg border border-stroke bg-white p-6 text-center dark:border-strokedark dark:bg-blacksection">
@@ -103,7 +134,7 @@ export default function LiveClassPage({ params }: PageProps) {
       )}
       
       
-      <LiveClass serverUrl={serverUrl} token={token} onLeavePath={onLeavePath} />
+      <LiveClass serverUrl={websocketUrl} token={token} onLeavePath={onLeavePath} />
     </div>
   );
 }

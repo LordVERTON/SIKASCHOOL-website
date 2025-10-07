@@ -31,6 +31,13 @@ export default function TutorMessagesPage() {
   const [threads, setThreads] = useState<MessageThread[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isNewOpen, setIsNewOpen] = useState(false);
+  const [participants, setParticipants] = useState<{ id: string; name: string; email: string }[]>([]);
+  const [participantsLoading, setParticipantsLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [subject, setSubject] = useState('');
+  const [content, setContent] = useState('');
+  const [creating, setCreating] = useState(false);
 
   const fetchThreads = useCallback(async () => {
     try {
@@ -56,6 +63,55 @@ export default function TutorMessagesPage() {
       fetchThreads();
     }
   }, [user?.id, fetchThreads]);
+
+  const openNewModal = async () => {
+    if (!user?.id) return;
+    try {
+      setIsNewOpen(true);
+      setParticipantsLoading(true);
+      const res = await fetch('/api/tutor/students', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setParticipants((data.students || []).map((s: any) => ({ id: s.id, name: s.name, email: s.email })));
+      } else {
+        setError('Erreur lors du chargement des étudiants assignés');
+      }
+    } catch {
+      setError('Erreur lors du chargement des étudiants assignés');
+    } finally {
+      setParticipantsLoading(false);
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  const handleCreateThread = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.id || !subject.trim() || !content.trim() || selectedIds.length === 0) return;
+    try {
+      setCreating(true);
+      const res = await fetch('/api/tutor/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tutorId: user.id, subject: subject.trim(), content: content.trim(), participantIds: selectedIds })
+      });
+      if (res.ok) {
+        await fetchThreads();
+        setIsNewOpen(false);
+        setSelectedIds([]);
+        setSubject('');
+        setContent('');
+      } else {
+        setError('Erreur lors de la création de la conversation');
+      }
+    } catch {
+      setError('Erreur lors de la création de la conversation');
+    } finally {
+      setCreating(false);
+    }
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -104,12 +160,18 @@ export default function TutorMessagesPage() {
   }
 
   return (
+    <>
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Messages</h1>
         <p className="text-gray-600">
           Gérez vos conversations avec vos étudiants
         </p>
+        <div className="mt-4">
+          <button onClick={openNewModal} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90">
+            Nouveau message
+          </button>
+        </div>
       </div>
 
       {threads.length === 0 ? (
@@ -198,6 +260,72 @@ export default function TutorMessagesPage() {
           </div>
         </div>
       )}
+    </div>
+
+    {/* Modal Nouvelle conversation */}
+    <TutorModal open={isNewOpen} onClose={() => setIsNewOpen(false)}>
+      <h3 className="text-lg font-semibold mb-4">Nouvelle conversation</h3>
+      <form onSubmit={handleCreateThread} className="space-y-4">
+        <div>
+          <label className="block text-sm mb-1">Sujet</label>
+          <input
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            className="w-full px-3 py-2 border rounded-md"
+            placeholder="Sujet de la conversation"
+          />
+        </div>
+        <div>
+          <label className="block text-sm mb-1">Message</label>
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            className="w-full px-3 py-2 border rounded-md"
+            rows={3}
+            placeholder="Votre message initial"
+          />
+        </div>
+        <div>
+          <label className="block text-sm mb-2">Choisir des étudiants</label>
+          {participantsLoading ? (
+            <p className="text-sm text-gray-500">Chargement...</p>
+          ) : participants.length === 0 ? (
+            <p className="text-sm text-gray-500">Aucun étudiant assigné</p>
+          ) : (
+            <div className="max-h-48 overflow-y-auto divide-y border rounded-md">
+              {participants.map((p) => (
+                <label key={p.id} className="flex items-center gap-3 p-3">
+                  <input type="checkbox" checked={selectedIds.includes(p.id)} onChange={() => toggleSelect(p.id)} />
+                  <span className="text-sm">{p.name} <span className="text-gray-500">{p.email}</span></span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="flex justify-end gap-3">
+          <button type="button" onClick={() => setIsNewOpen(false)} className="px-4 py-2 border rounded-md">Annuler</button>
+          <button
+            type="submit"
+            disabled={creating || !subject.trim() || !content.trim() || selectedIds.length === 0}
+            className="px-4 py-2 bg-primary text-white rounded-md disabled:opacity-50"
+          >
+            {creating ? 'Création...' : 'Créer'}
+          </button>
+        </div>
+      </form>
+    </TutorModal>
+    </>
+  );
+}
+
+function TutorModal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-xl rounded-lg bg-white p-6 shadow-sm border border-gray-200">
+        {children}
+      </div>
     </div>
   );
 }

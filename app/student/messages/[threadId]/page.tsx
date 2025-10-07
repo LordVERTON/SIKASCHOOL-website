@@ -37,6 +37,9 @@ export default function MessageThread({ params }: { params: Promise<{ threadId: 
   const [error, setError] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [editingSubject, setEditingSubject] = useState(false);
+  const [subjectInput, setSubjectInput] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const loadThread = async () => {
@@ -82,9 +85,15 @@ export default function MessageThread({ params }: { params: Promise<{ threadId: 
       });
 
       if (response.ok) {
-        const data = await response.json();
-        setMessages(prev => [...prev, data.message]);
+        // Message envoyé: recharger le thread pour rafraîchir immédiatement l'affichage
         setNewMessage("");
+        const refreshed = await fetch(`/api/student/messages/${resolvedParams.threadId}`, { credentials: 'include' });
+        if (refreshed.ok) {
+          const refreshedData = await refreshed.json();
+          setThread(refreshedData.thread);
+          setMessages(refreshedData.messages || []);
+        }
+        try { _router.refresh(); } catch {}
       } else {
         setError('Erreur lors de l\'envoi du message');
       }
@@ -109,6 +118,50 @@ export default function MessageThread({ params }: { params: Promise<{ threadId: 
       return 'Hier';
     } else {
       return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+    }
+  };
+
+  const handleEditSubject = async () => {
+    if (!thread) return;
+    if (!subjectInput.trim()) return;
+    try {
+      const resolvedParams = await params;
+      const res = await fetch(`/api/student/messages/${resolvedParams.threadId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ subject: subjectInput.trim() })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setThread((prev) => prev ? { ...prev, subject: data.thread.subject } : prev);
+        setEditingSubject(false);
+      } else {
+        setError('Erreur lors de la mise à jour du sujet');
+      }
+    } catch {
+      setError('Erreur lors de la mise à jour du sujet');
+    }
+  };
+
+  const handleDeleteThread = async () => {
+    if (!thread || deleting) return;
+    try {
+      setDeleting(true);
+      const resolvedParams = await params;
+      const res = await fetch(`/api/student/messages/${resolvedParams.threadId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      if (res.ok) {
+        _router.push('/student/messages');
+      } else {
+        setError('Erreur lors de la suppression de la conversation');
+      }
+    } catch {
+      setError('Erreur lors de la suppression de la conversation');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -157,13 +210,43 @@ export default function MessageThread({ params }: { params: Promise<{ threadId: 
                 ← Retour
               </Link>
               <div>
-                <h1 className="text-3xl font-bold text-black dark:text-white xl:text-sectiontitle3">
-                  {thread.subject}
-                </h1>
+                {!editingSubject ? (
+                  <h1 className="text-3xl font-bold text-black dark:text-white xl:text-sectiontitle3">
+                    {thread.subject}
+                  </h1>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <input
+                      value={subjectInput}
+                      onChange={(e) => setSubjectInput(e.target.value)}
+                      className="px-3 py-2 border border-stroke rounded-md dark:border-strokedark dark:bg-blacksection"
+                      placeholder="Sujet de la conversation"
+                    />
+                    <button onClick={handleEditSubject} className="px-3 py-2 bg-primary text-white rounded-md">Enregistrer</button>
+                    <button onClick={() => setEditingSubject(false)} className="px-3 py-2 border rounded-md">Annuler</button>
+                  </div>
+                )}
                 <p className="mt-2 text-para2 text-waterloo dark:text-manatee">
                   Conversation créée le {new Date(thread.createdAt).toLocaleDateString('fr-FR')}
                 </p>
               </div>
+            </div>
+            <div className="flex items-center gap-3">
+              {!editingSubject && (
+                <button
+                  onClick={() => { setSubjectInput(thread.subject); setEditingSubject(true); }}
+                  className="px-4 py-2 border rounded-md hover:bg-gray-50 dark:hover:bg-gray-800"
+                >
+                  Modifier le sujet
+                </button>
+              )}
+              <button
+                onClick={handleDeleteThread}
+                disabled={deleting}
+                className="px-4 py-2 border border-red-600 text-red-600 rounded-md hover:bg-red-50 disabled:opacity-50"
+              >
+                {deleting ? 'Suppression...' : 'Supprimer'}
+              </button>
             </div>
           </div>
         </div>

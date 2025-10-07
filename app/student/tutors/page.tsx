@@ -34,19 +34,19 @@ export default function TutorsPage() {
         
         if (response.ok) {
           const data = await response.json();
-          const tutorsData: Tutor[] = data.tutors.map((tutor: any) => ({
+          const tutorsData: Tutor[] = (data.tutors || []).map((tutor: any) => ({
             id: tutor.id,
             name: tutor.name,
-            avatar: tutor.avatar,
-            subjects: tutor.subjects,
-            rating: 0,
-            totalReviews: 0,
-            pricePerHour: 0,
-            bio: tutor.bio,
-            experience: tutor.experience,
-            availability: ['Disponible sur demande'], // À adapter selon les besoins
-            isAvailable: tutor.isAvailable,
-            totalSessions: 0 // À calculer si nécessaire
+            avatar: tutor.avatar || '/images/user/user-01.png',
+            subjects: Array.isArray(tutor.subjects) ? tutor.subjects : [],
+            rating: Number(tutor.rating) || 0,
+            totalReviews: Number(tutor.totalReviews) || 0,
+            pricePerHour: Number(tutor.pricePerHour) || 0,
+            bio: tutor.bio || 'Aucune biographie disponible',
+            experience: Number(tutor.experienceYears ?? tutor.experience) || 0,
+            availability: Array.isArray(tutor.availability) && tutor.availability.length > 0 ? tutor.availability : ['Disponible sur demande'],
+            isAvailable: typeof tutor.isAvailable === 'boolean' ? tutor.isAvailable : true,
+            totalSessions: Number(tutor.totalSessions) || 0
           }));
           
           setTutors(tutorsData);
@@ -66,12 +66,12 @@ export default function TutorsPage() {
     fetchTutors();
   }, []);
 
-  const allSubjects = Array.from(new Set(tutors.flatMap(tutor => tutor.subjects)));
+  const allSubjects = Array.from(new Set(tutors.flatMap(tutor => tutor.subjects || [])));
 
   const filteredTutors = tutors.filter(tutor => {
     const matchesSearch = tutor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         tutor.subjects.some(subject => subject.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesSubject = !selectedSubject || tutor.subjects.includes(selectedSubject);
+                         (tutor.subjects || []).some(subject => subject.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesSubject = !selectedSubject || (tutor.subjects || []).includes(selectedSubject);
     return matchesSearch && matchesSubject;
   });
 
@@ -163,7 +163,7 @@ export default function TutorsPage() {
                   Matières enseignées:
                 </h4>
                 <div className="flex flex-wrap gap-2">
-                  {tutor.subjects.map((subject) => (
+                  {(tutor.subjects || []).map((subject) => (
                     <span
                       key={subject}
                       className="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full"

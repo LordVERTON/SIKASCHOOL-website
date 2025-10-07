@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -30,6 +31,13 @@ export default function StudentMessages() {
   const [threads, setThreads] = useState<MessageThread[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isNewOpen, setIsNewOpen] = useState(false);
+  const [participants, setParticipants] = useState<{ id: string; name: string; email: string; avatar: string }[]>([]);
+  const [participantsLoading, setParticipantsLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [subject, setSubject] = useState("");
+  const [content, setContent] = useState("");
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     const loadThreads = async () => {
@@ -56,6 +64,61 @@ export default function StudentMessages() {
     loadThreads();
   }, []);
 
+  const openNewModal = async () => {
+    try {
+      setIsNewOpen(true);
+      setParticipantsLoading(true);
+      const res = await fetch('/api/student/assigned-tutors', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setParticipants((data.tutors || []).map((t: any) => ({ id: t.id, name: t.name, email: t.email, avatar: t.avatar })));
+      } else {
+        setError('Erreur lors du chargement des tuteurs assignés');
+      }
+    } catch {
+      setError('Erreur lors du chargement des tuteurs assignés');
+    } finally {
+      setParticipantsLoading(false);
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  const handleCreateThread = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!subject.trim() || !content.trim() || selectedIds.length === 0) return;
+    try {
+      setCreating(true);
+      const res = await fetch('/api/student/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ subject: subject.trim(), content: content.trim(), participantIds: selectedIds })
+      });
+      if (res.ok) {
+        // refresh list
+        const list = await fetch('/api/student/messages', { credentials: 'include' });
+        if (list.ok) {
+          const data = await list.json();
+          setThreads(data.threads || []);
+        }
+        // reset and close
+        setIsNewOpen(false);
+        setSelectedIds([]);
+        setSubject("");
+        setContent("");
+      } else {
+        setError('Erreur lors de la création de la conversation');
+      }
+    } catch {
+      setError('Erreur lors de la création de la conversation');
+    } finally {
+      setCreating(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -78,114 +141,191 @@ export default function StudentMessages() {
   };
 
   return (
-    <main className="pb-20 pt-15 lg:pb-25 xl:pb-30">
-      <div className="mx-auto max-w-c-1315 px-4 md:px-8 xl:px-0">
-        <div className="animate_top">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-black dark:text-white xl:text-sectiontitle3">
-                Messages
-              </h1>
-              <p className="mt-4 text-para2 text-waterloo dark:text-manatee">
-                Communiquez avec vos tuteurs.
-              </p>
-            </div>
-            <button className="rounded-md bg-primary px-6 py-3 font-medium text-white transition hover:opacity-90">
-              Nouveau message
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-10 grid gap-7.5 lg:grid-cols-3">
-          {/* Messages List */}
-          <div className="lg:col-span-1">
-            <div className="animate_top rounded-lg border border-stroke bg-white shadow-solid-10 dark:border-strokedark dark:bg-blacksection">
-              <div className="p-6 border-b border-stroke dark:border-strokedark">
-                <h2 className="text-lg font-semibold text-black dark:text-white">Conversations</h2>
-              </div>
-              
-              {loading ? (
-                <div className="p-6 text-center">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
-                  <p className="text-sm text-waterloo dark:text-manatee mt-2">Chargement...</p>
-                </div>
-              ) : error ? (
-                <div className="p-6 text-center">
-                  <p className="text-red-600 dark:text-red-400">{error}</p>
-                </div>
-              ) : threads.length === 0 ? (
-                <div className="p-6 text-center">
-                  <p className="text-waterloo dark:text-manatee">Aucune conversation</p>
-                  <p className="text-sm text-waterloo dark:text-manatee mt-1">
-                    Commencez une conversation avec vos tuteurs
-                  </p>
-                </div>
-              ) : (
-                <div className="divide-y divide-stroke dark:divide-strokedark">
-                  {threads.map((thread) => (
-                    <Link
-                      key={thread.id}
-                      href={`/student/messages/${thread.id}`}
-                      className={`block p-4 transition hover:bg-gray-50 dark:hover:bg-gray-800/50 ${
-                        thread.unreadCount > 0 ? 'bg-primary/5 border-l-4 border-l-primary' : ''
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className={`text-sm font-medium truncate ${
-                              thread.unreadCount > 0 ? 'text-black dark:text-white' : 'text-gray-700 dark:text-gray-300'
-                            }`}>
-                              {thread.subject}
-                            </h3>
-                            {thread.unreadCount > 0 && (
-                              <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-white bg-primary rounded-full">
-                                {thread.unreadCount}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-waterloo dark:text-manatee mb-1">
-                            avec {thread.tutor?.name || 'Tuteur inconnu'}
-                          </p>
-                          {thread.lastMessage && (
-                            <p className={`text-sm truncate ${
-                              thread.unreadCount > 0 ? 'text-black dark:text-white' : 'text-waterloo dark:text-manatee'
-                            }`}>
-                              {truncateContent(thread.lastMessage.content)}
-                            </p>
-                          )}
-                        </div>
-                        <div className="ml-2 text-xs text-waterloo dark:text-manatee">
-                          {formatDate(thread.updatedAt)}
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Message Content */}
-          <div className="lg:col-span-2">
-            <div className="animate_top rounded-lg border border-stroke bg-white shadow-solid-10 dark:border-strokedark dark:bg-blacksection">
-              <div className="p-6 text-center">
-                <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
-                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-medium text-black dark:text-white mb-2">
-                  Sélectionnez une conversation
-                </h3>
-                <p className="text-waterloo dark:text-manatee">
-                  Choisissez une conversation dans la liste pour commencer à échanger avec vos tuteurs.
-                </p>
-              </div>
-            </div>
-          </div>
+    <>
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Messages</h1>
+        <p className="text-gray-600">
+          Gérez vos conversations avec vos tuteurs
+        </p>
+        <div className="mt-4">
+          <button onClick={openNewModal} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90">
+            Nouveau message
+          </button>
         </div>
       </div>
-    </main>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      ) : error ? (
+        <div className="text-center py-12">
+          <p className="text-red-600">{error}</p>
+        </div>
+      ) : threads.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+            <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun message</h3>
+          <p className="text-gray-500">
+            Vous n'avez pas encore de conversations avec vos tuteurs.
+          </p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="divide-y divide-gray-200">
+            {threads.map((thread) => (
+              <Link
+                key={thread.id}
+                href={`/student/messages/${thread.id}`}
+                className="block p-6 hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-start space-x-4">
+                  {/* Avatar du tuteur */}
+                  <div className="flex-shrink-0">
+                    {thread.tutor?.avatar ? (
+                      <Image
+                        src={thread.tutor.avatar}
+                        alt={thread.tutor.name}
+                        width={48}
+                        height={48}
+                        className="rounded-full"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                        <span className="text-primary font-medium text-lg">
+                          {thread.tutor?.name?.charAt(0) || '?'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Contenu du thread */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-medium text-gray-900 truncate">
+                        {thread.tutor?.name || 'Tuteur inconnu'}
+                      </h3>
+                      <div className="flex items-center space-x-2">
+                        {thread.unreadCount > 0 && (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary text-white">
+                            {thread.unreadCount}
+                          </span>
+                        )}
+                        <span className="text-sm text-gray-500">
+                          {formatDate(thread.updatedAt)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="text-sm font-medium text-gray-900 mt-1">
+                      {thread.subject}
+                    </p>
+
+                    {thread.lastMessage && (
+                      <p className="text-sm text-gray-600 mt-1">
+                        {truncateContent(thread.lastMessage.content)}
+                      </p>
+                    )}
+
+                    <div className="flex items-center mt-2 text-sm text-gray-500">
+                      <span>{thread.tutor?.email}</span>
+                    </div>
+                  </div>
+
+                  {/* Indicateur de message non lu */}
+                  {thread.unreadCount > 0 && (
+                    <div className="flex-shrink-0">
+                      <div className="w-3 h-3 bg-primary rounded-full"></div>
+                    </div>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+
+    {/* Modal Nouvelle conversation */}
+    <Modal open={isNewOpen} onClose={() => setIsNewOpen(false)}>
+      <h3 className="text-lg font-semibold text-black dark:text-white mb-4">Nouvelle conversation</h3>
+      <form onSubmit={handleCreateThread} className="space-y-4">
+        <div>
+          <label className="block text-sm mb-1">Sujet</label>
+          <input
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            className="w-full px-3 py-2 border border-stroke rounded-md dark:border-strokedark dark:bg-blacksection"
+            placeholder="Sujet de la conversation"
+          />
+        </div>
+        <div>
+          <label className="block text-sm mb-1">Message</label>
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            className="w-full p-3 border border-stroke rounded-md resize-none dark:border-strokedark dark:bg-blacksection"
+            rows={3}
+            placeholder="Votre message initial"
+          />
+        </div>
+        <div>
+          <label className="block text-sm mb-2">Choisir des tuteurs</label>
+          {participantsLoading ? (
+            <p className="text-sm text-waterloo">Chargement...</p>
+          ) : participants.length === 0 ? (
+            <p className="text-sm text-waterloo">Aucun tuteur assigné</p>
+          ) : (
+            <div className="max-h-48 overflow-y-auto divide-y divide-stroke dark:divide-strokedark border border-stroke rounded-md dark:border-strokedark">
+              {participants.map((p) => (
+                <label key={p.id} className="flex items-center gap-3 p-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(p.id)}
+                    onChange={() => toggleSelect(p.id)}
+                  />
+                  <span className="text-sm">{p.name} <span className="text-waterloo">{p.email}</span></span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="flex justify-end gap-3">
+          <button type="button" onClick={() => setIsNewOpen(false)} className="px-4 py-2 border rounded-md">Annuler</button>
+          <button
+            type="submit"
+            disabled={creating || !subject.trim() || !content.trim() || selectedIds.length === 0}
+            className="px-4 py-2 bg-primary text-white rounded-md disabled:opacity-50"
+          >
+            {creating ? 'Création...' : 'Créer'}
+          </button>
+        </div>
+      </form>
+    </Modal>
+    </>
   );
 }
+
+// New conversation modal
+// Simple inline modal implementation
+// Placed after default export to keep file self-contained
+function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-xl rounded-lg border border-stroke bg-white p-6 shadow-solid-10 dark:border-strokedark dark:bg-blacksection">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// Augment the page with the modal JSX by rendering it via a wrapper component override
+// We monkey-patch render by exporting a Client Component that includes the modal
+// This is minimal and keeps current structure

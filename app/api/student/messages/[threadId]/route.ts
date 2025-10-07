@@ -32,15 +32,15 @@ export async function GET(
       return NextResponse.json({ error: 'Thread non trouvé ou accès refusé' }, { status: 404 });
     }
 
-    // Vérifier que l'étudiant a des messages dans ce thread
-    const { data: studentMessages, error: studentMessagesError } = await supabaseAdmin
-      .from('messages')
-      .select('id')
+    // Vérifier la participation de l'étudiant au thread
+    const { data: participant, error: participantError } = await (supabaseAdmin as any)
+      .from('message_thread_participants')
+      .select('thread_id')
       .eq('thread_id', threadId)
-      .eq('sender_id', user.id)
-      .limit(1);
+      .eq('user_id', user.id)
+      .single();
 
-    if (studentMessagesError || !studentMessages || studentMessages.length === 0) {
+    if (participantError || !participant) {
       return NextResponse.json({ error: 'Accès refusé à ce thread' }, { status: 403 });
     }
 
@@ -73,7 +73,7 @@ export async function GET(
     const userIds = [...new Set((messages || []).map((msg: any) => msg.sender_id))];
     const { data: users, error: usersError } = await supabaseAdmin
       .from('users')
-      .select('id, first_name, last_name, avatar_url, role')
+      .select('id, email, first_name, last_name, avatar_url, role')
       .in('id', userIds);
 
     if (usersError) {
@@ -81,8 +81,7 @@ export async function GET(
       return NextResponse.json({ error: 'Erreur lors de la récupération des utilisateurs' }, { status: 500 });
     }
 
-    // Trouver le tuteur dans les utilisateurs
-    const tutor = users?.find((u: any) => u.role === 'TUTOR');
+    // Note: tutor variable not used (kept for readability). Remove to satisfy linter.
 
     const formattedMessages = (messages || []).map((message: any) => {
       const sender = users?.find((u: any) => u.id === message.sender_id);
@@ -148,15 +147,15 @@ export async function POST(
       return NextResponse.json({ error: 'Thread non trouvé ou accès refusé' }, { status: 404 });
     }
 
-    // Vérifier que l'étudiant a des messages dans ce thread
-    const { data: studentMessages, error: studentMessagesError } = await supabaseAdmin
-      .from('messages')
-      .select('id')
+    // Vérifier la participation de l'étudiant au thread
+    const { data: participant, error: participantError } = await (supabaseAdmin as any)
+      .from('message_thread_participants')
+      .select('thread_id')
       .eq('thread_id', threadId)
-      .eq('sender_id', user.id)
-      .limit(1);
+      .eq('user_id', user.id)
+      .single();
 
-    if (studentMessagesError || !studentMessages || studentMessages.length === 0) {
+    if (participantError || !participant) {
       return NextResponse.json({ error: 'Accès refusé à ce thread' }, { status: 403 });
     }
 
@@ -178,7 +177,7 @@ export async function POST(
     }
 
     // Trouver le tuteur dans ce thread pour créer une notification
-    const { data: tutorMessages, error: tutorMessagesError } = await supabaseAdmin
+    const { data: tutorMessages } = await supabaseAdmin
       .from('messages')
       .select('sender_id')
       .eq('thread_id', threadId)
@@ -224,6 +223,95 @@ export async function POST(
 
   } catch (error) {
     console.error('❌ Erreur API envoi message:', error);
+    return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });
+  }
+}
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ threadId: string }> }
+) {
+  try {
+    const user = await getUserSession();
+    if (!user || user.role !== 'STUDENT') {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
+    const { threadId } = await params;
+    const body = await request.json();
+    const { subject } = body;
+
+    if (!subject) {
+      return NextResponse.json({ error: 'Sujet requis' }, { status: 400 });
+    }
+
+    // Vérifier participation
+    const { data: participant, error: participantError } = await (supabaseAdmin as any)
+      .from('message_thread_participants')
+      .select('thread_id')
+      .eq('thread_id', threadId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (participantError || !participant) {
+      return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
+    }
+
+    const { data: updated, error: updateError } = await (supabaseAdmin as any)
+      .from('message_threads')
+      .update({ subject })
+      .eq('id', threadId)
+      .select('id, subject')
+      .single();
+
+    if (updateError) {
+      return NextResponse.json({ error: 'Erreur mise à jour' }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, thread: updated });
+  } catch (error) {
+    console.error('❌ Erreur API update thread:', error);
+    return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ threadId: string }> }
+) {
+  try {
+    const user = await getUserSession();
+    if (!user || user.role !== 'STUDENT') {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
+    const { threadId } = await params;
+
+    // Vérifier participation
+    const { data: participant, error: participantError } = await (supabaseAdmin as any)
+      .from('message_thread_participants')
+      .select('thread_id')
+      .eq('thread_id', threadId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (participantError || !participant) {
+      return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
+    }
+
+    // Hard delete: supprimer définitivement le thread (messages et participants en cascade)
+    const { error: deleteError } = await (supabaseAdmin as any)
+      .from('message_threads')
+      .delete()
+      .eq('id', threadId);
+
+    if (deleteError) {
+      return NextResponse.json({ error: 'Erreur suppression' }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('❌ Erreur API delete thread:', error);
     return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });
   }
 }
