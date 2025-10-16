@@ -126,7 +126,7 @@ const BookOnline = () => {
                     {service.duration}
                   </div>
                   <div className="text-right">
-                    {service.isFree ? (
+                    {/* {service.isFree ? (
                       <span className="text-lg font-bold text-green-600 dark:text-green-400">
                         {service.price}
                       </span>
@@ -136,7 +136,7 @@ const BookOnline = () => {
                           {service.price}
                         </span>
                       </div>
-                    )}
+                    )} */}
                   </div>
                 </div>
 

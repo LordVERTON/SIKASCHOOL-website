@@ -184,14 +184,15 @@ const Contact = () => {
                 <h3 className="mb-4 text-metatitle3 font-medium text-black dark:text-white">
                   {t.contact.locationTitle}
                 </h3>
-                <p>290 Rue Clément Adler, Lausanne, Suisse</p>
+                <p>Campus Drive, Stanford, Californie</p>
               </div>
               <div className="5 mb-7">
                 <h3 className="mb-4 text-metatitle3 font-medium text-black dark:text-white">
                   {t.contact.emailTitle}
                 </h3>
                 <p>
-                  <a href="#">contact@sikaschool.com</a>
+                  <a href="#">sikaschoolservice@gmail.com
+                  </a>
                 </p>
               </div>
               <div>

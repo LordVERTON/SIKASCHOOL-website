@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = 'force-dynamic';
 import { useEffect, useMemo, useState } from 'react';
 import { formatMinutes } from '@/lib/time-utils';
 
@@ -108,7 +109,7 @@ export default function TutorPaiements() {
               <thead>
                 <tr className="border-b border-stroke text-waterloo dark:border-strokedark dark:text-manatee">
                   <th className="py-3 pr-6">Date</th>
-                  <th className="py-3 pr-6">Montant</th>
+                  {/* <th className="py-3 pr-6">Montant</th> */}
                   <th className="py-3">N° Compte</th>
                 </tr>
               </thead>
@@ -116,7 +117,7 @@ export default function TutorPaiements() {
                 {payouts.map((p, idx) => (
                   <tr key={idx} className={`${idx%2===1?'bg-[#efefef] dark:bg-[#1f1f1f]':''}`}>
                     <td className="py-3 pr-6">{p.date ? new Date(p.date).toLocaleDateString('fr-FR') : '—'}</td>
-                    <td className="py-3 pr-6">{(p.amountCents/100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</td>
+                    {/* <td className="py-3 pr-6">{(p.amountCents/100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</td> */}
                     <td className="py-3">{p.accountMasked}</td>
                   </tr>
                 ))}
@@ -131,16 +132,16 @@ export default function TutorPaiements() {
               <thead>
                 <tr className="border-b border-stroke text-waterloo dark:border-strokedark dark:text-manatee">
                   <th className="py-3 pr-6">Année</th>
-                  <th className="py-3 pr-6">Montant net imposable</th>
-                  <th className="py-3">Montant Impôt PAS</th>
+                  {/* <th className="py-3 pr-6">Montant net imposable</th>
+                  <th className="py-3">Montant Impôt PAS</th> */}
                 </tr>
               </thead>
               <tbody>
                 {annual.map((r: any) => (
                   <tr key={r.year} className="border-b border-stroke last:border-0 dark:border-strokedark">
                     <td className="py-3 pr-6">{r.year}</td>
-                    <td className="py-3 pr-6">{(r.netCents/100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</td>
-                    <td className="py-3">{(r.pasCents/100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</td>
+                    {/* <td className="py-3 pr-6">{(r.netCents/100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</td>
+                    <td className="py-3">{(r.pasCents/100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</td> */}
                   </tr>
                 ))}
               </tbody>

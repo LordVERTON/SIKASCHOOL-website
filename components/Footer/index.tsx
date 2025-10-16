@@ -61,7 +61,7 @@ const Footer = () => {
                   href="#"
                   className="text-itemtitle font-medium text-black dark:text-white"
                 >
-                  contact@sikaschool.com
+                  sikaschoolservice@gmail.com
                 </a>
               </motion.div>
 
@@ -173,10 +173,10 @@ const Footer = () => {
                     </li>
                     <li>
                       <Link
-                        href="mailto:contact@sikaschool.com"
+                        href="mailto:sikaschoolservice@gmail.com"
                         className="mb-3 inline-block hover:text-primary"
                       >
-                        contact@sikaschool.com
+                        sikaschoolservice@gmail.com
                       </Link>
                     </li>
                   </ul>
@@ -217,7 +217,7 @@ const Footer = () => {
                   </a>
                 </li>
                 <li>
-                  <a href="mailto:contact@sikaschool.com" className="hover:text-primary">
+                  <a href="mailto:sikaschoolservice@gmail.com" className="hover:text-primary">
                     {t.footer.supportLink}
                   </a>
                 </li>

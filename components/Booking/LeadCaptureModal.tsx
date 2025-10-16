@@ -58,12 +58,41 @@ export default function LeadCaptureModal({ isOpen, onClose, onSubmitted }: LeadC
         STORAGE_KEYS.LEAD_FORM,
         JSON.stringify({ civility, lastName, firstName, email, phone, zip, goal, goalOther: goal === "Autre" ? goalOther : "", contest: subject === "Préparation à un concours" ? contest : "" })
       );
+
+      // Call backend to create the student
+      const res = await fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          email,
+          phone,
+          zip,
+          level,
+          subject,
+          goal,
+          goalOther,
+          contest
+        })
+      });
+
+      if (!res.ok) {
+        throw new Error('lead_failed');
+      }
+
       onSubmitted?.();
-      onClose();
+      // Show a simple inline confirmation state
+      setShowThanks(true);
+    } catch {
+      setError('Une erreur est survenue. Merci de réessayer.');
     } finally {
       setSubmitting(false);
     }
   };
+
+  const [showThanks, setShowThanks] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -74,7 +103,18 @@ export default function LeadCaptureModal({ isOpen, onClose, onSubmitted }: LeadC
         <button onClick={onClose} className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
           <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
-
+        {error && (
+          <div className="mb-4 rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+        {showThanks ? (
+          <div className="py-16 text-center">
+            <h3 className="mb-3 text-2xl font-semibold text-black dark:text-white">Merci pour votre inscription</h3>
+            <p className="text-waterloo dark:text-manatee">Nous vous contacterons rapidement pour organiser une première séance d'essai.</p>
+          </div>
+        ) : (
+        <>
         <div className="grid gap-6 md:grid-cols-2">
           {/* Étape 1 */}
           <div className="rounded-lg bg-primary/10 p-6">
@@ -151,6 +191,8 @@ export default function LeadCaptureModal({ isOpen, onClose, onSubmitted }: LeadC
             {submitting ? 'Envoi…' : 'Valider'}
           </button>
         </div>
+        </>
+        )}
       </div>
     </div>
   );

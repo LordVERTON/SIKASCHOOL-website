@@ -42,13 +42,13 @@ const Pricing = () => {
               </div>
               
               <div className="mb-2 flex items-center gap-2">
-                <span className="relative text-lg text-black dark:text-white">
+                {/* <span className="relative text-lg text-black dark:text-white">
                   23.5€
                   <span className="absolute left-0 top-1/2 h-0.5 w-full -translate-y-1/2 -rotate-12 bg-red-500"></span>
                 </span>
                 <h3 className="text-3xl font-bold text-black dark:text-white xl:text-sectiontitle3">
                   18 <span className="text-regular text-waterloo dark:text-manatee">€/cours</span>
-                </h3>
+                </h3> */}
               </div>
           <h4 className="mb-2.5 text-para2 font-medium text-black dark:text-white">
             {t.pricing.college}
@@ -92,13 +92,13 @@ const Pricing = () => {
               </div>
 
               <div className="mb-2 flex items-center gap-2">
-                <span className="relative text-lg text-black dark:text-white">
+                {/* <span className="relative text-lg text-black dark:text-white">
                   27.5€
                   <span className="absolute left-0 top-1/2 h-0.5 w-full -translate-y-1/2 -rotate-12 bg-red-500"></span>
                 </span>
                 <h3 className="text-3xl font-bold text-black dark:text-white xl:text-sectiontitle3">
                   22 <span className="text-regular text-waterloo dark:text-manatee">€/cours</span>
-                </h3>
+                </h3> */}
               </div>
           <h4 className="mb-2.5 text-para2 font-medium text-black dark:text-white">
             {t.pricing.highSchool}
@@ -142,13 +142,13 @@ const Pricing = () => {
               </div>
 
               <div className="mb-2 flex items-center gap-2">
-                <span className="relative text-lg text-black dark:text-white">
+                {/* <span className="relative text-lg text-black dark:text-white">
                   33.5€
                   <span className="absolute left-0 top-1/2 h-0.5 w-full -translate-y-1/2 -rotate-12 bg-red-500"></span>
                 </span>
                 <h3 className="text-3xl font-bold text-black dark:text-white xl:text-sectiontitle3">
                   28 <span className="text-regular text-waterloo dark:text-manatee">€/cours</span>
-                </h3>
+                </h3> */}
               </div>
               <h4 className="mb-2.5 text-para2 font-medium text-black dark:text-white">
                 {t.pricing.university}

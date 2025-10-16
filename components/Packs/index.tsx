@@ -117,10 +117,10 @@ const Packs = () => {
                     {plan.name}
                   </h4>
                   <div className="mb-4">
-                    <span className="text-3xl font-bold text-primary">{plan.price}</span>
+                    {/* <span className="text-3xl font-bold text-primary">{plan.price}</span>
                     <span className="ml-2 text-sm text-waterloo dark:text-manatee">
                       {plan.originalPrice}
-                    </span>
+                    </span> */}
                   </div>
                   <p className="mb-2 text-sm font-medium text-black dark:text-white">
                     {plan.sessions} (Sans Engagement)
@@ -155,10 +155,10 @@ const Packs = () => {
                     {plan.name}
                   </h4>
                   <div className="mb-4">
-                    <span className="text-3xl font-bold text-primary">{plan.price}</span>
+                    {/* <span className="text-3xl font-bold text-primary">{plan.price}</span>
                     <span className="ml-2 text-sm text-waterloo dark:text-manatee">
                       {plan.originalPrice}
-                    </span>
+                    </span> */}
                   </div>
                   <p className="mb-2 text-sm font-medium text-black dark:text-white">
                     {plan.sessions} (Sans Engagement)
