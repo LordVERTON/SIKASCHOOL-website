@@ -1,7 +1,8 @@
 "use client";
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { formatMinutes } from '@/lib/time-utils';
 import { hasAdminPermissions } from '@/lib/admin-permissions';
@@ -57,8 +58,9 @@ interface Payment {
   created_at: string;
 }
 
-export default function AdministrationPage() {
+function AdministrationPageContent() {
   const { user, loading } = useAuth(['TUTOR', 'ADMIN']);
+  const searchParams = useSearchParams();
   // const { confirm, ConfirmDialog } = useConfirm();
   const [activeTab, setActiveTab] = useState<'users' | 'sessions' | 'payments' | 'assignments' | 'sync'>('users');
   const [users, setUsers] = useState<User[]>([]);
@@ -83,6 +85,58 @@ export default function AdministrationPage() {
     const hasPermissions = hasAdminPermissions(user);
     return hasPermissions;
   }, [user]);
+
+  // Fonctions pour gérer les assignations (définies avant le useEffect qui les utilise)
+  const handleViewAssignments = async (user: User) => {
+    setSelectedUserForAssignments(user);
+    setShowAssignmentModal(true);
+    try {
+      const response = await fetch(`/api/admin/assignments/user/${user.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setUserAssignments(data.assignments || []);
+        
+        // Récupérer les utilisateurs disponibles pour l'assignation
+        const availableResponse = await fetch('/api/admin/assignments/available-users');
+        if (availableResponse.ok) {
+          const availableData = await availableResponse.json();
+          if (user.role === 'STUDENT') {
+            setAvailableUsers(availableData.tutors || []);
+          } else if (user.role === 'TUTOR') {
+            setAvailableUsers(availableData.students || []);
+          }
+        }
+      } else {
+        const _error = await response.json();
+        console.error('Erreur lors de la récupération des assignations:', _error);
+      }
+    } catch (_error) {
+      console.error('Erreur lors de la récupération des assignations:', _error);
+    }
+  };
+
+  // Gérer les paramètres d'URL pour ouvrir directement l'onglet assignments avec un étudiant sélectionné
+  useEffect(() => {
+    if (!searchParams) return;
+    
+    const tab = searchParams.get('tab');
+    const studentId = searchParams.get('studentId');
+    
+    if (tab === 'assignments') {
+      setActiveTab('assignments');
+    }
+    
+    if (studentId && users.length > 0) {
+      const student = users.find(u => u.id === studentId && u.role === 'STUDENT');
+      if (student) {
+        setSelectedUserForAssignments(student);
+        // Appeler handleViewAssignments de manière asynchrone
+        handleViewAssignments(student).catch(err => {
+          console.error('Erreur lors de la récupération des assignations:', err);
+        });
+      }
+    }
+  }, [searchParams, users]);
 
   useEffect(() => {
     if (user && isAdmin && !dataLoaded && !loadingData) {
@@ -403,30 +457,6 @@ export default function AdministrationPage() {
     }
   };
 
-  // Fonctions pour gérer les assignations
-  const handleViewAssignments = async (user: User) => {
-    setSelectedUserForAssignments(user);
-    setShowAssignmentModal(true);
-    
-    try {
-      // Récupérer les assignations de l'utilisateur
-      const response = await fetch(`/api/admin/assignments/user/${user.id}`);
-      if (response.ok) {
-        const data = await response.json();
-        setUserAssignments(data.assignments || []);
-      }
-      
-      // Récupérer les utilisateurs disponibles pour assignation
-      const role = user.role === 'TUTOR' ? 'STUDENT' : 'TUTOR';
-      const availableResponse = await fetch(`/api/admin/assignments/available-users?role=${role}`);
-      if (availableResponse.ok) {
-        const availableData = await availableResponse.json();
-        setAvailableUsers(availableData.users || []);
-      }
-    } catch (_error) {
-      console.error('Erreur lors du chargement des assignations:', _error);
-    }
-  };
 
   const handleAssignUser = async (targetUserId: string, notes?: string) => {
     if (!selectedUserForAssignments) return;
@@ -1371,5 +1401,20 @@ function SessionModal({ session, users, onSave, onClose }: {
       
       {/* <ConfirmDialog /> */}
     </div>
+  );
+}
+
+export default function AdministrationPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Chargement...</p>
+        </div>
+      </div>
+    }>
+      <AdministrationPageContent />
+    </Suspense>
   );
 }

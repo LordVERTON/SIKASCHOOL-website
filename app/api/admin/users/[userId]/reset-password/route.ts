@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabase } from '@/lib/supabase';
-import { hasAdminPermissions } from '@/lib/admin-permissions';
+import { canAccessAdminFeatures } from '@/lib/admin-permissions';
 import bcrypt from 'bcryptjs';
 
 export async function POST(
@@ -9,15 +9,10 @@ export async function POST(
   { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    // Vérifier l'authentification
+    // Vérifier l'authentification et les permissions admin
     const user = await getUserSession();
-    if (!user || user.role !== 'TUTOR') {
+    if (!user || !canAccessAdminFeatures(user)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Vérifier les permissions admin
-    if (!hasAdminPermissions(user)) {
-      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
 
     const { userId } = await params;

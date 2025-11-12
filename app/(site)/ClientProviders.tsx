@@ -11,6 +11,7 @@ import { ThemeProvider } from "next-themes";
 import ToasterContext from "../context/ToastContext";
 import { useEffect, useState } from "react";
 import LeadCaptureModal from "@/components/Booking/LeadCaptureModal";
+import { setStorageItem, STORAGE_KEYS } from "@/lib/storage";
 
 export default function ClientProviders({
   children,
@@ -18,6 +19,10 @@ export default function ClientProviders({
   children: React.ReactNode;
 }) {
   const [leadOpen, setLeadOpen] = useState(false);
+
+  const handlePrefillEmail = (email: string) => {
+    setStorageItem(STORAGE_KEYS.LAST_LEAD_EMAIL, email);
+  };
 
   useEffect(() => {
     const handler = () => setLeadOpen(true);
@@ -38,7 +43,7 @@ export default function ClientProviders({
           <Header />
           <ToasterContext />
           {children}
-          <LeadCaptureModal isOpen={leadOpen} onClose={() => setLeadOpen(false)} />
+          <LeadCaptureModal isOpen={leadOpen} onClose={() => setLeadOpen(false)} onPrefillEmail={handlePrefillEmail} />
           <Footer />
           <ScrollToTop />
         </ErrorBoundary>

@@ -176,37 +176,51 @@ export async function POST(
       return NextResponse.json({ error: 'Erreur lors de l\'envoi du message' }, { status: 500 });
     }
 
-    // Trouver le tuteur dans ce thread pour créer une notification
-    const { data: tutorMessages } = await supabaseAdmin
-      .from('messages')
-      .select('sender_id')
+    // Récupérer tous les participants du thread (sauf l'expéditeur)
+    const { data: participants, error: _participantsError } = await supabaseAdmin
+      .from('message_thread_participants')
+      .select('user_id')
       .eq('thread_id', threadId)
-      .neq('sender_id', user.id)
-      .limit(1);
+      .neq('user_id', user.id);
 
-    if (tutorMessages && tutorMessages.length > 0) {
-      // Récupérer les informations du tuteur
-      const { data: tutor, error: tutorError } = await supabaseAdmin
+    if (participants && participants.length > 0) {
+      // Récupérer les informations de l'expéditeur
+      const { data: sender, error: senderError } = await supabaseAdmin
         .from('users')
-        .select('id, first_name, last_name')
-        .eq('id', (tutorMessages[0] as any).sender_id)
-        .eq('role', 'TUTOR')
+        .select('first_name, last_name')
+        .eq('id', user.id)
         .single();
 
-      if (tutor && !tutorError) {
-        // Créer une notification pour le tuteur
+      const senderName = sender && !senderError 
+        ? `${(sender as any).first_name || ''} ${(sender as any).last_name || ''}`.trim() || 'Un utilisateur'
+        : 'Un utilisateur';
+
+      // Récupérer le sujet du thread pour le message de notification
+      const { data: threadData } = await supabaseAdmin
+        .from('message_threads')
+        .select('subject')
+        .eq('id', threadId)
+        .single();
+
+      const threadSubject = (threadData as any)?.subject || 'Nouveau message';
+
+      // Créer des notifications pour tous les participants (étudiants et tuteurs)
+      const notifications = (participants as any[]).map((p: any) => ({
+        user_id: p.user_id,
+        type: 'MESSAGE',
+        title: 'Nouveau message',
+        message: `${senderName} vous a envoyé un message${threadSubject ? ` : ${threadSubject}` : ''}`,
+        data: {
+          thread_id: threadId,
+          sender_id: user.id,
+          sender_name: senderName
+        }
+      }));
+
+      if (notifications.length > 0) {
         await (supabaseAdmin as any)
           .from('notifications')
-          .insert({
-            user_id: (tutor as any).id,
-            type: 'MESSAGE',
-            title: 'Nouveau message',
-            message: `Vous avez reçu un nouveau message de ${(user as any).first_name || 'un étudiant'}`,
-            data: {
-              thread_id: threadId,
-              sender_id: user.id
-            }
-          });
+          .insert(notifications);
       }
     }
 

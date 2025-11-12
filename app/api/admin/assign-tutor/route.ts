@@ -32,7 +32,7 @@ const deassignSchema = z
 async function ensureUserExists(id: string, role: UsersRow['role']) {
   const { data, error } = await supabaseAdmin
     .from('users')
-    .select('id, role')
+    .select('id, role, first_name, last_name, email')
     .eq('id', id)
     .eq('role', role)
     .single();
@@ -77,6 +77,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Student not found' }, { status: 404 });
     }
 
+    // Récupérer les noms complets du tuteur
+    const tutorFirstName = (tutor as any).first_name || '';
+    const tutorLastName = (tutor as any).last_name || '';
+    const tutorName = [tutorFirstName, tutorLastName].filter(Boolean).join(' ') || 'votre tuteur';
+
     const insertPayload = {
       tutor_id: tutorId,
       student_id: studentId,
@@ -100,6 +105,32 @@ export async function POST(request: NextRequest) {
 
       console.error('Failed to assign tutor to student', assignmentError);
       return NextResponse.json({ error: 'Failed to assign tutor' }, { status: 500 });
+    }
+
+    // Créer la notification pour l'étudiant
+    const notificationPayload = {
+      user_id: studentId,
+      type: 'TUTOR_ASSIGNMENT',
+      title: 'Nouveau tuteur assigné',
+      message: `Un nouveau tuteur vous a été assigné : ${tutorName}. Préparez votre première séance ensemble !`,
+      data: {
+        tutor_id: tutorId,
+        tutor_name: tutorName,
+        assignment_id: assignment?.id ?? null,
+        notes: trimmedNotes,
+        assigned_by: sessionUser.id,
+        assigned_at: new Date().toISOString()
+      },
+      is_read: false
+    };
+
+    const { error: notificationError } = await (supabaseAdmin as any)
+      .from('notifications')
+      .insert(notificationPayload as any);
+
+    if (notificationError) {
+      console.error('❌ Erreur lors de la création de la notification d\'assignation de tuteur:', notificationError);
+      // Ne pas faire échouer la requête si la notification échoue, mais logger l'erreur
     }
 
     return NextResponse.json({

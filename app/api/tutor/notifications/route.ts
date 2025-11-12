@@ -48,8 +48,22 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { notificationId, action } = body as { notificationId?: string; action?: 'CONFIRM' | 'DECLINE' };
-    if (!notificationId || !action) {
+    const { notificationId, action, markAsRead } = body as { notificationId?: string; action?: 'CONFIRM' | 'DECLINE'; markAsRead?: boolean };
+    if (!notificationId) {
+      return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    }
+
+    // Si on veut juste marquer comme lu
+    if (markAsRead) {
+      await (supabaseAdmin as any)
+        .from('notifications')
+        .update({ is_read: true } as any)
+        .eq('id', notificationId)
+        .eq('user_id', user.id);
+      return NextResponse.json({ success: true });
+    }
+
+    if (!action) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
     }
 

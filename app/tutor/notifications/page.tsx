@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
+import Link from "next/link";
 
 type TutorNotification = {
   id: string;
@@ -37,6 +38,21 @@ export default function TutorNotificationsPage() {
   }, []);
 
   const unreadCount = useMemo(() => items.filter(n => !n.isRead).length, [items]);
+
+  const markAsRead = async (id: string) => {
+    try {
+      const res = await fetch('/api/tutor/notifications', {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notificationId: id, markAsRead: true }),
+      });
+      if (!res.ok) throw new Error('Action échouée');
+      await fetchNotifications();
+    } catch {
+      // Silently fail, not critical
+    }
+  };
 
   const actOn = async (id: string, action: 'CONFIRM' | 'DECLINE') => {
     try {
@@ -85,15 +101,31 @@ export default function TutorNotificationsPage() {
         ) : (
           <ul className="space-y-4">
             {items.map((n) => (
-              <li key={n.id} className="rounded-lg border border-stroke bg-white p-5 dark:border-strokedark dark:bg-blacksection">
+              <li 
+                key={n.id} 
+                className="rounded-lg border border-stroke bg-white p-5 dark:border-strokedark dark:bg-blacksection cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                onClick={() => !n.isRead && markAsRead(n.id)}
+              >
                 <div className="flex items-start justify-between gap-4">
-                  <div>
+                  <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <span className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{n.type}</span>
                       {!n.isRead && <span className="rounded bg-primary/10 px-2 py-0.5 text-xs text-primary">Nouveau</span>}
+                      {n.type === 'SYSTEM' && n.data?.action === 'NEW_STUDENT_REGISTRATION' && (
+                        <span className="rounded bg-orange-100 px-2 py-0.5 text-xs text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                          Action requise
+                        </span>
+                      )}
                     </div>
                     <h3 className="mt-1 text-lg font-semibold text-black dark:text-white">{n.title}</h3>
                     <p className="mt-1 text-sm text-waterloo dark:text-manatee">{n.message}</p>
+                    {n.type === 'SYSTEM' && n.data?.action === 'NEW_STUDENT_REGISTRATION' && (
+                      <div className="mt-2 rounded-md bg-blue-50 p-2 dark:bg-blue-900/20">
+                        <p className="text-xs font-medium text-blue-900 dark:text-blue-300">
+                          ⚠️ Cet élève n'a pas encore de tuteur assigné
+                        </p>
+                      </div>
+                    )}
                     <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{new Date(n.createdAt).toLocaleString('fr-FR')}</p>
                   </div>
                   {n.type === 'BOOKING' && (
@@ -112,6 +144,25 @@ export default function TutorNotificationsPage() {
                       >
                         Confirmer
                       </button>
+                    </div>
+                  )}
+                  {n.type === 'SYSTEM' && n.data?.action === 'NEW_STUDENT_REGISTRATION' && (
+                    <div className="flex shrink-0 flex-col gap-2">
+                      <Link
+                        href={`/tutor/administration?tab=assignments&studentId=${n.data.student_id}`}
+                        className="rounded bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primaryho transition-colors text-center"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          markAsRead(n.id);
+                        }}
+                      >
+                        Assigner un tuteur
+                      </Link>
+                      {n.data?.student_name && (
+                        <span className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                          {n.data.student_name}
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>

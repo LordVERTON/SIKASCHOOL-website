@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import LogoutButton from "../Auth/LogoutButton";
+import { useUnreadNotifications } from "@/hooks/useUnreadNotifications";
 
 const navigation = [
   {
@@ -73,6 +74,7 @@ const navigation = [
 
 export default function StudentSidebar() {
   const pathname = usePathname();
+  const { unreadCount } = useUnreadNotifications();
 
   return (
     <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0">
@@ -86,6 +88,7 @@ export default function StudentSidebar() {
           <nav className="flex-1 px-2 space-y-1">
             {navigation.map((item) => {
               const isActive = pathname === item.href;
+              const showBadge = item.href === "/student/notifications" && unreadCount > 0;
               return (
                 <Link
                   key={item.name}
@@ -96,12 +99,19 @@ export default function StudentSidebar() {
                       : "text-waterloo hover:bg-gray-50 hover:text-black dark:text-manatee dark:hover:bg-gray-800 dark:hover:text-white"
                   }`}
                 >
-                  <span
-                    className={`mr-3 flex-shrink-0 h-5 w-5 ${
-                      isActive ? "text-white" : "text-waterloo group-hover:text-black dark:text-manatee dark:group-hover:text-white"
-                    }`}
-                  >
-                    {item.icon}
+                  <span className="relative mr-3 flex-shrink-0 h-5 w-5">
+                    <span
+                      className={`h-5 w-5 ${
+                        isActive ? "text-white" : "text-waterloo group-hover:text-black dark:text-manatee dark:group-hover:text-white"
+                      }`}
+                    >
+                      {item.icon}
+                    </span>
+                    {showBadge && (
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </span>
+                    )}
                   </span>
                   {item.name}
                 </Link>

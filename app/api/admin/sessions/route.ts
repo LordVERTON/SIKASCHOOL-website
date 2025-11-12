@@ -12,7 +12,11 @@ export async function GET() {
     }
 
     // Récupérer toutes les sessions avec les informations des utilisateurs
-    const { data: sessions, error: _error } = await supabaseAdmin
+    // Essayer d'abord avec 'type', puis avec 'session_type' si nécessaire
+    let sessions: any[] = [];
+
+    // Essayer avec 'type' d'abord
+    const { data: sessionsWithType, error: errorWithType } = await supabaseAdmin
       .from('sessions')
       .select(`
         id,
@@ -31,30 +35,68 @@ export async function GET() {
       `)
       .order('created_at', { ascending: false });
 
-    if (_error) {
-      return NextResponse.json({ error: 'Failed to fetch sessions' }, { status: 500 });
+    if (errorWithType) {
+      // Si erreur, essayer avec 'session_type'
+      const { data: sessionsWithSessionType, error: errorWithSessionType } = await supabaseAdmin
+        .from('sessions')
+        .select(`
+          id,
+          student_id,
+          tutor_id,
+          subject,
+          level,
+          session_type,
+          status,
+          started_at,
+          completed_at,
+          duration_minutes,
+          student_rating,
+          created_at,
+          updated_at
+        `)
+        .order('created_at', { ascending: false });
+
+      if (errorWithSessionType) {
+        console.error('Erreur lors de la récupération des sessions:', errorWithSessionType);
+        return NextResponse.json({ error: 'Failed to fetch sessions', details: errorWithSessionType.message }, { status: 500 });
+      }
+
+      sessions = sessionsWithSessionType || [];
+    } else {
+      sessions = sessionsWithType || [];
+    }
+
+    // Si aucune session, retourner un tableau vide
+    if (!sessions || sessions.length === 0) {
+      return NextResponse.json([]);
     }
 
     // Récupérer les informations des utilisateurs
     const userIds = [...new Set([
-      ...(sessions as any)?.map((s: any) => s.student_id) || [],
-      ...(sessions as any)?.map((s: any) => s.tutor_id) || []
+      ...sessions.map((s: any) => s.student_id).filter(Boolean),
+      ...sessions.map((s: any) => s.tutor_id).filter(Boolean)
     ])];
 
-    const { data: users, error: usersError } = await supabaseAdmin
-      .from('users')
-      .select('id, first_name, last_name')
-      .in('id', userIds);
+    let users: any[] = [];
+    if (userIds.length > 0) {
+      const { data: usersData, error: usersError } = await supabaseAdmin
+        .from('users')
+        .select('id, first_name, last_name')
+        .in('id', userIds);
 
-    if (usersError) {
-      return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });
+      if (usersError) {
+        console.error('Erreur lors de la récupération des utilisateurs:', usersError);
+        return NextResponse.json({ error: 'Failed to fetch users', details: usersError.message }, { status: 500 });
+      }
+
+      users = usersData || [];
     }
 
     // Créer un map des utilisateurs pour un accès rapide
-    const usersMap = new Map((users as any)?.map((user: any) => [user.id, user]) || []);
+    const usersMap = new Map(users.map((user: any) => [user.id, user]));
 
     // Formater les données pour l'affichage
-    const formattedSessions = (sessions as any)?.map((session: any) => {
+    const formattedSessions = sessions.map((session: any) => {
       const student = usersMap.get(session.student_id);
       const tutor = usersMap.get(session.tutor_id);
       
@@ -62,24 +104,28 @@ export async function GET() {
         id: session.id,
         student_id: session.student_id,
         tutor_id: session.tutor_id,
-        student_name: student ? `${(student as any).first_name} ${(student as any).last_name}` : 'N/A',
-        tutor_name: tutor ? `${(tutor as any).first_name} ${(tutor as any).last_name}` : 'N/A',
-        subject: session.subject,
-        level: session.level,
-        type: session.type,
-        status: session.status,
+        student_name: student ? `${student.first_name || ''} ${student.last_name || ''}`.trim() || 'N/A' : 'N/A',
+        tutor_name: tutor ? `${tutor.first_name || ''} ${tutor.last_name || ''}`.trim() || 'N/A' : 'N/A',
+        subject: session.subject || 'N/A',
+        level: session.level || 'N/A',
+        type: session.type || session.session_type || 'N/A',
+        status: session.status || 'N/A',
         started_at: session.started_at,
         completed_at: session.completed_at,
-        duration_minutes: session.duration_minutes,
-        student_rating: session.student_rating,
+        duration_minutes: session.duration_minutes || 60,
+        student_rating: session.student_rating || null,
         created_at: session.created_at,
         updated_at: session.updated_at
       };
-    }) || [];
+    });
 
     return NextResponse.json(formattedSessions);
-      } catch {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } catch (error) {
+    console.error('Erreur dans GET /api/admin/sessions:', error);
+    return NextResponse.json({ 
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }
 

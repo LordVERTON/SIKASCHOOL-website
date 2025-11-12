@@ -1,7 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import TutorSelectionModal from "../Booking/TutorSelectionModal";
 import LeadCaptureModal from "../Booking/LeadCaptureModal";
 import { validateEmail, sanitizeString } from "@/lib/validation";
 import { setStorageItem, STORAGE_KEYS } from "@/lib/storage";
@@ -9,7 +7,6 @@ import { useLanguage } from "@/context/LanguageContext";
 
 const Hero = () => {
   const [email, setEmail] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLeadOpen, setIsLeadOpen] = useState(false);
   
   // Listen to header CTA to open lead modal
@@ -18,7 +15,6 @@ const Hero = () => {
     window.addEventListener('lead:open' as any, handler);
     return () => window.removeEventListener('lead:open' as any, handler);
   }, []);
-  const router = useRouter();
   const { t } = useLanguage();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -35,14 +31,8 @@ const Hero = () => {
     setIsLeadOpen(true);
   };
 
-  const handleSelectTutor = (tutorId: string) => {
-    // Store selected tutor securely
-    const success = setStorageItem(STORAGE_KEYS.SELECTED_TUTOR, tutorId);
-    if (success) {
-      router.push('/booking');
-    } else {
-      console.error('Failed to store tutor selection');
-    }
+  const handlePrefillEmail = (leadEmail: string) => {
+    setStorageItem(STORAGE_KEYS.LAST_LEAD_EMAIL, leadEmail);
   };
 
   return (
@@ -108,17 +98,11 @@ const Hero = () => {
         </div>
       </section>
 
-      {/* Tutor Selection Modal */}
+      {/* Lead capture modal */}
       <LeadCaptureModal
         isOpen={isLeadOpen}
         onClose={() => setIsLeadOpen(false)}
-        onSubmitted={() => setIsModalOpen(true)}
-      />
-
-      <TutorSelectionModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSelectTutor={handleSelectTutor}
+        onPrefillEmail={handlePrefillEmail}
       />
     </>
   );

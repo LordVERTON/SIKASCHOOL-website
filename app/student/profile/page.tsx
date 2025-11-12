@@ -2,6 +2,22 @@
 // import Link from "next/link";
 import { useEffect, useState } from "react";
 
+interface StudentIntakeDetails {
+  civility?: string;
+  guardianFirstName?: string;
+  guardianLastName?: string;
+  email?: string;
+  phone?: string;
+  zip?: string;
+  level?: string;
+  subject?: string;
+  goal?: string;
+  goalOther?: string;
+  goalSummary?: string;
+  contest?: string;
+  capturedAt?: string;
+}
+
 interface StudentProfileData {
   id: string;
   name: string;
@@ -20,6 +36,8 @@ interface StudentProfileData {
   language: string;
   theme?: string;
   notifications?: { email: boolean; push: boolean; sms: boolean };
+  academicGoals?: string;
+  intake?: StudentIntakeDetails | null;
 }
 
 export default function StudentProfile() {
@@ -170,6 +188,59 @@ export default function StudentProfile() {
           {/* Settings */}
           <div className="lg:col-span-2">
             <div className="space-y-6">
+              {profile.intake && (
+                <div className="animate_top rounded-lg border border-primary/20 bg-primary/5 p-7.5 shadow-solid-10 dark:border-primary/30 dark:bg-primary/10">
+                  <h3 className="text-lg font-semibold text-black dark:text-white mb-6">
+                    Informations transmises lors de l'inscription
+                  </h3>
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-waterloo dark:text-manatee">Responsable légal</p>
+                      <p className="mt-1 text-sm text-black dark:text-white">
+                        {profile.intake.civility ? `${profile.intake.civility} ` : ''}
+                        {[profile.intake.guardianFirstName, profile.intake.guardianLastName].filter(Boolean).join(' ') || 'Non communiqué'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-waterloo dark:text-manatee">Contact</p>
+                      <p className="mt-1 text-sm text-black dark:text-white">
+                        {profile.intake.email || profile.email}<br />
+                        {profile.intake.phone || profile.phone || '—'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-waterloo dark:text-manatee">Niveau / Classe</p>
+                      <p className="mt-1 text-sm text-black dark:text-white">{profile.intake.level || profile.level || '—'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-waterloo dark:text-manatee">Code postal</p>
+                      <p className="mt-1 text-sm text-black dark:text-white">{profile.intake.zip || profile.postalCode || '—'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-waterloo dark:text-manatee">Matière principale</p>
+                      <p className="mt-1 text-sm text-black dark:text-white">{profile.intake.subject || '—'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-waterloo dark:text-manatee">Objectif</p>
+                      <p className="mt-1 text-sm text-black dark:text-white">
+                        {profile.intake.goalSummary || profile.intake.goalOther || profile.intake.goal || profile.academicGoals || '—'}
+                      </p>
+                      {profile.intake.contest && (
+                        <p className="mt-1 text-xs text-waterloo dark:text-manatee">
+                          Concours ciblé : {profile.intake.contest}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {profile.academicGoals && (
+                    <div className="mt-4 rounded-md border border-primary/10 bg-white/60 p-4 text-sm text-waterloo dark:border-primary/30 dark:bg-black/30 dark:text-manatee">
+                      <span className="font-medium text-primary">Synthèse pédagogique :</span>{' '}
+                      {profile.academicGoals}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Personal Information */}
               <div className="animate_top rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection">
                 <h3 className="text-lg font-semibold text-black dark:text-white mb-6">
@@ -220,7 +291,7 @@ export default function StudentProfile() {
                     </label>
                     <input
                       type="tel"
-                      defaultValue={profile.phone || ''}
+                      defaultValue={profile.phone || profile.intake?.phone || ''}
                       className="w-full p-3 border border-stroke rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:border-strokedark dark:bg-blacksection"
                     />
                   </div>

@@ -3,10 +3,43 @@ import { toast } from "react-hot-toast";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type SVGProps } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useRouter } from "next/navigation";
 
+const EyeIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.5}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="M2.25 12s3.75-6 9.75-6 9.75 6 9.75 6-3.75 6-9.75 6-9.75-6-9.75-6Z" />
+    <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+  </svg>
+);
+
+const EyeOffIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.5}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="M3.98 8.223A10.477 10.477 0 0 0 2.25 12s3.75 6 9.75 6c1.757 0 3.306-.37 4.636-.963" />
+    <path d="M6.228 6.228A10.45 10.45 0 0 1 12 6c6 0 9.75 6 9.75 6a10.48 10.48 0 0 1-1.223 1.944" />
+    <path d="M15 12a3 3 0 0 1-4.5 2.598" />
+    <path d="M3 3l18 18" />
+  </svg>
+);
 const Signup = () => {
   const [data, setData] = useState({
     firstName: "",
@@ -15,6 +48,7 @@ const Signup = () => {
     password: "",
   });
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { t } = useLanguage();
   const router = useRouter();
 
@@ -156,16 +190,27 @@ const Signup = () => {
                   className="w-full border-b border-stroke bg-transparent pb-3.5 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:focus:border-manatee dark:focus:placeholder:text-white lg:w-1/2"
                 />
 
-                <input
-                  name="password"
-                  type="password"
-                  placeholder={t.auth.signup?.passwordPlaceholder || "Password"}
-                  value={data.password}
-                  onChange={(e) =>
-                    setData({ ...data, [e.target.name]: e.target.value })
-                  }
-                  className="w-full border-b border-stroke bg-transparent pb-3.5 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:focus:border-manatee dark:focus:placeholder:text-white lg:w-1/2"
-                />
+                <div className="relative w-full lg:w-1/2">
+                  <input
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder={t.auth.signup?.passwordPlaceholder || "Password"}
+                    value={data.password}
+                    onChange={(e) =>
+                      setData({ ...data, [e.target.name]: e.target.value })
+                    }
+                    className="w-full border-b border-stroke bg-transparent pb-3.5 pr-10 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:focus:border-manatee dark:focus:placeholder:text-white"
+                  />
+                  <button
+                    type="button"
+                    aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                    aria-pressed={showPassword}
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 text-waterloo transition hover:text-primary dark:text-manatee"
+                  >
+                    {showPassword ? <EyeOffIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+                  </button>
+                </div>
               </div>
 
               <div className="flex flex-wrap gap-10 md:justify-between xl:gap-15">

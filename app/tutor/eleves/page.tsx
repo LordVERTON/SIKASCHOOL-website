@@ -3,6 +3,22 @@ import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
+interface StudentLeadDetails {
+  civility?: string;
+  guardianFirstName?: string;
+  guardianLastName?: string;
+  email?: string;
+  phone?: string;
+  zip?: string;
+  level?: string;
+  subject?: string;
+  goal?: string;
+  goalOther?: string;
+  goalSummary?: string;
+  contest?: string;
+  capturedAt?: string;
+}
+
 interface StudentData {
   id: string;
   nom: string;
@@ -13,6 +29,9 @@ interface StudentData {
   avatar?: string;
   email: string;
   academic_goals: string;
+  intake?: StudentLeadDetails | null;
+  phone?: string;
+  postalCode?: string;
 }
 
 interface StudentSessions {
@@ -55,17 +74,23 @@ export default function TutorEleves() {
         const res = await fetch('/api/tutor/students', { credentials: 'include' });
         if (res.ok) {
           const data = await res.json();
-          const mapped = (data.students || []).map((s: any) => ({
-            id: s.id,
-            nom: s.name,
-            niveau: s.level,
-            matiere: s.academic_goals || 'Général',
-            statut: 'Actif',
-            dernier: s.assignedAt ? new Date(s.assignedAt).toLocaleDateString('fr-FR') : '—',
-            avatar: s.avatar_url || '/images/user/user-01.png',
-            email: s.email,
-            academic_goals: s.academic_goals || ''
-          }));
+          const mapped = (data.students || []).map((s: any) => {
+            const intake: StudentLeadDetails | null = s.intake || null;
+            return {
+              id: s.id,
+              nom: s.name,
+              niveau: s.level,
+              matiere: s.preferredSubject || intake?.subject || s.academic_goals || 'Général',
+              statut: 'Actif',
+              dernier: s.assignedAt ? new Date(s.assignedAt).toLocaleDateString('fr-FR') : '—',
+              avatar: s.avatar_url || '/images/user/user-01.png',
+              email: s.email,
+              academic_goals: s.academic_goals || '',
+              intake,
+              phone: s.phone || intake?.phone || '',
+              postalCode: s.postalCode || intake?.zip || ''
+            } as StudentData;
+          });
           setRows(mapped);
         }
       } finally {
@@ -276,12 +301,36 @@ export default function TutorEleves() {
                         </div>
                         <div>
                           <span className="font-medium text-waterloo dark:text-manatee">Objectifs académiques:</span>
-                          <div className="text-black dark:text-white">{r.academic_goals || 'Non spécifiés'}</div>
+                          <div className="text-black dark:text-white">
+                            {r.intake?.goalSummary || r.intake?.goalOther || r.intake?.goal || r.academic_goals || 'Non spécifiés'}
+                          </div>
+                          {r.intake?.contest && (
+                            <div className="text-xs text-waterloo dark:text-manatee mt-1">
+                              Concours visé : {r.intake.contest}
+                            </div>
+                          )}
                         </div>
                         <div>
                           <span className="font-medium text-waterloo dark:text-manatee">Dernière activité:</span>
                           <div className="text-black dark:text-white">{r.dernier}</div>
                         </div>
+                        <div>
+                          <span className="font-medium text-waterloo dark:text-manatee">Téléphone:</span>
+                          <div className="text-black dark:text-white">{r.phone || '—'}</div>
+                        </div>
+                        <div>
+                          <span className="font-medium text-waterloo dark:text-manatee">Code postal:</span>
+                          <div className="text-black dark:text-white">{r.postalCode || '—'}</div>
+                        </div>
+                        {r.intake && (
+                          <div>
+                            <span className="font-medium text-waterloo dark:text-manatee">Responsable légal:</span>
+                            <div className="text-black dark:text-white">
+                              {r.intake.civility ? `${r.intake.civility} ` : ''}
+                              {[r.intake.guardianFirstName, r.intake.guardianLastName].filter(Boolean).join(' ') || 'Non communiqué'}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div>

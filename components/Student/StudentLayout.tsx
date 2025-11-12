@@ -5,6 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import StudentSidebar from "./StudentSidebar";
 import LogoutButton from "../Auth/LogoutButton";
+import MobileFooterNav from "../Common/MobileFooterNav";
+import { useUnreadNotifications } from "@/hooks/useUnreadNotifications";
 
 interface StudentLayoutProps {
   children: React.ReactNode;
@@ -14,6 +16,7 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hideLogo, setHideLogo] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const { unreadCount } = useUnreadNotifications();
 
   useEffect(() => {
     const onScroll = () => {
@@ -125,9 +128,16 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
               className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-waterloo hover:bg-gray-50 hover:text-black dark:text-manatee dark:hover:bg-gray-800 dark:hover:text-white"
               onClick={() => setSidebarOpen(false)}
             >
-              <svg className="mr-3 h-5 w-5 text-waterloo group-hover:text-black dark:text-manatee dark:group-hover:text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
-              </svg>
+              <span className="relative mr-3 h-5 w-5">
+                <svg className="h-5 w-5 text-waterloo group-hover:text-black dark:text-manatee dark:group-hover:text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                </svg>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </span>
               Notifications
             </Link>
             <Link
@@ -175,6 +185,39 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
           </div>
         </main>
       </div>
+      {/* Mobile footer navigation */}
+      <MobileFooterNav
+        items={[
+          {
+            href: "/student",
+            label: "Mes cours",
+            icon: (
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 6a3 3 0 013-3h12a3 3 0 013 3v12a1 1 0 01-1 1H7a4 4 0 01-4-4V6z"/><path d="M7 8h10v2H7zM7 12h10v2H7z"/></svg>
+            ),
+          },
+          {
+            href: "/student/messages",
+            label: "Messages",
+            icon: (
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 7a2 2 0 00-2-2H5a2 2 0 00-2 2v10l4-3h12a2 2 0 002-2V7z"/></svg>
+            ),
+          },
+          {
+            href: "/student/calendar",
+            label: "Calendrier",
+            icon: (
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 2a1 1 0 00-1 1v1H5a3 3 0 00-3 3v11a3 3 0 003 3h14a3 3 0 003-3V7a3 3 0 00-3-3h-1V3a1 1 0 10-2 0v1H8V3A1 1 0 007 2zM5 10h14v9H5v-9z"/></svg>
+            ),
+          },
+          {
+            href: "/student/profile",
+            label: "Mon profil",
+            icon: (
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12a5 5 0 100-10 5 5 0 000 10z"/><path d="M4 20a8 8 0 0116 0v1H4v-1z"/></svg>
+            ),
+          },
+        ]}
+      />
     </div>
   );
 }

@@ -60,6 +60,7 @@ export const STORAGE_KEYS = {
   SELECTED_LEVEL: 'selectedLevel',
   SELECTED_SUBJECT: 'selectedSubject',
   LEAD_FORM: 'leadForm',
+  LAST_LEAD_EMAIL: 'leadEmail',
   USER_PREFERENCES: 'userPreferences',
   THEME: 'theme',
   LANGUAGE: 'language',

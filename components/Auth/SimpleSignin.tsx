@@ -1,8 +1,44 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, type SVGProps } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
+import { getStorageItem, removeStorageItem, STORAGE_KEYS } from "@/lib/storage";
+import ForgotPasswordModal from "./ForgotPasswordModal";
+
+const EyeIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.5}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="M2.25 12s3.75-6 9.75-6 9.75 6 9.75 6-3.75 6-9.75 6-9.75-6-9.75-6Z" />
+    <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+  </svg>
+);
+
+const EyeOffIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.5}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="M3.98 8.223A10.477 10.477 0 0 0 2.25 12s3.75 6 9.75 6c1.757 0 3.306-.37 4.636-.963" />
+    <path d="M6.228 6.228A10.45 10.45 0 0 1 12 6c6 0 9.75 6 9.75 6a10.48 10.48 0 0 1-1.223 1.944" />
+    <path d="M15 12a3 3 0 0 1-4.5 2.598" />
+    <path d="M3 3l18 18" />
+  </svg>
+);
 
 export default function SimpleSignin() {
   const [data, setData] = useState({
@@ -15,7 +51,25 @@ export default function SimpleSignin() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [isSignup, setIsSignup] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const emailParam = searchParams?.get("email");
+    if (emailParam) {
+      setData((prev) => ({ ...prev, email: emailParam }));
+      removeStorageItem(STORAGE_KEYS.LAST_LEAD_EMAIL);
+      return;
+    }
+
+    const storedEmail = getStorageItem(STORAGE_KEYS.LAST_LEAD_EMAIL);
+    if (storedEmail) {
+      setData((prev) => ({ ...prev, email: storedEmail }));
+      removeStorageItem(STORAGE_KEYS.LAST_LEAD_EMAIL);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -203,17 +257,28 @@ export default function SimpleSignin() {
                   className="w-full border-b border-stroke bg-white! pb-3.5 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:bg-black! dark:focus:border-manatee dark:focus:placeholder:text-white lg:w-1/2"
                 />
 
-                <input
-                  type="password"
-                  placeholder="Votre mot de passe"
-                  name="password"
-                  value={data.password}
-                  onChange={(e) =>
-                    setData({ ...data, password: e.target.value })
-                  }
-                  required
-                  className="w-full border-b border-stroke bg-white! pb-3.5 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:bg-black! dark:focus:border-manatee dark:focus:placeholder:text-white lg:w-1/2"
-                />
+                <div className="relative w-full lg:w-1/2">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Votre mot de passe"
+                    name="password"
+                    value={data.password}
+                    onChange={(e) =>
+                      setData({ ...data, password: e.target.value })
+                    }
+                    required
+                    className="w-full border-b border-stroke bg-white! pb-3.5 pr-10 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:bg-black! dark:focus:border-manatee dark:focus:placeholder:text-white"
+                  />
+                  <button
+                    type="button"
+                    aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                    aria-pressed={showPassword}
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 text-waterloo transition hover:text-primary dark:text-manatee"
+                  >
+                    {showPassword ? <EyeOffIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+                  </button>
+                </div>
               </div>
 
               {error && (
@@ -255,9 +320,13 @@ export default function SimpleSignin() {
                     </label>
                   </div>
 
-                  <a href="#" className="hover:text-primary">
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPasswordModal(true)}
+                    className="hover:text-primary text-left"
+                  >
                     Mot de passe oublié ?
-                  </a>
+                  </button>
                 </div>
 
                 <button
@@ -296,6 +365,12 @@ export default function SimpleSignin() {
         </div>
       </section>
       {/* <!-- ===== SignIn Form End ===== --> */}
+      
+      <ForgotPasswordModal 
+        isOpen={showForgotPasswordModal} 
+        onClose={() => setShowForgotPasswordModal(false)}
+        initialEmail={data.email}
+      />
     </>
   );
 }

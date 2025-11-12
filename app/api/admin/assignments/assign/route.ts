@@ -78,6 +78,27 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Erreur lors de la réactivation de l\'assignation' }, { status: 500 });
         }
 
+        // Créer une notification pour l'étudiant lors de la réactivation
+        const tutorName = [tutor.first_name, tutor.last_name].filter(Boolean).join(' ') || 'votre tuteur';
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: studentId,
+            type: 'TUTOR_ASSIGNMENT',
+            title: 'Tuteur réassigné',
+            message: `Votre tuteur ${tutorName} a été réassigné à votre compte. Préparez votre première séance ensemble !`,
+            data: {
+              tutor_id: tutorId,
+              tutor_name: tutorName,
+              assignment_id: updatedAssignment.id,
+              notes: notes || null,
+              assigned_by: user.id,
+              assigned_at: new Date().toISOString(),
+              is_reactivation: true
+            },
+            is_read: false
+          } as any);
+
         return NextResponse.json({
           message: 'Assignation réactivée avec succès',
           assignment: updatedAssignment
@@ -101,6 +122,30 @@ export async function POST(request: NextRequest) {
     if (insertError) {
       console.error('Erreur lors de la création de l\'assignation:', insertError);
       return NextResponse.json({ error: 'Erreur lors de la création de l\'assignation' }, { status: 500 });
+    }
+
+    // Créer une notification pour l'étudiant
+    const tutorName = [tutor.first_name, tutor.last_name].filter(Boolean).join(' ') || 'votre tuteur';
+    const { error: notificationError } = await supabase
+      .from('notifications')
+      .insert({
+        user_id: studentId,
+        type: 'TUTOR_ASSIGNMENT',
+        title: 'Nouveau tuteur assigné',
+        message: `Un nouveau tuteur vous a été assigné : ${tutorName}. Préparez votre première séance ensemble !`,
+        data: {
+          tutor_id: tutorId,
+          tutor_name: tutorName,
+          assignment_id: newAssignment.id,
+          notes: notes || null,
+          assigned_by: user.id,
+          assigned_at: new Date().toISOString()
+        },
+        is_read: false
+      } as any);
+
+    if (notificationError) {
+      console.error('❌ Erreur lors de la création de la notification d\'assignation:', notificationError);
     }
 
     return NextResponse.json({

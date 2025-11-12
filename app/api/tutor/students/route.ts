@@ -26,10 +26,17 @@ export async function GET() {
           last_name,
           email,
           avatar_url,
+          phone,
+          postal_code,
           students(
             user_id,
             grade_level,
-            academic_goals
+            academic_goals,
+            learning_style,
+            phone,
+            parent_phone,
+            parent_email,
+            postal_code
           )
         )
       `)
@@ -46,18 +53,33 @@ export async function GET() {
     const assignedStudents = (assignments as any)?.map((assignment: any) => {
       const student = assignment.users;
       const studentProfile = student.students?.[0] || {};
-      
+      let intakeDetails: any = null;
+      if (studentProfile.learning_style) {
+        try {
+          intakeDetails = JSON.parse(studentProfile.learning_style);
+        } catch (parseErr) {
+          console.warn('Impossible de parser les informations d\'inscription (tuteur):', parseErr);
+        }
+      }
+
+      const preferredSubject = intakeDetails?.subject || '';
+      const goalSummary = intakeDetails?.goalSummary || studentProfile.academic_goals || '';
+
       return {
         id: student.id,
         name: `${student.first_name} ${student.last_name}`,
         email: student.email,
         avatar_url: student.avatar_url || '/images/user/user-01.png',
-        level: studentProfile.grade_level || 'Débutant',
-        bio: '', // Pas de bio dans la table students
-        academic_goals: studentProfile.academic_goals || '',
+        level: studentProfile.grade_level || intakeDetails?.level || 'Débutant',
+        bio: '',
+        academic_goals: studentProfile.academic_goals || goalSummary || '',
+        preferredSubject,
         assignedAt: assignment.assigned_at,
         notes: assignment.notes || '',
-        assignmentId: assignment.id
+        assignmentId: assignment.id,
+        intake: intakeDetails,
+        phone: studentProfile.phone || student.phone || intakeDetails?.phone || '',
+        postalCode: studentProfile.postal_code || student.postal_code || intakeDetails?.zip || '',
       };
     }) || [];
 

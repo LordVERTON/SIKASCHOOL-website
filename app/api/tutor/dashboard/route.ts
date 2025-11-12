@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
+import { canAccessTutorFeatures } from '@/lib/admin-permissions';
 
 export async function GET() {
   try {
     const user = await getUserSession();
-    if (!user || user.role !== 'TUTOR') {
+    if (!user || !canAccessTutorFeatures(user)) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 

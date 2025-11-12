@@ -101,6 +101,88 @@ export async function POST(request: NextRequest) {
       .single();
     // On ignore volontairement studentProfileError
 
+    // Créer une notification de bienvenue pour l'étudiant
+    const profileNotification = {
+      user_id: newUser.id,
+      type: 'PROFILE',
+      title: 'Bienvenue sur SikaSchool 🎉',
+      message: 'Votre profil a bien été créé. Vous pouvez planifier vos séances et découvrir vos tuteurs.',
+      data: {
+        action: 'PROFILE_CREATED',
+        created_at: new Date().toISOString()
+      },
+    };
+
+    const { error: profileNotificationError } = await (supabaseAdmin as any)
+      .from('notifications')
+      .insert(profileNotification as any);
+
+    if (profileNotificationError) {
+      console.error('❌ Erreur lors de la création de la notification de profil:', profileNotificationError);
+    }
+
+    // Créer des notifications pour tous les admins
+    // Récupérer les admins (rôle ADMIN ou tuteurs avec emails spécifiques)
+    const adminEmails = ['daniel.verton@sikaschool.com', 'ruudy.mbouza-bayonne@sikaschool.com', 'admin@sikaschool.com'];
+    
+    const { data: adminUsers, error: adminUsersError } = await supabaseAdmin
+      .from('users')
+      .select('id, email, role')
+      .eq('role', 'ADMIN');
+
+    // Récupérer les utilisateurs avec emails spécifiques (peu importe leur rôle)
+    const { data: adminTutors, error: adminTutorsError } = await supabaseAdmin
+      .from('users')
+      .select('id, email, role')
+      .in('email', adminEmails);
+
+    // Log pour déboguer
+    if (adminUsersError) {
+      console.error('❌ Erreur lors de la récupération des admins (ADMIN):', adminUsersError);
+    }
+    if (adminTutorsError) {
+      console.error('❌ Erreur lors de la récupération des admins (TUTOR):', adminTutorsError);
+    }
+
+    // Combiner et dédupliquer par email
+    const allAdmins: Array<{ id: string; email: string; role: string }> = [
+      ...(adminUsers || []),
+      ...(adminTutors || [])
+    ];
+    const adminsMap = new Map<string, { id: string; email: string; role: string }>();
+    allAdmins.forEach(admin => {
+      if (admin && admin.email) {
+        adminsMap.set(admin.email.toLowerCase(), admin);
+      }
+    });
+    const admins: Array<{ id: string; email: string; role: string }> = Array.from(adminsMap.values());
+
+    if (admins && admins.length > 0) {
+      const studentName = `${newUser.first_name} ${newUser.last_name}`;
+      const adminNotifications = (admins as any[]).map((admin: any) => ({
+        user_id: admin.id,
+        type: 'SYSTEM',
+        title: 'Nouvelle inscription',
+        message: `${studentName} (${newUser.email}) vient de s'inscrire sur la plateforme. Veuillez assigner un tuteur à cet élève.`,
+        data: {
+          action: 'NEW_STUDENT_REGISTRATION',
+          student_id: newUser.id,
+          student_name: studentName,
+          student_email: newUser.email,
+          registered_at: new Date().toISOString()
+        },
+        is_read: false
+      }));
+
+      const { error: adminNotificationsError } = await (supabaseAdmin as any)
+        .from('notifications')
+        .insert(adminNotifications);
+
+      if (adminNotificationsError) {
+        console.error('❌ Erreur lors de la création des notifications admin:', adminNotificationsError);
+      }
+    }
+
     // Définir la session pour garder l'utilisateur connecté
     await setUserSession({
       id: newUser.id,
