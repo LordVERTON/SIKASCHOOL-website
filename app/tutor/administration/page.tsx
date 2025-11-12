@@ -7,7 +7,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { formatMinutes } from '@/lib/time-utils';
 import { hasAdminPermissions } from '@/lib/admin-permissions';
 import AssignmentModal from '@/components/Admin/AssignmentModal';
-// import { useConfirm } from '@/components/Common/ConfirmDialog';
 
 interface User {
   id: string;
@@ -61,7 +60,6 @@ interface Payment {
 function AdministrationPageContent() {
   const { user, loading } = useAuth(['TUTOR', 'ADMIN']);
   const searchParams = useSearchParams();
-  // const { confirm, ConfirmDialog } = useConfirm();
   const [activeTab, setActiveTab] = useState<'users' | 'sessions' | 'payments' | 'assignments' | 'sync'>('users');
   const [users, setUsers] = useState<User[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -107,11 +105,11 @@ function AdministrationPageContent() {
           }
         }
       } else {
-        const _error = await response.json();
-        console.error('Erreur lors de la récupération des assignations:', _error);
+        const errorData = await response.json();
+        console.error('Erreur lors de la récupération des assignations:', errorData);
       }
-    } catch (_error) {
-      console.error('Erreur lors de la récupération des assignations:', _error);
+    } catch (error) {
+      console.error('Erreur lors de la récupération des assignations:', error);
     }
   };
 
@@ -177,7 +175,6 @@ function AdministrationPageContent() {
   };
 
   const handleResetPassword = async (userId: string) => {
-    // eslint-disable-next-line no-alert
     if (window.confirm('Êtes-vous sûr de vouloir réinitialiser le mot de passe de cet utilisateur ?')) {
       try {
         const response = await fetch(`/api/admin/users/${userId}/reset-password`, {
@@ -185,17 +182,10 @@ function AdministrationPageContent() {
         });
         
         if (response.ok) {
-          // eslint-disable-next-line no-alert
-          // alert('Mot de passe réinitialisé avec succès');
           fetchData();
-        } else {
-          // eslint-disable-next-line no-alert
-          // alert('Erreur lors de la réinitialisation du mot de passe');
         }
       } catch (_error) {
         console.warn('Erreur:', _error);
-        // eslint-disable-next-line no-alert
-        // alert('Erreur lors de la réinitialisation du mot de passe');
       }
     }
   };
@@ -211,24 +201,15 @@ function AdministrationPageContent() {
       });
       
       if (response.ok) {
-        // eslint-disable-next-line no-alert
-        // alert(`Utilisateur ${!currentStatus ? 'activé' : 'désactivé'} avec succès`);
         fetchData();
-      } else {
-        // eslint-disable-next-line no-alert
-        // alert('Erreur lors de la modification du statut');
       }
     } catch (_error) {
       console.warn('Erreur:', _error);
-      // eslint-disable-next-line no-alert
-      // alert('Erreur lors de la modification du statut');
     }
   };
 
   const handleCreateUser = async (userData: Partial<User>) => {
     try {
-      console.warn('🔄 Création utilisateur:', userData);
-      
       const response = await fetch('/api/admin/users', {
         method: 'POST',
         headers: {
@@ -237,13 +218,8 @@ function AdministrationPageContent() {
         body: JSON.stringify(userData)
       });
       
-      console.warn('📡 Réponse reçue:', response.status, response.statusText);
-      
       if (response.ok) {
-        const _result = await response.json();
-        console.warn('✅ Création réussie:', _result);
-        // eslint-disable-next-line no-alert
-        // alert('Utilisateur créé avec succès');
+        await response.json();
         setShowUserModal(false);
         fetchData();
       } else {
@@ -251,19 +227,14 @@ function AdministrationPageContent() {
         console.warn('❌ Erreur API:', response.status, errorText);
         
         try {
-          const _error = JSON.parse(errorText);
-          // eslint-disable-next-line no-alert
-          // alert(`Erreur lors de la création: ${error.error}`);
+          const parsedError = JSON.parse(errorText);
+          console.warn('Détails de l\'erreur:', parsedError);
         } catch {
-          // eslint-disable-next-line no-alert
-          // alert(`Erreur lors de la création: ${response.status} ${response.statusText}`);
+          // Ignore parse errors
         }
       }
     } catch (_error) {
       console.warn('❌ Erreur fetch:', _error);
-      const _errorMessage = _error instanceof Error ? _error.message : 'Erreur inconnue';
-      // eslint-disable-next-line no-alert
-      // alert(`Erreur de connexion: ${errorMessage}`);
     }
   };
 
@@ -285,8 +256,6 @@ function AdministrationPageContent() {
 
   const handleUpdateUser = async (userId: string, userData: Partial<User>) => {
     try {
-      console.warn('🔄 Mise à jour utilisateur:', userId, userData);
-      
       const response = await fetch(`/api/admin/users/${userId}`, {
         method: 'PUT',
         headers: {
@@ -295,13 +264,8 @@ function AdministrationPageContent() {
         body: JSON.stringify(userData)
       });
       
-      console.warn('📡 Réponse reçue:', response.status, response.statusText);
-      
       if (response.ok) {
-        const _result = await response.json();
-        console.warn('✅ Mise à jour réussie:', _result);
-        // eslint-disable-next-line no-alert
-        // alert('Utilisateur modifié avec succès');
+        await response.json();
         setShowUserModal(false);
         setEditingUser(null);
         fetchData();
@@ -310,24 +274,18 @@ function AdministrationPageContent() {
         console.warn('❌ Erreur API:', response.status, errorText);
         
         try {
-          const _error = JSON.parse(errorText);
-          // eslint-disable-next-line no-alert
-          // alert(`Erreur lors de la modification: ${error.error}`);
+          const parsedError = JSON.parse(errorText);
+          console.warn('Détails de l\'erreur:', parsedError);
         } catch {
-          // eslint-disable-next-line no-alert
-          // alert(`Erreur lors de la modification: ${response.status} ${response.statusText}`);
+          // Ignore parse errors
         }
       }
     } catch (_error) {
       console.warn('❌ Erreur fetch:', _error);
-      const _errorMessage = _error instanceof Error ? _error.message : 'Erreur inconnue';
-      // eslint-disable-next-line no-alert
-      // alert(`Erreur de connexion: ${errorMessage}`);
     }
   };
 
   const handleDeleteUser = async (userId: string) => {
-    // eslint-disable-next-line no-alert
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.')) {
       try {
         const response = await fetch(`/api/admin/users/${userId}`, {
@@ -335,18 +293,12 @@ function AdministrationPageContent() {
         });
         
         if (response.ok) {
-          // eslint-disable-next-line no-alert
-          // alert('Utilisateur supprimé avec succès');
           fetchData();
         } else {
-          const _error = await response.json();
-          // eslint-disable-next-line no-alert
-          // alert(`Erreur lors de la suppression: ${error.error}`);
+          await response.json();
         }
       } catch (_error) {
         console.warn('Erreur:', _error);
-        // eslint-disable-next-line no-alert
-        // alert('Erreur lors de la suppression de l\'utilisateur');
       }
     }
   };
@@ -362,19 +314,13 @@ function AdministrationPageContent() {
       });
       
       if (response.ok) {
-        // eslint-disable-next-line no-alert
-        // alert('Session créée avec succès');
         setShowSessionModal(false);
         fetchData();
       } else {
-        const _error = await response.json();
-        // eslint-disable-next-line no-alert
-        // alert(`Erreur lors de la création: ${error.error}`);
+        await response.json();
       }
     } catch (_error) {
       console.warn('Erreur:', _error);
-      // eslint-disable-next-line no-alert
-      // alert('Erreur lors de la création de la session');
     }
   };
 
@@ -389,25 +335,18 @@ function AdministrationPageContent() {
       });
       
       if (response.ok) {
-        // eslint-disable-next-line no-alert
-        // alert('Session modifiée avec succès');
         setShowSessionModal(false);
         setEditingSession(null);
         fetchData();
       } else {
-        const _error = await response.json();
-        // eslint-disable-next-line no-alert
-        // alert(`Erreur lors de la modification: ${error.error}`);
+        await response.json();
       }
     } catch (_error) {
       console.error('Erreur:', _error);
-      // eslint-disable-next-line no-alert
-      // alert('Erreur lors de la modification de la session');
     }
   };
 
   const handleDeleteSession = async (sessionId: string) => {
-    // eslint-disable-next-line no-alert
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette session ? Cette action est irréversible.')) {
       try {
         const response = await fetch(`/api/admin/sessions/${sessionId}`, {
@@ -415,24 +354,17 @@ function AdministrationPageContent() {
         });
         
         if (response.ok) {
-          // eslint-disable-next-line no-alert
-          // alert('Session supprimée avec succès');
           fetchData();
         } else {
-          const _error = await response.json();
-          // eslint-disable-next-line no-alert
-          // alert(`Erreur lors de la suppression: ${error.error}`);
+          await response.json();
         }
       } catch (_error) {
         console.warn('Erreur:', _error);
-        // eslint-disable-next-line no-alert
-        // alert('Erreur lors de la suppression de la session');
       }
     }
   };
 
   const handleSyncProfiles = async () => {
-    // eslint-disable-next-line no-alert
     if (window.confirm('Êtes-vous sûr de vouloir synchroniser les profils ? Cela créera les profils manquants.')) {
       try {
         const response = await fetch('/api/admin/sync-profiles', {
@@ -440,19 +372,13 @@ function AdministrationPageContent() {
         });
         
         if (response.ok) {
-          const _result = await response.json();
-          // eslint-disable-next-line no-alert
-          // alert(`Synchronisation réussie !\n- Profils tuteurs créés: ${result.createdTutorProfiles}\n- Profils étudiants créés: ${result.createdStudentProfiles}`);
+          await response.json();
           fetchData();
         } else {
-          const _error = await response.json();
-          // eslint-disable-next-line no-alert
-          // alert(`Erreur lors de la synchronisation: ${error.error}`);
+          await response.json();
         }
       } catch (_error) {
-      console.warn('Erreur:', _error);
-        // eslint-disable-next-line no-alert
-        // alert('Erreur lors de la synchronisation');
+        console.warn('Erreur:', _error);
       }
     }
   };
@@ -478,14 +404,13 @@ function AdministrationPageContent() {
       if (response.ok) {
         // Recharger les assignations
         handleViewAssignments(selectedUserForAssignments);
-      } else {
-        const _error = await response.json();
-        console.error(`Erreur: ${_error.error}`);
+        } else {
+          const errorData = await response.json();
+          console.error(`Erreur: ${errorData.error}`);
+        }
+      } catch (error) {
+        console.error('Erreur lors de l\'assignation:', error);
       }
-    } catch (_error) {
-      console.error('Erreur lors de l\'assignation:', _error);
-      console.error('Erreur lors de l\'assignation');
-    }
   };
 
   const handleUnassignUser = async (targetUserId: string) => {
@@ -503,12 +428,11 @@ function AdministrationPageContent() {
         // Recharger les assignations
         handleViewAssignments(selectedUserForAssignments);
       } else {
-        const _error = await response.json();
-        console.error(`Erreur: ${_error.error}`);
+        const errorData = await response.json();
+        console.error(`Erreur: ${errorData.error}`);
       }
-    } catch (_error) {
-      console.error('Erreur lors de la désassignation:', _error);
-      console.error('Erreur lors de la désassignation');
+    } catch (error) {
+      console.error('Erreur lors de la désassignation:', error);
     }
   };
 
@@ -1398,8 +1322,6 @@ function SessionModal({ session, users, onSave, onClose }: {
           </div>
         </form>
       </div>
-      
-      {/* <ConfirmDialog /> */}
     </div>
   );
 }

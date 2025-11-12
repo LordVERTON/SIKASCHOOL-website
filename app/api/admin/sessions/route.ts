@@ -187,8 +187,8 @@ export async function POST(request: NextRequest) {
       session: newSession,
       message: 'Session created successfully' 
     });
-      } catch {
-    console.warn('Erreur dans /api/admin/sessions POST');
+  } catch (error) {
+    console.error('Erreur dans POST /api/admin/sessions:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
