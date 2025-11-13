@@ -95,14 +95,16 @@ function AdministrationPageContent() {
         setUserAssignments(data.assignments || []);
         
         // Récupérer les utilisateurs disponibles pour l'assignation
-        const availableResponse = await fetch('/api/admin/assignments/available-users');
+        // Si l'utilisateur est un étudiant, on veut les tuteurs disponibles
+        // Si l'utilisateur est un tuteur, on veut les étudiants disponibles
+        const targetRole = user.role === 'STUDENT' ? 'TUTOR' : 'STUDENT';
+        const availableResponse = await fetch(`/api/admin/assignments/available-users?role=${targetRole}`);
         if (availableResponse.ok) {
           const availableData = await availableResponse.json();
-          if (user.role === 'STUDENT') {
-            setAvailableUsers(availableData.tutors || []);
-          } else if (user.role === 'TUTOR') {
-            setAvailableUsers(availableData.students || []);
-          }
+          setAvailableUsers(availableData.users || []);
+        } else {
+          const errorData = await availableResponse.json();
+          console.error('Erreur lors de la récupération des utilisateurs disponibles:', errorData);
         }
       } else {
         const errorData = await response.json();

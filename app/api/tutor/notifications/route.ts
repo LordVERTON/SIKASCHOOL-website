@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
-import { supabase, supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 import { canAccessTutorFeatures } from '@/lib/admin-permissions';
 
 // GET tutor notifications
@@ -11,13 +11,16 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: notifications, error } = await supabase
+    const { data: notifications, error } = await supabaseAdmin
       .from('notifications')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
-    if (error) throw error as any;
+    if (error) {
+      console.error('Erreur lors de la récupération des notifications:', error);
+      throw error as any;
+    }
 
     if (!notifications || notifications.length === 0) {
       return NextResponse.json([]);
@@ -34,7 +37,8 @@ export async function GET() {
     }));
 
     return NextResponse.json(formatted);
-      } catch {
+  } catch (error) {
+    console.error('Erreur dans GET /api/tutor/notifications:', error);
     return NextResponse.json({ error: 'Erreur lors de la récupération des notifications' }, { status: 500 });
   }
 }
@@ -68,7 +72,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Load notification to get booking/session data
-    const { data: notif, error: notifErr } = await supabase
+    const { data: notif, error: notifErr } = await supabaseAdmin
       .from('notifications')
       .select('*')
       .eq('id', notificationId)

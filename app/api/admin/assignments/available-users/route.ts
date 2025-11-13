@@ -21,11 +21,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Rôle invalide. Utilisez TUTOR ou STUDENT' }, { status: 400 });
     }
 
-    let query;
-    
     if (role === 'TUTOR') {
-      // Pour les tuteurs, inclure les tuteurs normaux + Daniel Verton spécifiquement
-      query = supabase
+      // Pour les tuteurs, inclure les tuteurs normaux + les admins qui peuvent être tuteurs
+      // On récupère d'abord tous les tuteurs, puis on ajoute les admins spécifiques
+      const { data: tutors, error: tutorsError } = await supabase
         .from('users')
         .select(`
           id,
@@ -36,12 +35,55 @@ export async function GET(request: NextRequest) {
           is_active,
           created_at
         `)
-        .or('role.eq.TUTOR,and(email.eq.daniel.verton@sikaschool.com,role.eq.ADMIN)')
+        .eq('role', 'TUTOR')
         .eq('is_active', true)
         .order('first_name', { ascending: true });
+
+      if (tutorsError) {
+        console.error('Erreur lors de la récupération des tuteurs:', tutorsError);
+        return NextResponse.json({ error: 'Erreur lors de la récupération des tuteurs' }, { status: 500 });
+      }
+
+      // Récupérer les admins spécifiques qui peuvent être tuteurs
+      const adminEmails = ['daniel.verton@sikaschool.com', 'ruudy.mbouza-bayonne@sikaschool.com'];
+      const { data: adminTutors, error: adminTutorsError } = await supabase
+        .from('users')
+        .select(`
+          id,
+          email,
+          first_name,
+          last_name,
+          role,
+          is_active,
+          created_at
+        `)
+        .eq('role', 'ADMIN')
+        .in('email', adminEmails)
+        .eq('is_active', true)
+        .order('first_name', { ascending: true });
+
+      if (adminTutorsError) {
+        console.error('Erreur lors de la récupération des admins tuteurs:', adminTutorsError);
+        // On continue même si cette requête échoue
+      }
+
+      // Combiner et dédupliquer par email
+      const allTutors = [...(tutors || []), ...(adminTutors || [])];
+      const tutorsMap = new Map<string, any>();
+      allTutors.forEach(tutor => {
+        if (tutor && tutor.email) {
+          tutorsMap.set(tutor.email.toLowerCase(), tutor);
+        }
+      });
+      const uniqueTutors = Array.from(tutorsMap.values());
+
+      return NextResponse.json({
+        users: uniqueTutors,
+        count: uniqueTutors.length
+      });
     } else {
       // Pour les étudiants, garder la logique normale
-      query = supabase
+      const { data: users, error } = await supabase
         .from('users')
         .select(`
           id,
@@ -55,19 +97,17 @@ export async function GET(request: NextRequest) {
         .eq('role', role)
         .eq('is_active', true)
         .order('first_name', { ascending: true });
+
+      if (error) {
+        console.error(`Erreur lors de la récupération des ${role.toLowerCase()}s:`, error);
+        return NextResponse.json({ error: `Erreur lors de la récupération des ${role.toLowerCase()}s` }, { status: 500 });
+      }
+
+      return NextResponse.json({
+        users: users || [],
+        count: users?.length || 0
+      });
     }
-
-    const { data: users, error } = await query;
-
-    if (error) {
-      console.error(`Erreur lors de la récupération des ${role.toLowerCase()}s:`, error);
-      return NextResponse.json({ error: `Erreur lors de la récupération des ${role.toLowerCase()}s` }, { status: 500 });
-    }
-
-    return NextResponse.json({
-      users: users || [],
-      count: users?.length || 0
-    });
 
   } catch (error) {
     console.error('Erreur dans GET /api/admin/assignments/available-users:', error);
