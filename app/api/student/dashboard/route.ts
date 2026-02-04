@@ -2,6 +2,16 @@ import { NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
 import { formatHours } from '@/lib/time-utils';
+import { logger } from '@/lib/logger';
+import type {
+  DashboardSession,
+  SessionParticipantLink,
+  DashboardUser,
+  DashboardMessage,
+  DashboardNotification,
+  DashboardAssessment,
+  StudentProfileRow,
+} from '@/types/dashboard';
 
 export async function GET() {
   try {
@@ -51,11 +61,13 @@ export async function GET() {
       .eq('student_id', studentId);
 
     if (participantError) {
-      console.error('Erreur participants:', participantError);
+      logger.error('Dashboard: participant links error', { error: participantError });
     }
 
-    let participantSessions: any[] = [];
-    const participantSessionIds = Array.from(new Set((participantLinks || []).map((p: any) => p.session_id)));
+    let participantSessions: DashboardSession[] = [];
+    const participantSessionIds = Array.from(
+      new Set((participantLinks || []).map((p: SessionParticipantLink) => p.session_id))
+    );
     if (participantSessionIds.length > 0) {
       const { data: partSessions, error: partSessionsError } = await supabaseAdmin
         .from('sessions')
@@ -88,23 +100,27 @@ export async function GET() {
     }
 
     // Fusionner et dédupliquer les sessions
-    const byId = new Map<string, any>();
-    for (const s of (ownSessions as any || [])) byId.set(s.id, s);
-    for (const s of (participantSessions as any || [])) byId.set(s.id, s);
-    const sessions = Array.from(byId.values()).sort((a: any, b: any) => (a.started_at > b.started_at ? -1 : 1));
+    const byId = new Map<string, DashboardSession>();
+    for (const s of (ownSessions ?? []) as DashboardSession[]) byId.set(s.id, s);
+    for (const s of participantSessions) byId.set(s.id, s);
+    const sessions = Array.from(byId.values()).sort((a, b) =>
+      (a.started_at ?? '') > (b.started_at ?? '') ? -1 : 1
+    );
 
     // 2. Récupérer les informations des tuteurs
-    const tutorIds = [...new Set((sessions as any)?.map((s: any) => s.tutor_id).filter(Boolean) || [])];
-    let tutorsMap = new Map();
-    
+    const tutorIds = [...new Set(sessions.map((s) => s.tutor_id).filter(Boolean))];
+    const tutorsMap = new Map<string, DashboardUser>();
+
     if (tutorIds.length > 0) {
       const { data: tutors, error: tutorsError } = await supabaseAdmin
         .from('users')
         .select('id, first_name, last_name, avatar_url, email')
         .in('id', tutorIds);
-      
+
       if (!tutorsError && tutors) {
-        tutorsMap = new Map((tutors as any).map((tutor: any) => [tutor.id, tutor]));
+        for (const t of tutors as DashboardUser[]) {
+          tutorsMap.set(t.id, t);
+        }
       }
     }
 

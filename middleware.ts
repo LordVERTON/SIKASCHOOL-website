@@ -73,7 +73,9 @@ function checkRouteAccess(user: User, pathname: string, request: NextRequest): N
         : user.role === requiredRole;
       
       if (!isAuthorized) {
-        console.log(`🔒 Middleware: Accès refusé à ${route} pour ${user.role}`);
+        if (process.env.NODE_ENV === 'development') {
+          console.debug(`Middleware: access denied to ${route} for role ${user.role}`);
+        }
         return redirectToRoleSpace(user, request);
       }
       return null; // Accès autorisé
@@ -102,11 +104,15 @@ export function middleware(request: NextRequest) {
   const user = parseUserSession(userSession.value);
   
   if (!user) {
-    console.log('🔒 Middleware: Session invalide, redirection vers /auth/signin');
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('Middleware: invalid session, redirecting to signin');
+    }
     return NextResponse.redirect(new URL(SIGNIN_PATH, request.url));
   }
 
-  console.log(`🔒 Middleware: Utilisateur authentifié - ${user.email} (${user.role})`);
+  if (process.env.NODE_ENV === 'development') {
+    console.debug(`Middleware: authenticated ${user.email} (${user.role})`);
+  }
   
   // Vérifier l'accès à la route
   const accessCheck = checkRouteAccess(user, pathname, request);

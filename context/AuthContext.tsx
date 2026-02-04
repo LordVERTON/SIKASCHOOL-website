@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { API_ENDPOINTS, ROLE_REDIRECTS, ERROR_MESSAGES, type UserRole } from '@/lib/constants';
+import { logger } from '@/lib/logger';
 
 // Types
 interface User {
@@ -83,8 +84,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       authCache.lastCheck = now;
       setUser(userData);
       
-    } catch (error) {
-      console.error('🔒 AuthContext: Erreur de vérification:', error);
+    } catch (err) {
+      logger.error('AuthContext: check failed', { error: err });
       setError(ERROR_MESSAGES.AUTH_CHECK_FAILED);
       router.push('/auth/signin');
     } finally {
@@ -146,8 +147,8 @@ export function useAuth(requiredRole?: UserRole | UserRole[]): AuthContextType {
     if (user && requiredRole) {
       const allowedRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
       if (!allowedRoles.includes(user.role)) {
-        console.log(`🔒 useAuth: Rôle incorrect. Requis: ${allowedRoles.join(' ou ')}, Reçu: ${user.role}`);
-        
+        logger.debug(`useAuth: role mismatch, required ${allowedRoles.join(' or ')}, got ${user.role}`);
+
         // Rediriger vers l'espace approprié selon le rôle
         const redirectPath = ROLE_REDIRECTS[user.role] || '/auth/signin';
         router.push(redirectPath);

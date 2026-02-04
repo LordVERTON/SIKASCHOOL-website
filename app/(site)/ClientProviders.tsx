@@ -8,7 +8,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { SkipLink } from "@/components/Accessibility";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { ThemeProvider } from "next-themes";
-import ToasterContext from "../context/ToastContext";
+import ToastContext from "@/context/ToastContext";
 import { useEffect, useState } from "react";
 import LeadCaptureModal from "@/components/Booking/LeadCaptureModal";
 import { setStorageItem, STORAGE_KEYS } from "@/lib/storage";
@@ -41,7 +41,7 @@ export default function ClientProviders({
           <SkipLink />
           <Lines />
           <Header />
-          <ToasterContext />
+          <ToastContext />
           {children}
           <LeadCaptureModal isOpen={leadOpen} onClose={() => setLeadOpen(false)} onPrefillEmail={handlePrefillEmail} />
           <Footer />

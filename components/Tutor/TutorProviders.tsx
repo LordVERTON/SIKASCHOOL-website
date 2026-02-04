@@ -2,7 +2,7 @@
 
 import { LanguageProvider } from "@/context/LanguageContext";
 import { ThemeProvider } from "next-themes";
-import ToasterContext from "@/app/context/ToastContext";
+import ToastContext from "@/context/ToastContext";
 
 export default function TutorProviders({
   children,
@@ -16,7 +16,7 @@ export default function TutorProviders({
       defaultTheme="light"
     >
       <LanguageProvider>
-        <ToasterContext />
+        <ToastContext />
         {children}
       </LanguageProvider>
     </ThemeProvider>

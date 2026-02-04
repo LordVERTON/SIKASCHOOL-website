@@ -7,12 +7,13 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  API_ENDPOINTS, 
-  ROLE_REDIRECTS, 
+import {
+  API_ENDPOINTS,
+  ROLE_REDIRECTS,
   ERROR_MESSAGES,
-  type UserRole 
+  type UserRole
 } from '@/lib/constants';
+import { logger } from '@/lib/logger';
 
 // Types
 interface User {
@@ -62,7 +63,7 @@ export function useAuth(requiredRole?: UserRole | UserRole[]): UseAuthReturn {
       
       if (!response.ok) {
         if (response.status === 401) {
-          console.log('🔒 useAuth: Non authentifié, redirection vers /auth/signin');
+          logger.debug('useAuth: unauthenticated, redirecting to signin');
           router.push('/auth/signin');
           return;
         }
@@ -93,7 +94,7 @@ export function useAuth(requiredRole?: UserRole | UserRole[]): UseAuthReturn {
             prevUser.role === userData.role) {
           return prevUser; // Pas de changement, éviter le re-render
         }
-        console.log(`🔒 useAuth: Utilisateur authentifié - ${userData.email} (${userData.role})`);
+        logger.debug(`useAuth: authenticated ${userData.email} (${userData.role})`);
         return userData;
       });
       
@@ -121,8 +122,8 @@ export function useAuth(requiredRole?: UserRole | UserRole[]): UseAuthReturn {
       setUser(null);
       router.push('/');
       router.refresh();
-    } catch (error) {
-      console.error('🔒 useAuth:', ERROR_MESSAGES.LOGOUT_FAILED, error);
+    } catch (err) {
+      logger.error(ERROR_MESSAGES.LOGOUT_FAILED, { error: err });
     }
   }, [router]);
 
