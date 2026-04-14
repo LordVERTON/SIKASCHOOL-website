@@ -7,10 +7,6 @@ import type {
   DashboardSession,
   SessionParticipantLink,
   DashboardUser,
-  DashboardMessage,
-  DashboardNotification,
-  DashboardAssessment,
-  StudentProfileRow,
 } from '@/types/dashboard';
 
 export async function GET() {

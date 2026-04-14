@@ -75,6 +75,11 @@ function AdministrationPageContent() {
   const [userAssignments, setUserAssignments] = useState<any[]>([]);
   const [availableUsers, setAvailableUsers] = useState<any[]>([]);
 
+  const askForConfirmation = (message: string) => {
+    // eslint-disable-next-line no-alert
+    return window.confirm(message);
+  };
+
   // Vérifier si l'utilisateur a les permissions admin avec useMemo pour éviter les re-calculs
   const isAdmin = useMemo(() => {
     if (!user) {
@@ -177,7 +182,7 @@ function AdministrationPageContent() {
   };
 
   const handleResetPassword = async (userId: string) => {
-    if (window.confirm('Êtes-vous sûr de vouloir réinitialiser le mot de passe de cet utilisateur ?')) {
+    if (askForConfirmation('Êtes-vous sûr de vouloir réinitialiser le mot de passe de cet utilisateur ?')) {
       try {
         const response = await fetch(`/api/admin/users/${userId}/reset-password`, {
           method: 'POST'
@@ -288,7 +293,7 @@ function AdministrationPageContent() {
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.')) {
+    if (askForConfirmation('Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.')) {
       try {
         const response = await fetch(`/api/admin/users/${userId}`, {
           method: 'DELETE'
@@ -349,7 +354,7 @@ function AdministrationPageContent() {
   };
 
   const handleDeleteSession = async (sessionId: string) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette session ? Cette action est irréversible.')) {
+    if (askForConfirmation('Êtes-vous sûr de vouloir supprimer cette session ? Cette action est irréversible.')) {
       try {
         const response = await fetch(`/api/admin/sessions/${sessionId}`, {
           method: 'DELETE'
@@ -367,7 +372,7 @@ function AdministrationPageContent() {
   };
 
   const handleSyncProfiles = async () => {
-    if (window.confirm('Êtes-vous sûr de vouloir synchroniser les profils ? Cela créera les profils manquants.')) {
+    if (askForConfirmation('Êtes-vous sûr de vouloir synchroniser les profils ? Cela créera les profils manquants.')) {
       try {
         const response = await fetch('/api/admin/sync-profiles', {
           method: 'POST'

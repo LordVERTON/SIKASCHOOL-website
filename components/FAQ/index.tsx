@@ -3,11 +3,11 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import FAQItem from "./FAQItem";
-import { FAQ } from "@/types/faq";
+import type { FAQ as FAQType } from "@/types/faq";
 
 const FAQ = () => {
   const [activeFaq, setActiveFaq] = useState(1);
-  const [faqData, setFaqData] = useState<FAQ[]>([]);
+  const [faqData, setFaqData] = useState<FAQType[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
