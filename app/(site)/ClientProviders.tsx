@@ -11,7 +11,7 @@ import { ThemeProvider } from "next-themes";
 import ToastContext from "@/context/ToastContext";
 import { useEffect, useState } from "react";
 import LeadCaptureModal from "@/components/Booking/LeadCaptureModal";
-import { setStorageItem, STORAGE_KEYS } from "@/lib/storage";
+import { getStorageItem, setStorageItem, STORAGE_KEYS } from "@/lib/storage";
 
 export default function ClientProviders({
   children,
@@ -19,13 +19,21 @@ export default function ClientProviders({
   children: React.ReactNode;
 }) {
   const [leadOpen, setLeadOpen] = useState(false);
+  const [leadInitialEmail, setLeadInitialEmail] = useState<string>("");
 
   const handlePrefillEmail = (email: string) => {
     setStorageItem(STORAGE_KEYS.LAST_LEAD_EMAIL, email);
+    setLeadInitialEmail(email);
   };
 
   useEffect(() => {
-    const handler = () => setLeadOpen(true);
+    const handler = (event: Event) => {
+      const detailEmail =
+        (event as CustomEvent<{ email?: string }>).detail?.email?.trim() ?? "";
+      const fallback = getStorageItem(STORAGE_KEYS.LAST_LEAD_EMAIL) ?? "";
+      setLeadInitialEmail(detailEmail || fallback);
+      setLeadOpen(true);
+    };
     window.addEventListener('lead:open', handler);
     return () => window.removeEventListener('lead:open', handler);
   }, []);
@@ -43,7 +51,12 @@ export default function ClientProviders({
           <Header />
           <ToastContext />
           {children}
-          <LeadCaptureModal isOpen={leadOpen} onClose={() => setLeadOpen(false)} onPrefillEmail={handlePrefillEmail} />
+          <LeadCaptureModal
+            isOpen={leadOpen}
+            onClose={() => setLeadOpen(false)}
+            onPrefillEmail={handlePrefillEmail}
+            initialEmail={leadInitialEmail}
+          />
           <Footer />
           <ScrollToTop />
         </ErrorBoundary>

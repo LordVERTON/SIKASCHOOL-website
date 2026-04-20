@@ -1,12 +1,18 @@
 "use client";
 import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { setStorageItem, STORAGE_KEYS } from "@/lib/storage";
+import {
+  PHONE_COUNTRIES,
+  findPhoneCountry,
+  normalizeForSearch,
+} from "@/lib/phone-countries";
 
 type LeadCaptureModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onPrefillEmail?: (email: string) => void;
+  initialEmail?: string;
 };
 
 const LEVELS = [
@@ -28,14 +34,17 @@ const GOALS = [
   "Autre"
 ] as const;
 
-export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail }: LeadCaptureModalProps) {
+
+export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, initialEmail }: LeadCaptureModalProps) {
   const [level, setLevel] = useState<string>("");
   const [subject, setSubject] = useState<string>("");
   const [civility, setCivility] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
   const [firstName, setFirstName] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
+  const [email, setEmail] = useState<string>(initialEmail?.trim() ?? "");
+  const [emailManuallyEdited, setEmailManuallyEdited] = useState<boolean>(false);
   const [phone, setPhone] = useState<string>("");
+  const [phoneDialCountry, setPhoneDialCountry] = useState<string>("FR");
   const [zip, setZip] = useState<string>("");
   const [goal, setGoal] = useState<string>("");
   const [goalOther, setGoalOther] = useState<string>("");
@@ -43,6 +52,77 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail }: Le
   const [submitting, setSubmitting] = useState(false);
   const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
+
+  // Keep the form email in sync with the hero/header email as long as the
+  // user has not manually edited the field inside the modal itself.
+  useEffect(() => {
+    if (emailManuallyEdited) return;
+    const trimmed = initialEmail?.trim() ?? "";
+    setEmail((current) => (current === trimmed ? current : trimmed));
+  }, [initialEmail, emailManuallyEdited]);
+
+  // Reset the manual-edit flag whenever the modal is closed so the next
+  // opening can be prefilled again from the hero/header email.
+  useEffect(() => {
+    if (!isOpen) setEmailManuallyEdited(false);
+  }, [isOpen]);
+
+  const selectedCountry = useMemo(
+    () => findPhoneCountry(phoneDialCountry) ?? findPhoneCountry("FR")!,
+    [phoneDialCountry]
+  );
+  const phoneDialCode = selectedCountry.dial;
+
+  const fullPhone = useMemo(
+    () => (phone ? `${phoneDialCode} ${phone}`.trim() : ""),
+    [phoneDialCode, phone]
+  );
+
+  // --- Dropdown indicatif téléphonique (compact + recherche) -----------------
+  const [dialPickerOpen, setDialPickerOpen] = useState(false);
+  const [dialSearch, setDialSearch] = useState("");
+  const dialPickerRef = useRef<HTMLDivElement | null>(null);
+  const dialSearchInputRef = useRef<HTMLInputElement | null>(null);
+
+  const filteredCountries = useMemo(() => {
+    const q = normalizeForSearch(dialSearch.trim());
+    if (!q) return PHONE_COUNTRIES;
+    const digits = q.replace(/\D+/g, "");
+    return PHONE_COUNTRIES.filter((option) => {
+      if (normalizeForSearch(option.country).includes(q)) return true;
+      if (option.code.toLowerCase().includes(q)) return true;
+      if (digits && option.dial.replace(/\D+/g, "").includes(digits)) return true;
+      return false;
+    });
+  }, [dialSearch]);
+
+  // Fermeture au clic en dehors ou via la touche Echap.
+  useEffect(() => {
+    if (!dialPickerOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!dialPickerRef.current) return;
+      if (!dialPickerRef.current.contains(event.target as Node)) {
+        setDialPickerOpen(false);
+      }
+    };
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setDialPickerOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [dialPickerOpen]);
+
+  // Focus automatique du champ de recherche à l'ouverture.
+  useEffect(() => {
+    if (dialPickerOpen) {
+      setDialSearch("");
+      requestAnimationFrame(() => dialSearchInputRef.current?.focus());
+    }
+  }, [dialPickerOpen]);
 
   const isValid = useMemo(() => {
     const base = level && subject && civility && lastName && firstName && /.+@.+\..+/.test(email) && phone.length >= 6 && zip.length >= 4;
@@ -73,7 +153,20 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail }: Le
       setStorageItem(STORAGE_KEYS.SELECTED_SUBJECT, subject);
       setStorageItem(
         STORAGE_KEYS.LEAD_FORM,
-        JSON.stringify({ civility, lastName, firstName, email, phone, zip, goal, goalOther: goal === "Autre" ? goalOther : "", contest: subject === "Préparation à un concours" ? contest : "" })
+        JSON.stringify({
+          civility,
+          lastName,
+          firstName,
+          email,
+          phone: fullPhone,
+          phoneLocal: phone,
+          phoneDialCode,
+          phoneDialCountry,
+          zip,
+          goal,
+          goalOther: goal === "Autre" ? goalOther : "",
+          contest: subject === "Préparation à un concours" ? contest : ""
+        })
       );
 
       // Call backend to create the student
@@ -84,7 +177,9 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail }: Le
           firstName,
           lastName,
           email,
-          phone,
+          phone: fullPhone,
+          phoneDialCode,
+          phoneDialCountry,
           zip,
           level,
           subject,
@@ -254,9 +349,171 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail }: Le
               </select>
               <input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Nom" className="w-full rounded-full bg-white px-4 py-2 text-black" />
               <input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Prénom" className="w-full rounded-full bg-white px-4 py-2 text-black" />
-              <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" type="email" className="w-full rounded-full bg-white px-4 py-2 text-black" />
-              <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Téléphone" className="w-full rounded-full bg-white px-4 py-2 text-black" />
-              <input value={zip} onChange={(e) => setZip(e.target.value)} placeholder="Code postal" className="w-full rounded-full bg-white px-4 py-2 text-black" />
+              <input
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setEmailManuallyEdited(true);
+                }}
+                placeholder="Email"
+                type="email"
+                className="w-full rounded-full bg-white px-4 py-2 text-black"
+              />
+              <div className="flex w-full items-stretch gap-2">
+                <div ref={dialPickerRef} className="relative shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setDialPickerOpen((open) => !open)}
+                    aria-haspopup="listbox"
+                    aria-expanded={dialPickerOpen}
+                    aria-label={`Indicatif téléphonique (${selectedCountry.country}, ${selectedCountry.dial})`}
+                    title={`${selectedCountry.country} (${selectedCountry.dial})`}
+                    className="flex h-full items-center gap-1 rounded-full bg-white pl-3 pr-2 py-2 text-black focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  >
+                    <span className="text-base leading-none" aria-hidden="true">
+                      {selectedCountry.flag}
+                    </span>
+                    <span className="whitespace-nowrap text-sm font-medium">
+                      {selectedCountry.dial}
+                    </span>
+                    <span
+                      aria-hidden="true"
+                      className="text-xs text-black/60"
+                    >
+                      ▾
+                    </span>
+                  </button>
+
+                  {dialPickerOpen && (
+                    <div
+                      role="dialog"
+                      aria-label="Choisir un indicatif téléphonique"
+                      className="absolute left-0 top-full z-[100] mt-2 flex w-[min(20rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-black/10 bg-white text-black shadow-2xl dark:border-white/10 dark:bg-blacksection dark:text-white"
+                    >
+                      <div className="shrink-0 border-b border-black/5 p-2 dark:border-white/10">
+                        <input
+                          ref={dialSearchInputRef}
+                          value={dialSearch}
+                          onChange={(e) => setDialSearch(e.target.value)}
+                          placeholder="Rechercher un pays ou indicatif…"
+                          aria-label="Rechercher un pays ou indicatif"
+                          className="w-full rounded-full border border-black/10 bg-white px-3 py-1.5 text-sm text-black placeholder-black/40 focus:border-primary focus:outline-none dark:border-white/10 dark:bg-black/30 dark:text-white dark:placeholder-white/40"
+                        />
+                      </div>
+                      <ul
+                        role="listbox"
+                        aria-activedescendant={`dial-option-${selectedCountry.code}`}
+                        className="h-[min(20rem,55vh)] overflow-y-auto overscroll-contain py-1 [scrollbar-color:rgba(0,0,0,0.25)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-black/20 hover:[&::-webkit-scrollbar-thumb]:bg-black/40 [&::-webkit-scrollbar-track]:bg-transparent"
+                        onWheelCapture={(e) => e.stopPropagation()}
+                        onTouchMoveCapture={(e) => e.stopPropagation()}
+                      >
+                        {filteredCountries.length === 0 ? (
+                          <li className="px-3 py-2 text-sm text-black/50 dark:text-white/50">
+                            Aucun résultat
+                          </li>
+                        ) : (
+                          filteredCountries.map((option) => {
+                            const isSelected = option.code === phoneDialCountry;
+                            return (
+                              <li key={option.code}>
+                                <button
+                                  type="button"
+                                  id={`dial-option-${option.code}`}
+                                  role="option"
+                                  aria-selected={isSelected}
+                                  onClick={() => {
+                                    setPhoneDialCountry(option.code);
+                                    setDialPickerOpen(false);
+                                  }}
+                                  className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition hover:bg-primary/10 ${
+                                    isSelected
+                                      ? "bg-primary/10 font-semibold text-primary"
+                                      : "text-black dark:text-white"
+                                  }`}
+                                >
+                                  <span className="text-base leading-none" aria-hidden="true">
+                                    {option.flag}
+                                  </span>
+                                  <span className="flex-1 truncate">
+                                    {option.country}
+                                  </span>
+                                  <span className="shrink-0 text-black/60 dark:text-white/60">
+                                    {option.dial}
+                                  </span>
+                                </button>
+                              </li>
+                            );
+                          })
+                        )}
+                      </ul>
+                      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-5 bg-gradient-to-t from-white to-transparent dark:from-blacksection" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex min-w-0 flex-1 items-center rounded-full bg-white px-4 text-black">
+                  <span className="mr-2 select-none whitespace-nowrap text-black/70">
+                    {phoneDialCode}
+                  </span>
+                  <input
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value.replace(/\D+/g, ""))}
+                    onKeyDown={(e) => {
+                      if (
+                        e.key.length === 1 &&
+                        !/[0-9]/.test(e.key) &&
+                        !e.ctrlKey &&
+                        !e.metaKey &&
+                        !e.altKey
+                      ) {
+                        e.preventDefault();
+                      }
+                    }}
+                    onPaste={(e) => {
+                      const pasted = e.clipboardData.getData("text");
+                      if (/\D/.test(pasted)) {
+                        e.preventDefault();
+                        setPhone((prev) => (prev + pasted).replace(/\D+/g, ""));
+                      }
+                    }}
+                    placeholder="Numéro de téléphone"
+                    type="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    autoComplete="tel-national"
+                    maxLength={15}
+                    className="w-full bg-transparent py-2 text-black focus:outline-none"
+                  />
+                </div>
+              </div>
+              <input
+                value={zip}
+                onChange={(e) => setZip(e.target.value.replace(/\D+/g, ""))}
+                onKeyDown={(e) => {
+                  if (
+                    e.key.length === 1 &&
+                    !/[0-9]/.test(e.key) &&
+                    !e.ctrlKey &&
+                    !e.metaKey &&
+                    !e.altKey
+                  ) {
+                    e.preventDefault();
+                  }
+                }}
+                onPaste={(e) => {
+                  const pasted = e.clipboardData.getData("text");
+                  if (/\D/.test(pasted)) {
+                    e.preventDefault();
+                    setZip((prev) => (prev + pasted).replace(/\D+/g, "").slice(0, 5));
+                  }
+                }}
+                placeholder="Code postal"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                autoComplete="postal-code"
+                maxLength={5}
+                className="w-full rounded-full bg-white px-4 py-2 text-black"
+              />
             </div>
 
             <div className="mt-6 text-xs text-black/70">

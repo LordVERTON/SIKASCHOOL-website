@@ -27,6 +27,9 @@ const Hero = () => {
       return;
     }
     
+    // Persist email so it can also be reused when opening the modal from the header CTA
+    setStorageItem(STORAGE_KEYS.LAST_LEAD_EMAIL, email.trim());
+
     // Open lead capture first per new requirement
     setIsLeadOpen(true);
   };
@@ -103,6 +106,7 @@ const Hero = () => {
         isOpen={isLeadOpen}
         onClose={() => setIsLeadOpen(false)}
         onPrefillEmail={handlePrefillEmail}
+        initialEmail={email}
       />
     </>
   );
