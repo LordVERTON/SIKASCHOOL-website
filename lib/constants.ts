@@ -17,13 +17,15 @@ export const PUBLIC_ROUTES = [
   '/about',
   '/how-it-works',
   '/pricing',
+  '/packs',
   '/book',
   '/auth/signin',
   '/auth/signup',
   '/legal',
   '/api/auth/login',
   '/api/auth/logout',
-  '/api/auth/me'
+  '/api/auth/me',
+  '/api/webhooks/stripe'
 ] as const;
 
 // Redirections par rôle
