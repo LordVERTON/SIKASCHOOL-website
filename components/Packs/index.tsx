@@ -1,85 +1,58 @@
 "use client";
 import Image from "next/image";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import SectionHeader from "../Common/SectionHeader";
+import { CLIENT_PLANS, formatEuros, LEVEL_COLORS } from "@/lib/payments-catalog";
 
 const Packs = () => {
-  const pricingPlans = [
-    // Eco Plans (8 séances)
-    {
-      id: 1,
-      name: "NOTA - Eco",
-      price: "144€",
-      originalPrice: "144€",
-      sessions: "8 séances",
-      level: "Collège",
-      description: "Maths, Français, Physique-Chimie. Méthode et confiance.",
-      type: "eco",
-      color: "bg-yellow-100 text-yellow-800",
-    },
-    {
-      id: 2,
-      name: "AVA - Eco", 
-      price: "176€",
-      originalPrice: "176€",
-      sessions: "8 séances",
-      level: "Lycée",
-      description: "Maths, Physique, SVT, Spécialités. Préparation examens.",
-      type: "eco",
-      color: "bg-sky-100 text-sky-800",
-    },
-    {
-      id: 3,
-      name: "TODA - Eco",
-      price: "224€", 
-      originalPrice: "224€",
-      sessions: "8 séances",
-      level: "Enseignement Supérieur",
-      description: "Maths, Physique, Info, Méthodes et projets.",
-      type: "eco",
-      color: "bg-green-100 text-green-800",
-    },
-    // Basic Plans (4 séances)
-    {
-      id: 4,
-      name: "NOTA - Basic",
-      price: "88€",
-      originalPrice: "88€", 
-      sessions: "4 séances",
-      level: "Collège",
-      description: "Maths, Français, Physique-Chimie. Méthode et confiance.",
-      type: "basic",
-      color: "bg-yellow-100 text-yellow-800",
-    },
-    {
-      id: 5,
-      name: "AVA - Basic",
-      price: "108€",
-      originalPrice: "108€",
-      sessions: "4 séances", 
-      level: "Lycée",
-      description: "Maths, Physique, SVT, Spécialités. Préparation examens.",
-      type: "basic",
-      color: "bg-sky-100 text-sky-800",
-    },
-    {
-      id: 6,
-      name: "TODA - Basic",
-      price: "128€",
-      originalPrice: "128€",
-      sessions: "4 séances",
-      level: "Enseignement Supérieur", 
-      description: "Maths, Physique, Info, Méthodes et projets.",
-      type: "basic",
-      color: "bg-green-100 text-green-800",
+  const router = useRouter();
+  const [pendingPlan, setPendingPlan] = useState<string | null>(null);
+
+  const ecoPlans = CLIENT_PLANS.filter((p) => p.kind === "PACK" && p.sessions === 8);
+  const basicPlans = CLIENT_PLANS.filter((p) => p.kind === "PACK" && p.sessions === 4);
+
+  const onSelect = async (planId: string) => {
+    setPendingPlan(planId);
+    try {
+      // Vérifie auth via /api/auth/me
+      const meRes = await fetch("/api/auth/me", { credentials: "include" });
+      if (!meRes.ok) {
+        // Non connecté -> signin avec retour vers /student/paiements
+        router.push(`/auth/signin?next=${encodeURIComponent("/student/paiements")}`);
+        return;
+      }
+      const me = await meRes.json();
+      if (me?.role !== "STUDENT") {
+        toast.error("Seuls les comptes Élève peuvent acheter un pack.");
+        setPendingPlan(null);
+        return;
+      }
+
+      // Crée une session Stripe Checkout
+      const res = await fetch("/api/student/payments/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ planId }),
+      });
+      const body = await res.json();
+      if (!res.ok || !body?.url) {
+        throw new Error(body?.error || "Erreur lors du paiement");
+      }
+      window.location.href = body.url;
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Erreur";
+      toast.error(msg);
+      setPendingPlan(null);
     }
-  ];
+  };
 
   return (
     <>
-      {/* <!-- ===== Packs Section Start ===== --> */}
       <section className="overflow-hidden pb-20 pt-15 lg:pb-25 xl:pb-30">
         <div className="mx-auto max-w-c-1315 px-4 md:px-8 xl:px-0">
-          {/* <!-- Section Title Start --> */}
           <div className="animate_top mx-auto text-center">
             <SectionHeader
               headerInfo={{
@@ -89,7 +62,6 @@ const Packs = () => {
               }}
             />
           </div>
-          {/* <!-- Section Title End --> */}
         </div>
 
         <div className="relative mx-auto mt-15 max-w-[1400px] px-4 md:px-8 xl:mt-20 xl:px-0">
@@ -101,42 +73,59 @@ const Packs = () => {
               className="dark:hidden"
             />
           </div>
-          
+
           {/* Eco Plans Section */}
           <div className="mb-12">
             <h3 className="mb-8 text-center text-2xl font-bold text-black dark:text-white">
               Formules Eco (8 séances)
             </h3>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {pricingPlans.filter(plan => plan.type === 'eco').map((plan) => (
-                <div key={plan.id} className="animate_top group relative rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection dark:shadow-none xl:p-12.5">
-                  <div className={`mb-3 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${plan.color || ''}`}>
-                    {plan.level}
-                  </div>
-                  <h4 className="mb-1 text-lg font-semibold text-waterloo dark:text-manatee">
-                    {plan.name}
-                  </h4>
-                  <div className="mb-4">
-                    {/* <span className="text-3xl font-bold text-primary">{plan.price}</span>
-                    <span className="ml-2 text-sm text-waterloo dark:text-manatee">
-                      {plan.originalPrice}
-                    </span> */}
-                  </div>
-                  <p className="mb-2 text-sm font-medium text-black dark:text-white">
-                    {plan.sessions} (Sans Engagement)
-                  </p>
-                  <p className="mb-6 text-sm text-waterloo dark:text-manatee">
-                    {plan.description}
-                  </p>
-                  
-                  <button
-                    aria-label="Sélectionner button"
-                    className="w-full rounded-lg bg-primary px-6 py-3 text-white transition-all duration-300 hover:bg-primaryho"
+              {ecoPlans.map((plan) => {
+                const colors = LEVEL_COLORS[plan.level];
+                const isLoading = pendingPlan === plan.id;
+                return (
+                  <div
+                    key={plan.id}
+                    className="animate_top group relative rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection dark:shadow-none xl:p-12.5"
                   >
-                    Sélectionner
-                  </button>
-                </div>
-              ))}
+                    <div className={`mb-3 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${colors.bg} ${colors.text}`}>
+                      {plan.levelLabel}
+                    </div>
+                    <h4 className="mb-1 text-lg font-semibold text-waterloo dark:text-manatee">
+                      {plan.name}
+                    </h4>
+                    <div className="mb-2">
+                      <span className="text-3xl font-bold text-primary">{formatEuros(plan.priceCents)}</span>
+                      {plan.sessions && plan.sessions > 1 && (
+                        <span className="ml-2 text-sm text-waterloo dark:text-manatee">
+                          soit {formatEuros(plan.priceCents / plan.sessions)} / séance
+                        </span>
+                      )}
+                    </div>
+                    <p className="mb-2 text-sm font-medium text-black dark:text-white">
+                      {plan.sessions} séances (Sans Engagement)
+                    </p>
+                    <p className="mb-6 text-sm text-waterloo dark:text-manatee">
+                      {plan.description}
+                    </p>
+
+                    <button
+                      onClick={() => onSelect(plan.id)}
+                      disabled={isLoading}
+                      aria-label="Sélectionner button"
+                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-white transition-all duration-300 hover:bg-primaryho disabled:opacity-60"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Spinner /> Redirection...
+                        </>
+                      ) : (
+                        "Sélectionner"
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -146,48 +135,74 @@ const Packs = () => {
               Formules Basic (4 séances)
             </h3>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {pricingPlans.filter(plan => plan.type === 'basic').map((plan) => (
-                <div key={plan.id} className="animate_top group relative rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection dark:shadow-none xl:p-12.5">
-                  <div className={`mb-3 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${plan.color || ''}`}>
-                    {plan.level}
-                  </div>
-                  <h4 className="mb-1 text-lg font-semibold text-waterloo dark:text-manatee">
-                    {plan.name}
-                  </h4>
-                  <div className="mb-4">
-                    {/* <span className="text-3xl font-bold text-primary">{plan.price}</span>
-                    <span className="ml-2 text-sm text-waterloo dark:text-manatee">
-                      {plan.originalPrice}
-                    </span> */}
-                  </div>
-                  <p className="mb-2 text-sm font-medium text-black dark:text-white">
-                    {plan.sessions} (Sans Engagement)
-                  </p>
-                  <p className="mb-6 text-sm text-waterloo dark:text-manatee">
-                    {plan.description}
-                  </p>
-                  
-                  <button
-                    aria-label="Sélectionner button"
-                    className="w-full rounded-lg bg-primary px-6 py-3 text-white transition-all duration-300 hover:bg-primaryho"
+              {basicPlans.map((plan) => {
+                const colors = LEVEL_COLORS[plan.level];
+                const isLoading = pendingPlan === plan.id;
+                return (
+                  <div
+                    key={plan.id}
+                    className="animate_top group relative rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection dark:shadow-none xl:p-12.5"
                   >
-                    Sélectionner
-                  </button>
-                </div>
-              ))}
+                    <div className={`mb-3 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${colors.bg} ${colors.text}`}>
+                      {plan.levelLabel}
+                    </div>
+                    <h4 className="mb-1 text-lg font-semibold text-waterloo dark:text-manatee">
+                      {plan.name}
+                    </h4>
+                    <div className="mb-2">
+                      <span className="text-3xl font-bold text-primary">{formatEuros(plan.priceCents)}</span>
+                      {plan.sessions && plan.sessions > 1 && (
+                        <span className="ml-2 text-sm text-waterloo dark:text-manatee">
+                          soit {formatEuros(plan.priceCents / plan.sessions)} / séance
+                        </span>
+                      )}
+                    </div>
+                    <p className="mb-2 text-sm font-medium text-black dark:text-white">
+                      {plan.sessions} séances (Sans Engagement)
+                    </p>
+                    <p className="mb-6 text-sm text-waterloo dark:text-manatee">
+                      {plan.description}
+                    </p>
+
+                    <button
+                      onClick={() => onSelect(plan.id)}
+                      disabled={isLoading}
+                      aria-label="Sélectionner button"
+                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-white transition-all duration-300 hover:bg-primaryho disabled:opacity-60"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Spinner /> Redirection...
+                        </>
+                      ) : (
+                        "Sélectionner"
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
           {/* Explainer */}
           <div className="mx-auto mt-10 max-w-[900px] text-center text-sm text-waterloo dark:text-manatee">
             <p>
-              Pack = carnet de séances à tarif avantageux. À la séance = paiement à l'unité. Choisissez selon votre besoin et votre régularité.
+              Pack = carnet de séances à tarif avantageux. À la séance = paiement à l&apos;unité.
+              Choisissez selon votre besoin et votre régularité. Paiement 100% sécurisé par Stripe.
             </p>
           </div>
         </div>
       </section>
-      {/* <!-- ===== Packs Section End ===== --> */}
     </>
   );
 };
+
+function Spinner() {
+  return (
+    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.25" strokeWidth="4" />
+      <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 export default Packs;
