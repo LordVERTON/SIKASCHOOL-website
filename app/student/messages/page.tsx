@@ -155,6 +155,48 @@ export default function StudentMessages() {
         </div>
       </div>
 
+      {/* Tuteur IA permanent - toujours épinglé en haut */}
+      <Link
+        href="/student/messages/ai-tutor"
+        className="mb-6 block rounded-lg border border-primary/40 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 shadow-sm hover:shadow-md transition-shadow"
+      >
+        <div className="flex items-start space-x-4">
+          <div className="flex-shrink-0">
+            <div className="w-14 h-14 bg-gradient-to-br from-primary to-primary/70 rounded-full flex items-center justify-center shadow-md">
+              <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            </div>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-lg font-semibold text-gray-900">Sika AI</h3>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/15 text-primary">
+                Tuteur permanent · 24/7
+              </span>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                En ligne
+              </span>
+            </div>
+            <p className="mt-1 text-sm text-gray-700">
+              Pose tes questions techniques, fais corriger un devoir à partir d'une photo,
+              demande une fiche de révision ou une explication détaillée.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2 text-xs">
+              <span className="px-2 py-1 bg-white border border-gray-200 rounded-full text-gray-600">Exercices</span>
+              <span className="px-2 py-1 bg-white border border-gray-200 rounded-full text-gray-600">Correction de photos</span>
+              <span className="px-2 py-1 bg-white border border-gray-200 rounded-full text-gray-600">Fiches de révision</span>
+              <span className="px-2 py-1 bg-white border border-gray-200 rounded-full text-gray-600">Explications</span>
+            </div>
+          </div>
+          <div className="flex-shrink-0 self-center">
+            <span className="inline-flex items-center px-3 py-2 rounded-lg bg-primary text-white text-sm font-medium">
+              Ouvrir →
+            </span>
+          </div>
+        </div>
+      </Link>
+
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
