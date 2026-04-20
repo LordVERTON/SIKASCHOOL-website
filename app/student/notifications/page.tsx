@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
 import { supabaseBrowser } from "@/lib/supabase-browser";
@@ -135,7 +135,17 @@ export default function StudentNotifications() {
     try {
       const response = await fetch("/api/student/notifications", { credentials: "include" });
       if (!response.ok) {
-        throw new Error("Erreur lors de la récupération des notifications");
+        if (response.status === 401) {
+          // Session non encore prête — on ne bloque pas l'UI avec un message d'erreur.
+          setNotifications([]);
+          setError(null);
+          return;
+        }
+        console.warn(
+          `[StudentNotifications] /api/student/notifications a retourné ${response.status}`
+        );
+        setError("Impossible de charger vos notifications pour le moment.");
+        return;
       }
       const payload: NotificationRecord[] = await response.json();
       setNotifications(payload);
@@ -193,32 +203,52 @@ export default function StudentNotifications() {
     [fetchNotifications]
   );
 
+  // Garder une référence à la dernière version de fetchNotifications pour
+  // éviter de résouscrire au canal realtime à chaque rendu.
+  const fetchRef = useRef(fetchNotifications);
+  useEffect(() => {
+    fetchRef.current = fetchNotifications;
+  }, [fetchNotifications]);
+
   useEffect(() => {
     if (!user) return;
+    const userId = user.id;
     setIsInitialLoading(true);
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 60_000);
+    fetchRef.current();
+    const interval = setInterval(() => fetchRef.current(), 60_000);
+
+    // Nom de canal unique par montage pour éviter que Supabase retourne
+    // un canal déjà en cache (et déjà subscribed) en StrictMode/dev.
+    const channelName = `student-notifications-${userId}-${
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : Math.random().toString(36).slice(2)
+    }`;
+
     const channel = supabaseBrowser
-      .channel(`student-notifications-${user.id}`)
+      .channel(channelName)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "notifications",
-          filter: `user_id=eq.${user.id}`
+          filter: `user_id=eq.${userId}`
         },
         () => {
-          fetchNotifications();
+          fetchRef.current();
         }
       )
       .subscribe();
 
     return () => {
-      channel.unsubscribe();
+      // removeChannel supprime le canal du cache interne de Supabase,
+      // évitant l'erreur "cannot add postgres_changes callbacks after subscribe()"
+      // lors du re-mount (StrictMode / re-render).
+      supabaseBrowser.removeChannel(channel);
       clearInterval(interval);
     };
-  }, [user, fetchNotifications]);
+  }, [user]);
 
   return (
     <main className="pb-20 pt-15 lg:pb-25 xl:pb-30">

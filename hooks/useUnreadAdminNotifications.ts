@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabaseBrowser } from "@/lib/supabase-browser";
 import { hasAdminPermissions } from "@/lib/admin-permissions";
@@ -34,7 +34,13 @@ export function useUnreadAdminNotifications() {
         credentials: "include",
       });
       if (!response.ok) {
-        throw new Error("Erreur lors de la récupération des notifications");
+        if (response.status !== 401) {
+          console.warn(
+            `[useUnreadAdminNotifications] /api/tutor/notifications a retourné ${response.status}`
+          );
+        }
+        setUnreadCount(0);
+        return;
       }
       const notifications: Array<{ isRead: boolean }> = await response.json();
       const count = notifications.filter((n) => !n.isRead).length;
@@ -47,6 +53,13 @@ export function useUnreadAdminNotifications() {
     }
   }, [user, authLoading]);
 
+  // Garder une référence à la dernière version de fetchUnreadCount pour
+  // éviter de résouscrire au canal realtime à chaque rendu.
+  const fetchRef = useRef(fetchUnreadCount);
+  useEffect(() => {
+    fetchRef.current = fetchUnreadCount;
+  }, [fetchUnreadCount]);
+
   useEffect(() => {
     if (!user || authLoading) {
       setUnreadCount(0);
@@ -54,8 +67,6 @@ export function useUnreadAdminNotifications() {
       return;
     }
 
-    // Vérifier que l'utilisateur a accès aux fonctionnalités tuteur/admin
-    // Les admins (rôle ADMIN) et les tuteurs (rôle TUTOR) peuvent voir les notifications
     const canAccess = user.role === 'ADMIN' || user.role === 'TUTOR' || hasAdminPermissions(user);
     if (!canAccess) {
       setUnreadCount(0);
@@ -63,35 +74,44 @@ export function useUnreadAdminNotifications() {
       return;
     }
 
-    // Charger initialement
-    fetchUnreadCount();
+    const userId = user.id;
 
-    // S'abonner aux changements en temps réel
+    fetchRef.current();
+
+    // Nom de canal unique par montage pour éviter que Supabase retourne
+    // un canal déjà en cache (et déjà subscribed) en StrictMode/dev.
+    const channelName = `admin-unread-notifications-${userId}-${
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : Math.random().toString(36).slice(2)
+    }`;
+
     const channel = supabaseBrowser
-      .channel(`admin-unread-notifications-${user.id}`)
+      .channel(channelName)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "notifications",
-          filter: `user_id=eq.${user.id}`,
+          filter: `user_id=eq.${userId}`,
         },
         () => {
-          // Rafraîchir le compteur quand une notification change
-          fetchUnreadCount();
+          fetchRef.current();
         }
       )
       .subscribe();
 
-    // Rafraîchir périodiquement (toutes les 30 secondes)
-    const interval = setInterval(fetchUnreadCount, 30_000);
+    const interval = setInterval(() => fetchRef.current(), 30_000);
 
     return () => {
-      channel.unsubscribe();
+      // removeChannel supprime le canal du cache interne de Supabase,
+      // évitant l'erreur "cannot add postgres_changes callbacks after subscribe()"
+      // lors du re-mount (StrictMode / re-render).
+      supabaseBrowser.removeChannel(channel);
       clearInterval(interval);
     };
-  }, [user, authLoading, fetchUnreadCount]);
+  }, [user, authLoading]);
 
   return { unreadCount, loading };
 }
