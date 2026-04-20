@@ -1,568 +1,425 @@
-# SikaSchool - Next.js Platform (based on Solid template)
+# SikaSchool — Plateforme Next.js
 
-This project is a comprehensive Next.js 15+ (App Router) educational platform aligned with the SikaSchool structure and content while preserving the original Solid template design system (Tailwind CSS, dark mode, animations).
+Plateforme éducative complète construite sur **Next.js 15 (App Router)** et **React 19**, avec cours particuliers en direct (LiveKit), messagerie, gestion administrative et **Sika AI**, un tuteur IA permanent intégré à l'espace élève (LangChain / LangGraph, vision multimodale).
 
-- **Stack**: Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS, Framer Motion, Swiper, LiveKit, Supabase
-- **Design system**: Original Solid template styles retained; content updated to match SikaSchool
-- **Live content modeled from**: `https://www.sikaschool.com/`
-- **Platform URL**: `https://sikaschool.app` - The platform is accessible at this address
+- **URL de production** : [https://sikaschool.app](https://sikaschool.app)
+- **Basé sur** : template Solid (design system conservé — Tailwind CSS, dark mode, animations)
+- **Contenu inspiré de** : `https://www.sikaschool.com/`
 
-## What's included
-- **Homepage sections**: Hero, About (Nos méthodes), Fun Facts (Quelques Chiffres), Témoignages, Pricing (Packs de séances), Contact
-- **Header navigation**: `Accueil`, `Comment ça marche`, `Qui sommes nous ?`, `Packs de séances`, `A la séance`, `Se connecter`
-- **CTAs**: `Se connecter` and `Réserver` in the header
-- **Theming**: Light/Dark mode toggle preserved
-- **Authentication**: Complete login/signup system with role-based access
-- **Lead Capture**: Automatic student account creation from registration form
-- **Student Portal**: Full dashboard with booking, history, tutor selection, notifications, and messaging
-- **Tutor Portal**: Complete tutor management interface with admin capabilities
-- **Admin Panel**: Comprehensive administration system for user, session, and assignment management
-- **Database**: Full Supabase integration with real-time data synchronization
-- **Live Sessions**: LiveKit integration for real-time video tutoring sessions
-- **Real-time Notifications**: Instant notifications for students, tutors, and admins
+---
 
-Removed (from the original template): Blog pages/components and Docs page.
+## Sommaire
 
-## 🏗️ Technical Architecture
+- [Fonctionnalités](#fonctionnalités)
+- [Sika AI — Tuteur permanent (LangChain / LangGraph)](#sika-ai--tuteur-permanent-langchain--langgraph)
+- [Architecture technique](#architecture-technique)
+- [Structure du projet](#structure-du-projet)
+- [Démarrage](#démarrage)
+- [Variables d'environnement](#variables-denvironnement)
+- [Routes API](#routes-api)
+- [Schéma base de données](#schéma-base-de-données)
+- [Qualité & sécurité](#qualité--sécurité)
+- [Roadmap](#roadmap)
+- [Documentation](#documentation)
+- [Scripts](#scripts)
 
-### **Frontend Stack**
-- **Next.js 15** - App Router with TypeScript
-- **React 19** - Latest React features and hooks
-- **Tailwind CSS 4** - Utility-first CSS framework
-- **Framer Motion** - Smooth animations and transitions
-- **Swiper** - Touch slider for testimonials and carousels
-- **React Hot Toast** - Toast notifications
-- **LiveKit Components** - Real-time video and audio components
+---
 
-### **Backend & Database**
-- **Supabase** - PostgreSQL database with real-time features
-  - Real-time subscriptions for notifications
-  - Row-level security policies
-  - Database functions and triggers
-- **Custom Authentication** - Secure session management with bcryptjs
-- **API Routes** - RESTful endpoints for all operations
-- **TypeScript** - End-to-end type safety
-- **LiveKit** - Real-time video/audio infrastructure for live tutoring sessions
+## Fonctionnalités
 
-### **Key Features**
-- **Role-Based Access Control** - Students, Tutors, and Admins with granular permissions
-- **Real-time Data Sync** - Live updates across all interfaces using Supabase Realtime
-- **Responsive Design** - Mobile-first approach with optimized layouts
-- **Dark/Light Theme** - User preference support with system detection
-- **Internationalization** - French/English support ready
-- **Security** - Input validation, password hashing, secure sessions, CSRF protection
-- **Real-time Notifications** - Instant notifications with unread badges
-- **Live Video Sessions** - LiveKit integration for interactive tutoring
+### Portails
+- **Espace élève** — tableau de bord, calendrier, historique, profil, messagerie, notifications temps réel, sélection/assignation de tuteurs, **chat avec Sika AI**.
+- **Espace tuteur** — tableau de bord, agenda, fiches élèves (avec infos d'intake), sessions, paiements & commissions, messagerie, notifications.
+- **Panel admin** (tuteurs privilégiés) — gestion utilisateurs (CRUD + reset mot de passe + statut actif), sessions, assignations tuteur↔élève, synchronisation de profils.
 
-## Project structure (key files)
-- `app/(site)/page.tsx`: Homepage composition with anchors `#about`, `#how-it-works`, `#pricing`, `#contact`
-- `app/(site)/donnees-personnelles/page.tsx`: Privacy policy page
-- `components/Header/menuData.tsx`: Navigation items aligned to SikaSchool
-- `components/Header/index.tsx`: Header with CTAs `Se connecter` and `Réserver`
-- `components/Hero/index.tsx`: Updated hero copy with lead capture modal
-- `components/Booking/LeadCaptureModal.tsx`: Registration form with automatic account creation
-- `components/Auth/SimpleSignin.tsx`: Sign-in form with password visibility toggle
-- `components/Auth/ForgotPasswordModal.tsx`: Password reset functionality
-- `app/student/`: Complete student portal (dashboard, calendar, history, messages, notifications, profile, tutors)
-- `app/tutor/`: Complete tutor portal (dashboard, calendar, students, messages, notifications, administration)
-- `app/api/`: Comprehensive API routes for all operations
-- `hooks/useUnreadNotifications.ts`: Real-time notification count hook for students
-- `hooks/useUnreadAdminNotifications.ts`: Real-time notification count hook for admins/tutors
+### Acquisition & authentification
+- Capture de leads depuis la homepage avec **création automatique de compte élève** et mot de passe initial `<prenom>.<nom>12345`.
+- Authentification maison sur Supabase, rôles `STUDENT` / `TUTOR` / `ADMIN`, sessions signées en cookie HttpOnly (HMAC-SHA256), hash `bcryptjs`.
+- Mot de passe oublié avec reset et traçabilité.
 
-## Getting started
+### Temps réel
+- **Notifications** (profil, assignations, sessions, messages, paiements) via Supabase Realtime — badge non-lus en sidebar, canal unique par montage pour éviter les re-subscriptions en StrictMode.
+- **Messagerie** multi-participants (threads, participants, notifications contextuelles).
+- **Vidéo live** via LiveKit (salles par session, tokens signés côté serveur).
 
-### **Prerequisites**
-- Node.js 18+ 
-- npm or yarn
-- Supabase account and project
-- LiveKit account (for video sessions)
+### Conformité
+- Page `donnees-personnelles` (RGPD), headers sécurité (CSP/XFO/XCTO/Referrer-Policy), consentement utilisateur.
 
-### **Installation**
-1. Clone the repository:
+---
+
+## Sika AI — Tuteur permanent (LangChain / LangGraph)
+
+Assistant IA pédagogique disponible **24/7** depuis la section Messages de l'espace élève. Construit avec un agent **LangGraph ReAct** multimodal (OpenAI GPT-4o par défaut).
+
+### Capacités
+- Répondre aux questions techniques (maths, physique, chimie, informatique, français, …).
+- Aider à faire un devoir **étape par étape** avec justification des règles utilisées.
+- **Corriger des photos d'exercices / d'examens** grâce à la vision multimodale du modèle (upload direct depuis l'UI).
+- Générer des **fiches de révision** structurées (définitions, théorèmes, méthodes, exemples, pièges, quiz).
+- Expliquer un concept en profondeur (intuition, définition formelle, exemple, confusions fréquentes, mini quiz).
+
+### Architecture
+```
+┌─────────────────────────────┐        ┌────────────────────────────┐
+│  Student UI (Next.js)       │        │  Route API (Node runtime)  │
+│  /student/messages/ai-tutor │──POST─▶│  /api/student/ai-tutor/... │
+│  - chat + upload images     │        │  - auth role STUDENT       │
+│  - compression JPEG 1600px  │        │  - persiste user msg       │
+└─────────────────────────────┘        │  - invoque l'agent         │
+                                       │  - persiste réponse        │
+                                       └────────────┬───────────────┘
+                                                    │
+                                                    ▼
+                                      ┌─────────────────────────────┐
+                                      │  lib/ai-tutor/agent.ts      │
+                                      │  createReactAgent (LangGraph)│
+                                      │  ChatOpenAI (vision)        │
+                                      │  4 tools (zod-typed)        │
+                                      └─────────────────────────────┘
+                                                    │
+                                                    ▼
+                                      ┌─────────────────────────────┐
+                                      │  Supabase                   │
+                                      │  ai_tutor_conversations     │
+                                      │  ai_tutor_messages (JSONB)  │
+                                      └─────────────────────────────┘
+```
+
+### Outils cognitifs de l'agent
+| Outil | Usage |
+| --- | --- |
+| `solve_homework_step_by_step` | Résolution pas-à-pas avec stratégie + vérification |
+| `correct_student_work` | Correction commentée (texte ou photo) avec note et conseils |
+| `generate_revision_sheet` | Fiche de révision dense et structurée |
+| `explain_concept` | Explication intuition / définition / exemple / pièges / quiz |
+
+Les photos envoyées par l'élève sont transmises comme `image_url` (data URL base64) au modèle multimodal, qui lit l'énoncé directement sans OCR externe. La compression est faite côté client (JPEG qualité 0.85, max 1600 px) pour limiter le payload et le coût.
+
+Voir **[docs/SIKA_AI_TUTOR.md](docs/SIKA_AI_TUTOR.md)** pour le guide complet (installation, sécurité, coûts, pistes d'évolution).
+
+---
+
+## Architecture technique
+
+### Frontend
+- **Next.js 15** (App Router) + **React 19** + **TypeScript strict**
+- **Tailwind CSS 4** (utility-first, dark mode)
+- **Framer Motion** (animations), **Swiper** (carousels), **React Hot Toast**
+- **LiveKit Components** pour les sessions vidéo
+
+### Backend
+- **Supabase** (PostgreSQL) — schéma, RLS, triggers, Realtime
+- **Auth custom** — sessions signées HMAC-SHA256 + cookies HttpOnly + bcryptjs
+- **API Routes Next.js** (App Router, runtime Node)
+- **LiveKit** — infrastructure temps réel audio/vidéo
+
+### IA
+- **@langchain/langgraph** — `createReactAgent` (pattern ReAct)
+- **@langchain/openai** — `ChatOpenAI` multimodal (GPT-4o / GPT-4o-mini)
+- **@langchain/core** + **zod** — outils typés
+
+### Qualité
+- TypeScript strict + `moduleResolution: bundler`
+- ESLint (plugin sécurité) + Prettier
+- Headers sécurité dans `next.config.js`
+- Row-Level Security côté base
+
+---
+
+## Structure du projet
+
+```
+app/
+  (site)/                     Pages publiques (home, privacy, auth)
+  api/
+    auth/                     Login, logout, me, signup, forgot-password
+    student/                  Routes espace élève
+      ai-tutor/conversations/ Sika AI (GET/POST list, GET/POST/PATCH/DELETE item)
+      messages/               Messagerie humain-humain
+      ...
+    tutor/                    Routes espace tuteur
+    admin/                    Routes admin (users, sessions, assignments)
+    livekit/token/            Génération de token vidéo
+  student/
+    dashboard|calendar|history|profile|tutors|notifications
+    messages/
+      page.tsx                Liste threads + carte Sika AI épinglée
+      [threadId]/             Thread humain-humain
+      ai-tutor/               Chat Sika AI
+        page.tsx              Liste des discussions IA
+        [conversationId]/     Interface de chat (texte + images)
+  tutor/                      Espace tuteur + admin
+  class|live/                 Salles de cours LiveKit
+
+lib/
+  ai-tutor/                   Agent LangGraph (prompts, tools, agent)
+  auth-simple.ts              Auth custom (HMAC + bcryptjs)
+  supabase.ts                 Clients Supabase (browser + admin)
+  livekit*.ts                 Helpers LiveKit (token, egress, access)
+  constants.ts                Rôles, routes, endpoints, messages
+  ...
+
+components/                   UI (Hero, Header, Pricing, Booking, Auth, ...)
+hooks/                        useAuth, useUnreadNotifications, ...
+supabase/                     Scripts SQL (schéma + migrations + seed)
+  create-ai-tutor-tables.sql  Tables Sika AI
+  create-message-thread-participants.sql
+  schema-*.sql, add-*.sql, fix-*.sql, seed-*.sql
+docs/
+  SIKA_AI_TUTOR.md            Documentation Sika AI
+  LIVEKIT_SETUP.md            Setup LiveKit
+  SUPABASE_SETUP.md           Setup Supabase
+```
+
+---
+
+## Démarrage
+
+### Prérequis
+- Node.js 18+
+- Compte **Supabase** (projet + clés)
+- Compte **LiveKit** (pour les sessions vidéo)
+- Clé **OpenAI** (pour Sika AI — optionnel, l'app fonctionne sans mais l'agent IA sera désactivé)
+
+### Installation
+
 ```bash
-git clone <repository-url>
+git clone https://github.com/LordVERTON/SIKASCHOOL-website.git
 cd SIKASCHOOL-website
-```
-
-2. Install dependencies:
-```bash
 npm install --legacy-peer-deps
+cp .env.example .env.local   # ou créer manuellement (voir ci-dessous)
 ```
 
-3. Set up environment variables:
-```bash
-cp .env.example .env.local
-```
+### Configuration Supabase
 
-4. Configure environment variables in `.env.local`:
+1. Créer un projet Supabase.
+2. Exécuter dans l'éditeur SQL de Supabase (ou via la CLI) :
+   - `supabase/schema-fixed.sql` (ou `schema-simple.sql`) — schéma principal
+   - `supabase/create-message-thread-participants.sql` — messagerie multi-participants
+   - `supabase/create-ai-tutor-tables.sql` — **tables du tuteur IA**
+   - Tout autre `add-*.sql` / `fix-*.sql` pertinent selon votre état
+3. Activer Realtime sur `notifications`, `messages`, `ai_tutor_messages`.
+
+### Configuration LiveKit
+
+Voir [docs/LIVEKIT_SETUP.md](docs/LIVEKIT_SETUP.md).
+
+### Configuration Sika AI
+
+Ajouter dans `.env.local` :
 ```env
-# Supabase
+OPENAI_API_KEY=sk-...
+SIKA_AI_MODEL=gpt-4o-mini  # optionnel, défaut gpt-4o-mini
+```
+
+### Lancer
+
+```bash
+npm run dev        # http://localhost:3000
+npm run build
+npm run start
+```
+
+---
+
+## Variables d'environnement
+
+```env
+# --- Supabase ---
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
-# LiveKit
-LIVEKIT_URL=your_livekit_url
-LIVEKIT_API_KEY=your_livekit_api_key
-LIVEKIT_API_SECRET=your_livekit_api_secret
+# --- Auth / sessions ---
+JWT_SECRET=your_hmac_secret          # obligatoire (signature cookie session)
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=fallback_for_jwt     # fallback si JWT_SECRET absent
 
-# Application
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+# --- LiveKit ---
+NEXT_PUBLIC_LIVEKIT_SERVER_URL=wss://...
+LIVEKIT_API_KEY=...
+LIVEKIT_API_SECRET=...
+
+# --- Sika AI (LangChain / LangGraph) ---
+OPENAI_API_KEY=sk-...
+SIKA_AI_MODEL=gpt-4o-mini            # optionnel
+
+# --- Divers ---
+NODE_ENV=development
 ```
 
-5. Configure Supabase:
-   - Create a new Supabase project
-   - Run the database schema from `supabase/` directory
-   - Set up Row Level Security policies
-   - Configure real-time subscriptions
-
-6. Configure LiveKit:
-   - Create a LiveKit account
-   - Set up your LiveKit server
-   - Add credentials to `.env.local`
-   - See `docs/LIVEKIT_SETUP.md` for detailed setup
-
-7. Run the development server:
-```bash
-npm run dev
-```
-
-The app will be available at `http://localhost:3000`.
-
-**Production URL**: The platform is live and accessible at [https://sikaschool.app](https://sikaschool.app)
-
-### **Build & Deployment**
-```bash
-# Build for production
-npm run build
-
-# Start production server
-npm run start
-
-# Deploy to Vercel
-vercel --prod
-```
-
-## 🔌 API Endpoints
-
-### **Authentication**
-- `POST /api/auth/login` - User login
-- `POST /api/auth/logout` - User logout  
-- `GET /api/auth/me` - Get current user info
-- `POST /api/auth/signup` - User registration
-- `POST /api/auth/forgot-password` - Password reset request
-
-### **Lead Capture**
-- `POST /api/leads` - Create lead and student account automatically
-  - Generates initial password: `<firstname>.<lastname>12345`
-  - Creates user and student profile
-  - Stores intake information
-  - Sends notifications to admins
-
-### **Student APIs**
-- `GET /api/student/dashboard` - Student dashboard data
-- `GET /api/student/profile` - Get/update student profile
-- `GET /api/student/tutors` - Available tutors list
-- `GET /api/student/assigned-tutors` - Assigned tutors
-- `GET /api/student/notifications` - Student notifications (real-time)
-- `PATCH /api/student/notifications` - Mark notifications as read
-- `GET /api/student/calendar` - Calendar events
-- `GET /api/student/messages` - Message threads
-- `POST /api/student/messages/[threadId]` - Send message
-- `GET /api/student/sessions` - Student sessions
-
-### **Tutor APIs**
-- `GET /api/tutor/dashboard` - Tutor dashboard data
-- `GET /api/tutor/students` - Assigned students with intake details
-- `GET /api/tutor/notifications` - Tutor/admin notifications (real-time)
-- `PATCH /api/tutor/notifications` - Mark notifications as read
-- `GET /api/tutor/messages` - Message threads
-- `POST /api/tutor/messages/[threadId]` - Send message
-- `GET /api/tutor/sessions` - Tutor sessions
-- `GET /api/tutor/payments/*` - Payment tracking
-
-### **Admin APIs**
-- `GET /api/admin/users` - Manage all users
-- `POST /api/admin/users` - Create new user
-- `PUT /api/admin/users/[userId]` - Update user
-- `DELETE /api/admin/users/[userId]` - Delete user
-- `POST /api/admin/users/[userId]/reset-password` - Reset user password
-- `POST /api/admin/users/[userId]/toggle-status` - Toggle user active status
-- `GET /api/admin/sessions` - Manage all sessions
-- `POST /api/admin/sessions` - Create session
-- `PUT /api/admin/sessions/[sessionId]` - Update session
-- `DELETE /api/admin/sessions/[sessionId]` - Delete session
-- `GET /api/admin/assignments` - View all assignments
-- `POST /api/admin/assignments/assign` - Assign tutor to student
-- `DELETE /api/admin/assignments/unassign` - Unassign tutor from student
-- `POST /api/admin/sync-profiles` - Sync user profiles
-
-### **LiveKit APIs**
-- `POST /api/livekit/token` - Generate LiveKit access token for sessions
-
-### **Public APIs**
-- `GET /api/faqs` - FAQ data
-- `GET /api/testimonials` - Testimonials data
-- `GET /api/subjects` - Available subjects
-
-## Code Quality & Security
-This project follows security best practices and includes comprehensive quality checks:
-
-### Available Scripts
-- `npm run lint` - Run ESLint with security rules
-- `npm run lint:fix` - Fix ESLint issues automatically
-- `npm run type-check` - Run TypeScript type checking
-- `npm run security:audit` - Run npm security audit
-- `npm run security:check` - Run comprehensive security checks
-- `npm run format` - Format code with Prettier
-
-### Security Features
-- ✅ Input validation and sanitization
-- ✅ Security headers (CSP, XSS protection, etc.)
-- ✅ Error boundaries and secure logging
-- ✅ TypeScript strict mode
-- ✅ ESLint security rules
-- ✅ Regular security audits
-- ✅ Accessibility features (WCAG compliant)
-- ✅ Password hashing with bcryptjs
-- ✅ Secure session management
-
-## Customization
-- Update navigation items in `components/Header/menuData.tsx`.
-- Edit homepage sections in `app/(site)/page.tsx` and the respective components under `components/`.
-- Images live in `public/images/**`. Replace with your own assets as needed.
-- Colors/spacing/typography are Tailwind-based; tweak via classes in components or Tailwind config.
-
-## Deployment
-- **Production URL**: The platform is live at [https://sikaschool.app](https://sikaschool.app)
-- Recommended platforms: `Vercel` or `Netlify` for Next.js.
-- Ensure environment variables are configured in the hosting provider.
-- Set up Supabase and LiveKit production instances.
-- Configure domain and SSL certificates.
-
-## 🚀 Current Status - Platform Features Implemented
-
-### ✅ **Completed Features**
-
-#### **Authentication & User Management**
-- **Custom Authentication System** - Secure auth with Supabase backend
-  - Email/password login for students and tutors
-  - Role-based access control (STUDENT, TUTOR, ADMIN)
-  - Session management with secure cookies
-  - Password hashing with bcryptjs
-  - Password visibility toggle in forms
-  - Forgot password functionality with automatic password reset
-  - Initial password generation: `<firstname>.<lastname>12345`
-
-#### **Lead Capture & Registration**
-- **Automatic Account Creation** - From registration form
-  - Lead capture modal on homepage
-  - Automatic student account creation
-  - Password generation and display
-  - Email pre-filling for sign-in
-  - Privacy policy link integration
-  - Intake information storage (civility, guardian info, goals, etc.)
-  - Admin notifications for new registrations
-
-#### **Student Portal**
-- **Complete Student Dashboard**
-  - Personalized dashboard with statistics
-  - Course management and progress tracking
-  - Tutor selection and booking system
-  - Session history and ratings
-  - Calendar integration
-  - Profile management with intake details display
-  - Assigned tutors view
-
-- **Real-time Notifications**
-  - Profile creation notifications
-  - Tutor assignment notifications
-  - Session confirmations, cancellations, and modifications
-  - Password reset history
-  - Unread badge in sidebar
-  - Real-time updates via Supabase Realtime
-
-- **Messaging System**
-  - Thread-based messaging with tutors
-  - Real-time message notifications
-  - Message history and search
-
-#### **Tutor Portal**
-- **Complete Tutor Dashboard**
-  - Tutor profile management
-  - Student management with detailed intake information
-  - Session tracking and management
-  - Availability management
-  - Payment tracking and commission calculations
-  - Calendar view
-
-- **Administration Panel** (for admin tutors)
-  - User management (create, update, delete, reset passwords, toggle status)
-  - Session management (view, create, update, delete)
-  - Assignment management (assign/unassign tutors to students)
-  - Payment tracking and management
-  - Profile synchronization between users and tutors/students
-  - Direct navigation from notifications to assignments
-
-- **Real-time Notifications**
-  - New student registration alerts
-  - Assignment requests
-  - Session updates
-  - Message notifications
-  - Unread badge in sidebar
-
-#### **Database Integration**
-- **Full Supabase Backend**
-  - User management (students, tutors, admins)
-  - Session tracking and booking system
-  - Payment management with commission calculations
-  - Real-time data synchronization
-  - Comprehensive API endpoints
-  - Notification system with real-time subscriptions
-  - Message threads and conversations
-  - Assignment tracking (tutor-student relationships)
-
-#### **Live Video Sessions**
-- **LiveKit Integration**
-  - Real-time video/audio infrastructure
-  - Access token generation
-  - Session room management
-  - Live class pages with video components
-
-#### **Privacy & Compliance**
-- **Data Protection**
-  - Privacy policy page (`/donnees-personnelles`)
-  - GDPR-compliant data handling
-  - Secure data storage
-  - User consent management
-
-### 🔄 **In Progress Features**
-- **Live Video Sessions** - LiveKit integration in place, UI enhancements ongoing
-- **Payment Integration** - Payment tracking system in place, Stripe integration pending
-- **Email Notifications** - System ready, email service integration pending
-
-### 📋 **Remaining Features to Implement**
-
-#### 🎯 **Priority 1 - Core Platform Features**
-- [ ] **Stripe Payment Integration**
-  - Integrate Stripe for actual payment processing
-  - Implement subscription management (monthly packs)
-  - Add invoice generation and management
-  - Implement refund and cancellation policies
-  - Add wallet system for session credits
-
-- [ ] **Enhanced Booking System**
-  - Add timezone support for international tutors
-  - Implement recurring session scheduling
-  - Add automatic reminder notifications (email/SMS)
-  - Implement waitlist functionality
-  - Add session rescheduling with conflict detection
-
-- [ ] **LiveKit UI Enhancements**
-  - Complete video session UI
-  - Add whiteboard functionality
-  - Implement screen sharing capabilities
-  - Add session recording features
-  - Chat during live sessions
-
-#### 🎨 **Priority 2 - User Experience Enhancements**
-- [ ] **Advanced Search & Filtering**
-  - Implement tutor search by subject, level, availability
-  - Add rating and review system
-  - Implement recommendation engine
-  - Add advanced filtering options
-
-- [ ] **Content Management**
-  - Add file sharing system for homework and materials
-  - Implement assignment submission and grading
-  - Add progress tracking and analytics
-  - Create learning path recommendations
-
-- [ ] **Communication Enhancements**
-  - Add real-time chat during sessions
-  - Implement file sharing capabilities
-  - Add voice message support
-  - Create notification preferences (email, SMS, push)
-
-#### 🔧 **Priority 3 - Technical Improvements**
-- [ ] **Performance Optimization**
-  - Implement caching strategies
-  - Add CDN for static assets
-  - Optimize database queries
-  - Add lazy loading for components
-  - Implement image optimization
-
-- [ ] **Security Enhancements**
-  - Implement rate limiting
-  - Add CSRF protection
-  - Enhance input validation
-  - Add audit logging
-  - Implement 2FA (optional)
-
-- [ ] **Monitoring & Analytics**
-  - Add error tracking (Sentry)
-  - Implement performance monitoring
-  - Add user analytics and dashboards
-  - Create admin reporting tools
-
-#### 🌐 **Priority 4 - Business Features**
-- [ ] **Marketing & Growth**
-  - Add referral system
-  - Implement loyalty programs
-  - Create promotional campaigns
-  - Add social media integration
-
-- [ ] **Compliance & Legal**
-  - Complete GDPR compliance features
-  - Add terms of service page
-  - Create tutor contracts and agreements
-  - Add data retention policies
-  - Implement data export functionality
-
-- [ ] **Multi-language Support**
-  - Implement i18n for French/English
-  - Add language selection
-  - Translate all user interfaces
-  - Add RTL support if needed
-
-#### 📱 **Priority 5 - Mobile & Accessibility**
-- [ ] **Mobile App Development**
-  - Create React Native mobile app
-  - Implement push notifications
-  - Add offline functionality
-  - Create mobile-specific features
-
-- [ ] **Accessibility Improvements**
-  - Enhance screen reader support
-  - Add keyboard navigation
-  - Implement high contrast mode
-  - Add voice commands
-
-#### 🧪 **Priority 6 - Testing & Quality**
-- [ ] **Comprehensive Testing**
-  - Add unit tests for all components
-  - Implement integration tests
-  - Add end-to-end testing
-  - Create performance tests
-
-- [ ] **Quality Assurance**
-  - Implement automated testing pipeline
-  - Add code coverage reporting
-  - Create user acceptance testing
-  - Add security testing
-
-#### 📊 **Priority 7 - Analytics & Reporting**
-- [ ] **Business Intelligence**
-  - Add revenue tracking and reporting
-  - Implement user behavior analytics
-  - Create tutor performance metrics
-  - Add predictive analytics
-
-- [ ] **Admin Dashboard Enhancements**
-  - Add real-time monitoring
-  - Implement automated alerts
-  - Create custom reporting tools
-  - Add data export capabilities
-
-## 🗄️ Database Schema
-
-### **Core Tables**
-- **users** - User accounts (students, tutors, admins)
-  - Authentication and basic profile information
-  - Role-based access control
-  - Active/inactive status management
-
-- **students** - Student profiles and academic information
-  - Grade level, academic goals
-  - Learning style and intake details (JSON)
-  - Contact information and preferences
-
-- **tutors** - Tutor profiles and specializations
-  - Bio, experience, subjects
-  - Availability and rates
-  - Commission settings
-
-- **sessions** - Tutoring sessions and bookings
-  - Session details (subject, level, type, duration)
-  - Status tracking (SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED)
-  - Ratings and feedback
-
-- **assignments** - Tutor-student relationships
-  - Assignment tracking
-  - Active/inactive status
-  - Assignment history
-
-- **notifications** - User notifications and alerts
-  - Real-time notification system
-  - Multiple notification types (PROFILE, PASSWORD, SESSION_UPDATE, TUTOR_ASSIGNMENT, SYSTEM, MESSAGE, BOOKING)
-  - Read/unread status
-  - JSON data payload for context
-
-- **message_threads** - Conversation threads
-  - Thread metadata
-  - Participant management
-
-- **messages** - Communication between users
-  - Message content and metadata
-  - Thread associations
-
-- **session_payments** - Payment tracking
-  - Payment amounts and status
-  - Commission calculations
-  - Payment history
-
-### **Key Relationships**
-- Users → Tutors/Students (one-to-one)
-- Sessions → Users (many-to-one for student and tutor)
-- Assignments → Users (many-to-many for tutors and students)
-- Notifications → Users (many-to-one)
-- Messages → Message Threads (many-to-one)
-- Payments → Sessions (one-to-one)
-
-## 🎯 Next Steps & Development Roadmap
-
-### **Immediate Priorities (Next 2-4 weeks)**
-1. **Stripe Payment Integration** - Implement real payment processing
-2. **Email Notifications** - Add email service for reminders and confirmations
-3. **LiveKit UI Completion** - Finish video session interface
-4. **Mobile Optimization** - Ensure perfect mobile experience
-
-### **Short-term Goals (1-3 months)**
-1. **Advanced Booking** - Recurring sessions, timezone support
-2. **Content Management** - File sharing, assignments, progress tracking
-3. **Rating System** - Tutor reviews and feedback
-4. **Search & Filtering** - Advanced tutor discovery
-
-### **Long-term Vision (3-6 months)**
-1. **Mobile App** - React Native application
-2. **AI Features** - Smart matching, progress recommendations
-3. **Analytics Dashboard** - Business intelligence and reporting
-4. **Multi-language** - Full internationalization
-
-## 📚 Documentation
-- [Development Guide](DEVELOPMENT.md) - Comprehensive development guidelines
-- [Security Policy](SECURITY.md) - Security measures and best practices
-- [Supabase Setup](docs/SUPABASE_SETUP.md) - Database setup and configuration
-- [LiveKit Setup](docs/LIVEKIT_SETUP.md) - Video session setup guide
-- [Student Section Guide](README_student_section.md) - Student portal documentation
+> Sans `OPENAI_API_KEY`, les routes `/api/student/ai-tutor/*` renvoient une réponse de repli propre (`"le tuteur IA est momentanément indisponible"`) sans casser la conversation ni l'UI.
+
+---
+
+## Routes API
+
+### Authentification
+- `POST /api/auth/login` — connexion
+- `POST /api/auth/logout` — déconnexion
+- `GET  /api/auth/me` — session courante
+- `POST /api/auth/signup` — inscription
+- `POST /api/auth/forgot-password` — demande de reset
+
+### Leads
+- `POST /api/leads` — capture lead + création auto du compte élève (+ notifications admin)
+
+### Espace élève
+- `GET  /api/student/dashboard`
+- `GET|PATCH /api/student/profile`
+- `GET  /api/student/tutors`, `GET /api/student/assigned-tutors`
+- `GET  /api/student/calendar`
+- `GET|PATCH /api/student/notifications`
+- `GET  /api/student/sessions`
+- `GET  /api/student/messages`, `POST /api/student/messages`
+- `GET|POST|PATCH|DELETE /api/student/messages/[threadId]`
+- **Sika AI** :
+  - `GET  /api/student/ai-tutor/conversations` — liste des discussions IA
+  - `POST /api/student/ai-tutor/conversations` — créer une discussion
+  - `GET  /api/student/ai-tutor/conversations/[id]` — récupérer messages
+  - `POST /api/student/ai-tutor/conversations/[id]` — envoyer un message (texte + jusqu'à 6 images) et recevoir la réponse de l'agent
+  - `PATCH /api/student/ai-tutor/conversations/[id]` — renommer / mettre à jour matière/niveau
+  - `DELETE /api/student/ai-tutor/conversations/[id]` — supprimer
+
+### Espace tuteur
+- `GET  /api/tutor/dashboard`, `/students`, `/sessions`
+- `GET|PATCH /api/tutor/notifications`
+- `GET  /api/tutor/messages`, `POST /api/tutor/messages/[threadId]`
+- `GET  /api/tutor/payments/*`
+
+### Admin
+- `GET|POST /api/admin/users`, `PUT|DELETE /api/admin/users/[userId]`
+- `POST /api/admin/users/[userId]/reset-password`, `/toggle-status`
+- `GET|POST /api/admin/sessions`, `PUT|DELETE /api/admin/sessions/[sessionId]`
+- `GET /api/admin/assignments`, `POST /assign`, `DELETE /unassign`
+- `POST /api/admin/sync-profiles`
+
+### LiveKit
+- `POST /api/livekit/token`
+
+### Public
+- `GET /api/faqs`, `/testimonials`, `/subjects`
+
+---
+
+## Schéma base de données
+
+Tables principales (voir `supabase/` pour les scripts SQL exacts) :
+
+| Table | Rôle |
+| --- | --- |
+| `users` | Comptes (auth, rôle STUDENT/TUTOR/ADMIN, is_active) |
+| `students` | Profil élève + intake JSON |
+| `tutors` | Profil tuteur (bio, matières, tarifs, commission) |
+| `sessions` | Sessions de cours (statut, durée, type, notes) |
+| `assignments` | Liens tuteur ↔ élève (actifs/historique) |
+| `notifications` | Notifications temps réel (type, data JSONB, is_read) |
+| `message_threads` | Fils de messagerie humain-humain |
+| `message_thread_participants` | Participants d'un thread (N:N) |
+| `messages` | Messages humain-humain |
+| `session_payments` | Paiements et commissions |
+| **`ai_tutor_conversations`** | **Discussions élève ↔ Sika AI** (titre, matière, niveau) |
+| **`ai_tutor_messages`** | **Messages Sika AI** (role, contenu, images JSONB, metadata JSONB) |
+
+Les tables Sika AI disposent d'un trigger `AFTER INSERT` qui met automatiquement à jour `updated_at` de la conversation à chaque nouveau message, ce qui simplifie le tri côté API.
+
+---
+
+## Qualité & sécurité
+
+- ✅ TypeScript strict, `moduleResolution: bundler` (nécessaire pour les subpath exports des packages modernes type LangGraph)
+- ✅ ESLint + `eslint-plugin-security`
+- ✅ Hash de mot de passe **bcryptjs**
+- ✅ Sessions signées **HMAC-SHA256** (cookie HttpOnly, SameSite)
+- ✅ Validation d'input (zod côté outils IA, validation manuelle côté API)
+- ✅ Headers sécurité (CSP, XFO, XCTO, Referrer-Policy)
+- ✅ Toutes les routes `/api/student/ai-tutor/*` vérifient `getUserSession()` + rôle `STUDENT` + scope `user_id`
+- ✅ Images IA compressées côté client (max 1600 px, JPEG 0.85) et limitées à 6 par message
+- ✅ `recursionLimit: 12` sur l'agent LangGraph pour éviter les boucles d'outils infinies
+- ✅ Fallback propre si `OPENAI_API_KEY` absente ou si l'agent échoue
+- ✅ RLS et séparation client anon / service_role côté Supabase
+
+---
+
+## Roadmap
+
+### ✅ Implémenté
+- Authentification, rôles, sessions sécurisées
+- Portails élève / tuteur / admin
+- Messagerie humain-humain (threads, participants, notifications)
+- Notifications temps réel (Supabase Realtime)
+- LiveKit — salles de cours, tokens signés
+- **Sika AI — tuteur IA permanent** (LangGraph agent, vision, fiches de révision, correction de photos)
+- Capture de leads avec création auto de compte
+- RGPD / Privacy policy
+
+### 🔄 En cours
+- UI LiveKit avancée (partage d'écran, tableau blanc, enregistrement)
+- Notifications email
+
+### 📋 À venir (priorisé)
+1. **Paiement Stripe** — packs mensuels, factures, wallet de crédits, remboursements
+2. **Booking avancé** — timezones, récurrence, rappels, liste d'attente, reschedule
+3. **Recherche & filtres tuteurs** — matière, niveau, disponibilité, notes/avis
+4. **Contenu pédagogique** — dépôt de devoirs, corrections, suivi de progression, parcours
+5. **Sika AI — évolutions** :
+   - Streaming des réponses (Server-Sent Events)
+   - RAG sur les cours SikaSchool via **Supabase pgvector**
+   - Export PDF des fiches de révision générées
+   - Quotas par élève + logs d'utilisation
+6. **Observabilité** — Sentry, métriques produit, alertes
+7. **i18n complet** — FR/EN
+8. **App mobile** — React Native + push notifications
+9. **Tests automatisés** — unitaires, intégration, e2e, pipeline CI
+
+---
+
+## Documentation
+
+- [docs/SIKA_AI_TUTOR.md](docs/SIKA_AI_TUTOR.md) — **Guide Sika AI** (installation, architecture, sécurité, coûts)
+- [docs/LIVEKIT_SETUP.md](docs/LIVEKIT_SETUP.md) — Setup vidéo LiveKit
+- [docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md) — Setup Supabase
+- [DEVELOPMENT.md](DEVELOPMENT.md) — Guide développeur
+- [SECURITY.md](SECURITY.md) — Politique sécurité
+- [README_student_section.md](README_student_section.md) — Portail élève en détail
+
+---
 
 ## Scripts
-- `dev`: start development server
-- `build`: build production bundle
-- `start`: start production server
-- `lint`: run ESLint with security rules
-- `lint:fix`: fix ESLint issues automatically
-- `type-check`: run TypeScript type checking
-- `security:audit`: run npm security audit
-- `security:check`: run comprehensive security checks
-- `format`: format code with Prettier
-- `db:types`: generate TypeScript types from Supabase schema
+
+| Script | Description |
+| --- | --- |
+| `npm run dev` | Serveur Next.js en dev |
+| `npm run build` | Build production |
+| `npm run start` | Serveur production |
+| `npm run lint` | ESLint (règles sécurité incluses) |
+| `npm run lint:fix` | Auto-fix ESLint |
+| `npm run type-check` | `tsc --noEmit` |
+| `npm run format` | Prettier write |
+| `npm run format:check` | Prettier check |
+| `npm run security:audit` | `npm audit` |
+| `npm run security:check` | Script maison `scripts/security-check.js` |
+| `npm run db:types` | Génère `lib/database.types.ts` depuis Supabase |
+
+---
+
+## Déploiement
+
+- **Production** : [https://sikaschool.app](https://sikaschool.app) (Vercel recommandé)
+- Configurer toutes les variables d'environnement dans l'hébergeur (**dont `OPENAI_API_KEY`** pour activer Sika AI en prod).
+- Instances Supabase & LiveKit de production distinctes.
+- Domaine personnalisé + certificats SSL (gérés par Vercel par défaut).
+
+---
 
 ## License
-This repository began from the Solid Next.js template. The customizations for SikaSchool are open for personal or commercial use in the context of this project. Please review the original Solid template license in `LICENSE`.
 
-## Acknowledgements
-- Base template: Solid by Next.js Templates
-- Content inspiration: SikaSchool (`https://www.sikaschool.com/`)
-- Video infrastructure: LiveKit
-- Database & Backend: Supabase
+Ce repository part du template **Solid** de Next.js Templates. Les personnalisations SikaSchool sont utilisables librement dans le cadre du projet. Voir `LICENSE` pour la licence du template de base.
+
+## Remerciements
+
+- Template de base : **Solid** (Next.js Templates)
+- Contenu & branding : [SikaSchool](https://www.sikaschool.com/)
+- Infrastructure vidéo : [LiveKit](https://livekit.io/)
+- Base de données & temps réel : [Supabase](https://supabase.com/)
+- Agent IA : [LangChain](https://js.langchain.com/) / [LangGraph](https://langchain-ai.github.io/langgraphjs/) & [OpenAI](https://openai.com/)
