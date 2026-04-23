@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { setStorageItem, STORAGE_KEYS } from "@/lib/storage";
 
 type ForgotPasswordModalProps = {
@@ -14,7 +14,6 @@ export default function ForgotPasswordModal({ isOpen, onClose, initialEmail = ""
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
 
   // Update email when initialEmail changes or modal opens
@@ -26,7 +25,6 @@ export default function ForgotPasswordModal({ isOpen, onClose, initialEmail = ""
       // Reset state when modal closes
       setError(null);
       setShowSuccess(false);
-      setGeneratedPassword(null);
       setSubmittedEmail(null);
     }
   }, [isOpen, initialEmail]);
@@ -51,27 +49,15 @@ export default function ForgotPasswordModal({ isOpen, onClose, initialEmail = ""
         throw new Error(data?.error || "Une erreur est survenue");
       }
 
-      if (data.initialPassword) {
-        setGeneratedPassword(data.initialPassword);
-        setSubmittedEmail(email.trim());
-        setStorageItem(STORAGE_KEYS.LAST_LEAD_EMAIL, email.trim());
-        setShowSuccess(true);
-      } else {
-        throw new Error("Réinitialisation échouée");
-      }
+      setSubmittedEmail(email.trim());
+      setStorageItem(STORAGE_KEYS.LAST_LEAD_EMAIL, email.trim());
+      setShowSuccess(true);
     } catch (err: any) {
       setError(err.message || "Une erreur est survenue. Merci de réessayer.");
     } finally {
       setSubmitting(false);
     }
   };
-
-  const handleCopyPassword = useCallback(() => {
-    if (!generatedPassword) return;
-    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(generatedPassword).catch(() => undefined);
-    }
-  }, [generatedPassword]);
 
   const signinHref = submittedEmail
     ? `/auth/signin?email=${encodeURIComponent(submittedEmail)}`
@@ -91,54 +77,35 @@ export default function ForgotPasswordModal({ isOpen, onClose, initialEmail = ""
 
         {showSuccess ? (
           <div className="py-8 text-center">
-            <h3 className="mb-3 text-2xl font-semibold text-black dark:text-white">Mot de passe réinitialisé</h3>
+            <h3 className="mb-3 text-2xl font-semibold text-black dark:text-white">E-mail envoyé</h3>
             <p className="mx-auto max-w-xl text-waterloo dark:text-manatee">
-              Votre mot de passe a été réinitialisé. Vous pouvez dès à présent vous connecter avec l&apos;adresse e-mail fournie et le mot de passe ci-dessous.
+              Si cette adresse existe, vous recevrez un lien de réinitialisation dans quelques instants. Vérifiez aussi le dossier spam/indésirables.
             </p>
-            {generatedPassword && (
-              <div className="mx-auto mt-6 w-fit rounded-lg border border-primary/30 bg-primary/5 px-6 py-4 text-left text-sm text-black dark:text-white">
-                <div className="mb-2 flex items-center gap-3">
-                  <p className="font-semibold text-primary">Mot de passe initial</p>
-                  <button
-                    type="button"
-                    onClick={handleCopyPassword}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary/30 text-primary transition hover:bg-primary hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-primaryho focus-visible:ring-offset-2 dark:ring-offset-black"
-                    title="Copier le mot de passe"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={1.5}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-4 w-4"
-                    >
-                      <path d="M8 8h8v12H8z" />
-                      <path d="M16 4H6a2 2 0 0 0-2 2v12" />
-                    </svg>
-                  </button>
-                </div>
-                <p className="select-all font-mono text-base text-black dark:text-white">{generatedPassword}</p>
-                <p className="mt-3 text-xs text-waterloo dark:text-manatee">
-                  Pensez à le modifier depuis votre espace une fois connecté.
-                </p>
-              </div>
-            )}
-            <Link
-              href={signinHref}
-              onClick={onClose}
-              className="mt-8 inline-flex items-center justify-center rounded-full bg-primary px-8 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primaryho focus:outline-none focus-visible:ring-2 focus-visible:ring-primaryho focus-visible:ring-offset-2 dark:ring-offset-black"
-            >
-              Se connecter à mon espace
-            </Link>
+            <div className="mt-8 flex flex-col items-center gap-3">
+              <Link
+                href={signinHref}
+                onClick={onClose}
+                className="inline-flex items-center justify-center rounded-full bg-primary px-8 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primaryho focus:outline-none focus-visible:ring-2 focus-visible:ring-primaryho focus-visible:ring-offset-2 dark:ring-offset-black"
+              >
+                Retour à la connexion
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSuccess(false);
+                  setError(null);
+                }}
+                className="text-sm text-waterloo hover:text-primary dark:text-manatee"
+              >
+                Renvoyer un lien
+              </button>
+            </div>
           </div>
         ) : (
           <>
             <h3 className="mb-4 text-2xl font-semibold text-black dark:text-white">Mot de passe oublié</h3>
             <p className="mb-6 text-waterloo dark:text-manatee">
-              Entrez votre adresse e-mail et nous vous enverrons un nouveau mot de passe.
+              Entrez votre adresse e-mail et nous vous enverrons un lien de réinitialisation.
             </p>
 
             {error && (
@@ -176,7 +143,7 @@ export default function ForgotPasswordModal({ isOpen, onClose, initialEmail = ""
                   disabled={submitting || !email.trim()}
                   className="flex-1 rounded-md bg-primary px-4 py-3 text-white transition hover:bg-primaryho disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {submitting ? "Envoi..." : "Réinitialiser"}
+                  {submitting ? "Envoi..." : "Envoyer le lien"}
                 </button>
               </div>
             </form>

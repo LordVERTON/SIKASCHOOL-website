@@ -21,6 +21,7 @@ export const PUBLIC_ROUTES = [
   '/book',
   '/auth/signin',
   '/auth/signup',
+  '/auth/reset-password',
   '/auth/verify-email',
   '/legal',
   '/api/auth/login',
@@ -29,6 +30,7 @@ export const PUBLIC_ROUTES = [
   '/api/auth/register',
   '/api/auth/signup',
   '/api/auth/forgot-password',
+  '/api/auth/reset-password',
   '/api/auth/verify-email',
   '/api/webhooks/stripe'
 ] as const;
@@ -59,6 +61,7 @@ export const SESSION_CONFIG = {
 export const CREDENTIAL_TYPES = {
   PASSWORD: 'password',
   EMAIL_VERIFICATION: 'email_verification',
+  PASSWORD_RESET: 'password_reset',
   SMS_2FA_ENABLED: 'sms_2fa_enabled',
   SMS_2FA_PHONE: 'sms_2fa_phone',
   SMS_2FA_SETUP: 'sms_2fa_setup',

@@ -1,25 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import bcrypt from 'bcryptjs';
+import { randomBytes } from 'node:crypto';
+import { CREDENTIAL_TYPES } from '@/lib/constants';
+import { sendPasswordResetEmail } from '@/lib/registration-emails';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
-const sanitizeNameForPassword = (value: string) => {
-  return value
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '');
-};
-
-const buildInitialPassword = (firstName: string, lastName: string) => {
-  const safeFirst = sanitizeNameForPassword(firstName) || 'eleve';
-  const safeLast = sanitizeNameForPassword(lastName) || 'sikaschool';
-  return `${safeFirst}.${safeLast}12345`;
-};
+const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000; // 1 heure
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,7 +25,7 @@ export async function POST(request: NextRequest) {
     // Check if user exists
     const { data: user, error: userError } = await supabase
       .from('users')
-      .select('id, first_name, last_name, email')
+      .select('id, first_name, email')
       .eq('email', normalizedEmail)
       .single();
 
@@ -43,39 +33,48 @@ export async function POST(request: NextRequest) {
       // Don't reveal if email exists or not for security
       return NextResponse.json({ 
         success: true,
-        message: 'Si cette adresse e-mail existe dans notre système, un nouveau mot de passe a été généré.'
+        message: 'Si cette adresse e-mail existe dans notre système, un lien de réinitialisation a été envoyé.'
       });
     }
 
-    // Generate new password using the same format as registration
-    const initialPassword = buildInitialPassword(user.first_name || '', user.last_name || '');
-    const hashedPassword = await bcrypt.hash(initialPassword, 12);
+    const token = randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + PASSWORD_RESET_TTL_MS).toISOString();
+    const now = new Date().toISOString();
 
-    // Update password in database
-    const { error: updateError } = await supabase
-      .from('users')
-      .update({
-        password_hash: hashedPassword,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', user.id);
+    const { error: tokenError } = await supabase.from('user_credentials').upsert(
+      {
+        user_id: user.id,
+        credential_type: CREDENTIAL_TYPES.PASSWORD_RESET,
+        credential_value: token,
+        is_active: true,
+        expires_at: expiresAt,
+        updated_at: now,
+      },
+      { onConflict: 'user_id,credential_type' }
+    );
 
-    if (updateError) {
-      console.error('Erreur lors de la réinitialisation du mot de passe:', updateError);
+    if (tokenError) {
+      console.error('Erreur lors de la création du token de reset:', tokenError);
       return NextResponse.json({ error: 'Erreur lors de la réinitialisation' }, { status: 500 });
     }
+
+    await sendPasswordResetEmail({
+      to: user.email,
+      firstName: user.first_name,
+      resetToken: token,
+    });
 
     const { error: notificationError } = await supabase
       .from('notifications')
       .insert({
         user_id: user.id,
         type: 'PASSWORD',
-        title: 'Mot de passe réinitialisé',
-        message: 'Votre mot de passe vient d’être réinitialisé. Utilisez le nouveau mot de passe fourni et pensez à le modifier dans votre espace.',
+        title: 'Réinitialisation demandée',
+        message: 'Un lien de réinitialisation de mot de passe vient d’être envoyé à votre adresse e-mail.',
         data: {
-          action: 'PASSWORD_RESET',
+          action: 'PASSWORD_RESET_REQUESTED',
           trigger: 'FORGOT_PASSWORD',
-          occurred_at: new Date().toISOString()
+          occurred_at: now
         }
       });
 
@@ -83,11 +82,9 @@ export async function POST(request: NextRequest) {
       console.error('Erreur lors de la création de la notification de mot de passe:', notificationError);
     }
 
-    // Return success with the initial password (will be shown in modal)
     return NextResponse.json({ 
-      success: true, 
-      initialPassword,
-      message: 'Mot de passe réinitialisé avec succès'
+      success: true,
+      message: 'Si cette adresse e-mail existe, un lien de réinitialisation a été envoyé.'
     });
 
   } catch (error) {
