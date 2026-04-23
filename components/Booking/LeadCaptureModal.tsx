@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { setStorageItem, STORAGE_KEYS } from "@/lib/storage";
 import {
   PHONE_COUNTRIES,
@@ -36,6 +37,7 @@ const GOALS = [
 
 
 export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, initialEmail }: LeadCaptureModalProps) {
+  const router = useRouter();
   const [level, setLevel] = useState<string>("");
   const [subject, setSubject] = useState<string>("");
   const [civility, setCivility] = useState<string>("");
@@ -196,9 +198,18 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
   const [showThanks, setShowThanks] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const signinHref = submittedEmail
-    ? `/auth/signin?email=${encodeURIComponent(submittedEmail)}`
-    : "/auth/signin";
+  const handleSigninRedirect = () => {
+    if (submittedEmail?.trim()) {
+      const normalized = submittedEmail.trim();
+      // Double sécurité: query param + stockage local pour garantir le préremplissage.
+      setStorageItem(STORAGE_KEYS.LAST_LEAD_EMAIL, normalized);
+      onClose();
+      router.push(`/auth/signin?email=${encodeURIComponent(normalized)}`);
+      return;
+    }
+    onClose();
+    router.push("/auth/signin");
+  };
 
   if (!isOpen) return null;
 
@@ -221,16 +232,19 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
               Un e-mail de confirmation contenant vos informations de connexion vous a ete envoye.
               Verifiez votre boite de reception (et vos spams), puis confirmez votre adresse e-mail avant de vous connecter.
             </p>
+            <p className="mx-auto mt-3 max-w-xl text-sm text-waterloo dark:text-manatee">
+              Apres votre premiere connexion, pensez a changer votre mot de passe depuis votre espace.
+            </p>
             <p className="mx-auto mt-4 max-w-xl text-xs text-waterloo dark:text-manatee">
               Si vous ne recevez rien sous quelques minutes, contactez-nous pour renvoyer l&apos;e-mail de confirmation.
             </p>
-            <Link
-              href={signinHref}
-              onClick={onClose}
+            <button
+              type="button"
+              onClick={handleSigninRedirect}
               className="mt-8 inline-flex items-center justify-center rounded-full bg-primary px-8 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primaryho focus:outline-none focus-visible:ring-2 focus-visible:ring-primaryho focus-visible:ring-offset-2 dark:ring-offset-black"
             >
               Se connecter à mon espace
-            </Link>
+            </button>
           </div>
         ) : (
         <>

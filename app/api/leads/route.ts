@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { supabaseAdmin } from '@/lib/supabase';
 import {
   insertAdminNewStudentNotifications,
+  insertStudentPasswordChangeNotification,
   sendRegistrationResendEmails,
   upsertEmailVerificationToken,
 } from '@/lib/registration-emails';
@@ -221,6 +222,7 @@ export async function POST(request: NextRequest) {
       last_name: lastName,
       role: 'STUDENT',
     });
+    await insertStudentPasswordChangeNotification(supabase, newUser.id, 'lead_form');
 
     const verifyToken = await upsertEmailVerificationToken(supabase, newUser.id);
     void sendRegistrationResendEmails(supabase, {

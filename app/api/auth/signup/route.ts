@@ -4,6 +4,7 @@ import { setUserSession } from '@/lib/auth-simple';
 import bcrypt from 'bcryptjs';
 import {
   insertAdminNewStudentNotifications,
+  insertStudentPasswordChangeNotification,
   sendRegistrationResendEmails,
   upsertEmailVerificationToken,
 } from '@/lib/registration-emails';
@@ -134,6 +135,7 @@ export async function POST(request: NextRequest) {
       role: newUser.role,
     };
 
+    await insertStudentPasswordChangeNotification(supabaseAdmin, newUser.id, 'signup_form');
     await insertAdminNewStudentNotifications(supabaseAdmin, newUserRow);
 
     const verifyToken = await upsertEmailVerificationToken(supabaseAdmin, newUser.id);

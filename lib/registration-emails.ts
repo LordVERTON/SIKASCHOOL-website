@@ -204,6 +204,34 @@ export async function insertAdminNewStudentNotifications(
   }
 }
 
+/**
+ * Notification élève affichée dès la première connexion pour rappeler
+ * de changer le mot de passe initial.
+ */
+export async function insertStudentPasswordChangeNotification(
+  supabase: ServiceSupabase,
+  userId: string,
+  source: 'signup_form' | 'lead_form' | 'register_form' = 'signup_form'
+): Promise<void> {
+  const { error } = await supabase.from('notifications').insert({
+    user_id: userId,
+    type: 'PASSWORD',
+    title: 'Sécurisez votre compte',
+    message:
+      'Après votre première connexion, pensez à modifier votre mot de passe depuis votre espace.',
+    data: {
+      action: 'CHANGE_PASSWORD_RECOMMENDED',
+      source,
+      created_at: new Date().toISOString(),
+    },
+    is_read: false,
+  } as any);
+
+  if (error) {
+    console.error('[email] Insert notification changement mot de passe:', error);
+  }
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, '&amp;')
@@ -212,45 +240,37 @@ function escapeHtml(s: string): string {
     .replace(/"/g, '&quot;');
 }
 
-function buildWelcomeEmailHtml(params: {
+function buildVerificationEmailHtml(params: {
   firstName: string;
-  verifyUrl: string | null;
-  plainPassword: string | null;
+  verifyUrl: string;
+}): string {
+  const name = params.firstName?.trim() || 'Bonjour';
+  return `
+  <p>${escapeHtml(name)},</p>
+  <p>Merci de rejoindre ${APP_CONFIG.NAME}.</p>
+  <p><strong>Confirmez votre adresse e-mail</strong> (lien valable 48 h) :</p>
+  <p><a href="${params.verifyUrl}">Confirmer mon adresse e-mail</a></p>
+  <p>Si vous n’êtes pas à l’origine de cette inscription, ignorez ce message.</p>
+  `;
+}
+
+function buildPasswordEmailHtml(params: {
+  firstName: string;
+  plainPassword: string;
   signinUrl: string;
 }): string {
   const name = params.firstName?.trim() || 'Bonjour';
-  const parts: string[] = [`<p>${escapeHtml(name)},</p>`, `<p>Merci de rejoindre ${APP_CONFIG.NAME}.</p>`];
-
-  if (params.verifyUrl) {
-    parts.push(
-      `<p><strong>Confirmez votre adresse e-mail</strong> (lien valable 48 h) :</p>`,
-      `<p><a href="${params.verifyUrl}">Confirmer mon adresse e-mail</a></p>`
-    );
-  }
-
-  if (params.plainPassword) {
-    parts.push(
-      `<p><strong>Rappel de votre mot de passe</strong> (celui que vous venez d’indiquer lors de l’inscription) :</p>`,
-      `<p style="font-family:monospace;font-size:15px;padding:10px 12px;background:#f4f4f5;border-radius:8px;">${escapeHtml(
-        params.plainPassword
-      )}</p>`,
-      `<p>Pour des raisons de sécurité, nous vous invitons à <strong>changer ce mot de passe</strong> après votre première connexion, depuis votre espace ou via « mot de passe oublié » sur la page de connexion.</p>`,
-      `<p><a href="${params.signinUrl}">Se connecter</a></p>`,
-      `<p style="font-size:12px;color:#666;">L’e-mail n’est pas un canal totalement sûr : évitez de le transférer et gardez ce message confidentiel.</p>`
-    );
-  }
-
-  if (!params.verifyUrl) {
-    parts.push(
-      `<p>Si vous n’êtes pas à l’origine de ce compte, contactez <a href="mailto:${
-        APP_CONFIG.SUPPORT_EMAIL
-      }">${APP_CONFIG.SUPPORT_EMAIL}</a>.</p>`
-    );
-  } else {
-    parts.push(`<p>Si vous n’êtes pas à l’origine de cette inscription, ignorez ce message.</p>`);
-  }
-
-  return parts.join('\n');
+  return `
+  <p>${escapeHtml(name)},</p>
+  <p>Voici votre mot de passe de connexion pour ${APP_CONFIG.NAME} :</p>
+  <p style="font-family:monospace;font-size:15px;padding:10px 12px;background:#f4f4f5;border-radius:8px;">${escapeHtml(
+    params.plainPassword
+  )}</p>
+  <p>Par sécurité, nous vous recommandons de le modifier juste après votre première connexion.</p>
+  <p><a href="${params.signinUrl}">Se connecter</a></p>
+  <p style="font-size:12px;color:#666;">L’e-mail n’est pas un canal totalement sûr : évitez de le transférer et gardez ce message confidentiel.</p>
+  <p>En cas de besoin, contactez <a href="mailto:${APP_CONFIG.SUPPORT_EMAIL}">${APP_CONFIG.SUPPORT_EMAIL}</a>.</p>
+  `;
 }
 
 function buildAdminNewStudentHtml(student: NewUserRow, adminUrl: string): string {
@@ -300,25 +320,34 @@ export async function sendRegistrationResendEmails(
     ? `${base}/auth/verify-email?token=${encodeURIComponent(options.verifyToken)}`
     : null;
   const plainPassword = options.plainPassword?.trim() || null;
-  const sendUserMail = Boolean(verifyUrl || plainPassword);
-
-  if (sendUserMail) {
-    const subject = verifyUrl
-      ? `Bienvenue sur ${APP_CONFIG.NAME} — confirmez votre e-mail et sécurisez votre compte`
-      : `Bienvenue sur ${APP_CONFIG.NAME}`;
+  if (verifyUrl) {
     const { error } = await resend.emails.send({
       from,
       to: options.newUser.email,
-      subject,
-      html: buildWelcomeEmailHtml({
+      subject: `Confirmez votre adresse e-mail - ${APP_CONFIG.NAME}`,
+      html: buildVerificationEmailHtml({
         firstName: options.newUser.first_name,
         verifyUrl,
+      }),
+    });
+    if (error) {
+      console.error('[email] Envoi e-mail de confirmation:', error);
+    }
+  }
+
+  if (plainPassword) {
+    const { error } = await resend.emails.send({
+      from,
+      to: options.newUser.email,
+      subject: `Vos informations de connexion - ${APP_CONFIG.NAME}`,
+      html: buildPasswordEmailHtml({
+        firstName: options.newUser.first_name,
         plainPassword,
         signinUrl,
       }),
     });
     if (error) {
-      console.error('[email] Envoi e-mail nouvel inscrit:', error);
+      console.error('[email] Envoi e-mail mot de passe:', error);
     }
   }
 
