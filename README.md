@@ -180,6 +180,7 @@ docs/
 - Compte **Supabase** (projet + clés)
 - Compte **LiveKit** (pour les sessions vidéo)
 - Clé **OpenAI** (pour Sika AI — optionnel, l'app fonctionne sans mais l'agent IA sera désactivé)
+- **Docker** (optionnel, pour tester les e-mails en local avec Mailpit)
 
 ### Installation
 
@@ -212,10 +213,37 @@ OPENAI_API_KEY=sk-...
 SIKA_AI_MODEL=gpt-4o-mini  # optionnel, défaut gpt-4o-mini
 ```
 
+### Configuration e-mails (Resend ou Mailpit)
+
+Le projet supporte maintenant deux modes d'envoi:
+- **`MAIL_PROVIDER=resend`** (prod/recommandé)
+- **`MAIL_PROVIDER=smtp`** (local/dev, idéal avec Mailpit)
+
+Exemple `.env.local` pour Mailpit :
+```env
+MAIL_PROVIDER=smtp
+MAIL_FROM_EMAIL="SikaSchool <noreply@localhost>"
+SMTP_HOST=127.0.0.1
+SMTP_PORT=1025
+SMTP_SECURE=false
+```
+
+`npm run dev` démarre automatiquement Mailpit (Docker) puis Next.js.
+
+Si tu veux lancer Mailpit manuellement :
+```bash
+docker run -d --name mailpit -p 1025:1025 -p 8025:8025 axllent/mailpit
+```
+
+Puis ouvrir l'interface Mailpit : [http://localhost:8025](http://localhost:8025)
+
+> En mode SMTP local, toutes les notifications e-mail de l'app (inscription, reset password, assignation, annulation, etc.) sont capturées dans Mailpit sans envoi réel vers Internet.
+
 ### Lancer
 
 ```bash
-npm run dev        # http://localhost:3000
+npm run dev        # démarre Mailpit + Next.js (http://localhost:3000)
+npm run dev:mailpit:stop
 npm run build
 npm run start
 ```
@@ -246,6 +274,23 @@ SIKA_AI_MODEL=gpt-4o-mini            # optionnel
 
 # --- Divers ---
 NODE_ENV=development
+
+# --- Email provider ---
+# Choix: resend | smtp (Mailpit/local)
+MAIL_PROVIDER=resend
+# Expéditeur par défaut (fallback sur RESEND_FROM_EMAIL si absent)
+MAIL_FROM_EMAIL="SikaSchool <noreply@sikaschool.app>"
+
+# --- SMTP (Mailpit/local) ---
+SMTP_HOST=127.0.0.1
+SMTP_PORT=1025
+SMTP_SECURE=false
+# SMTP_USER=
+# SMTP_PASS=
+
+# --- Resend (prod) ---
+RESEND_API_KEY=re_...
+RESEND_FROM_EMAIL="SikaSchool <noreply@sikaschool.app>"
 ```
 
 > Sans `OPENAI_API_KEY`, les routes `/api/student/ai-tutor/*` renvoient une réponse de repli propre (`"le tuteur IA est momentanément indisponible"`) sans casser la conversation ni l'UI.
@@ -355,7 +400,6 @@ Les tables Sika AI disposent d'un trigger `AFTER INSERT` qui met automatiquement
 
 ### 🔄 En cours
 - UI LiveKit avancée (partage d'écran, tableau blanc, enregistrement)
-- Notifications email
 
 ### 📋 À venir (priorisé)
 1. **Paiement Stripe** — packs mensuels, factures, wallet de crédits, remboursements
@@ -389,7 +433,9 @@ Les tables Sika AI disposent d'un trigger `AFTER INSERT` qui met automatiquement
 
 | Script | Description |
 | --- | --- |
-| `npm run dev` | Serveur Next.js en dev |
+| `npm run dev` | Démarre Mailpit (Docker) puis Next.js en dev |
+| `npm run dev:mailpit:start` | Démarre/recrée le conteneur Mailpit |
+| `npm run dev:mailpit:stop` | Arrête et supprime le conteneur Mailpit |
 | `npm run build` | Build production |
 | `npm run start` | Serveur production |
 | `npm run lint` | ESLint (règles sécurité incluses) |
