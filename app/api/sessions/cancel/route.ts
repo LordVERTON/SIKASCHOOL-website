@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
+import { sendTutorSessionCancelledEmail } from '@/lib/registration-emails';
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -95,7 +96,7 @@ export async function PATCH(request: NextRequest) {
     // Récupérer les noms des utilisateurs pour les notifications
     const { data: users, error: usersError } = await (supabaseAdmin as any)
       .from('users')
-      .select('id, first_name, last_name')
+      .select('id, first_name, last_name, email')
       .in('id', Array.from(userIdsToNotify));
 
     if (usersError) {
@@ -109,6 +110,7 @@ export async function PATCH(request: NextRequest) {
 
     const cancelledBy = usersMap.get(user.id);
     const cancelledByName = cancelledBy ? `${cancelledBy.first_name} ${cancelledBy.last_name}` : 'Un utilisateur';
+    const tutorUser = usersMap.get((session as any).tutor_id);
 
     // Créer les notifications pour tous les participants
     const notifications = Array.from(userIdsToNotify)
@@ -135,6 +137,17 @@ export async function PATCH(request: NextRequest) {
         console.error('Error creating notifications:', notificationError);
         // Ne pas échouer la requête si les notifications échouent
       }
+    }
+
+    if (tutorUser?.email && (session as any).tutor_id !== user.id) {
+      void sendTutorSessionCancelledEmail({
+        tutorEmail: tutorUser.email,
+        tutorFirstName: tutorUser.first_name || tutorUser.last_name || '',
+        cancelledByName,
+        subject: (session as any).subject || 'Cours',
+        startedAt: (session as any).started_at,
+        reason: reason || null,
+      });
     }
 
     return NextResponse.json({ 

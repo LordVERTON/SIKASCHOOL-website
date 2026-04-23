@@ -287,6 +287,126 @@ function buildAdminNewStudentHtml(student: NewUserRow, adminUrl: string): string
   `;
 }
 
+function buildStudentTutorAssignedEmailHtml(params: {
+  studentFirstName: string;
+  tutorName: string;
+  bookingUrl: string;
+}): string {
+  const name = params.studentFirstName?.trim() || 'Bonjour';
+  return `
+  <p>${escapeHtml(name)},</p>
+  <p>Bonne nouvelle : <strong>${escapeHtml(params.tutorName)}</strong> vient d'être assigné(e) à votre suivi sur ${APP_CONFIG.NAME}.</p>
+  <p>Vous pouvez dès maintenant vous connecter à votre espace étudiant pour <strong>réserver une nouvelle séance</strong>.</p>
+  <p><a href="${params.bookingUrl}">Accéder à mon espace student et réserver</a></p>
+  <p>À très vite sur ${APP_CONFIG.NAME}.</p>
+  `;
+}
+
+function buildStudentSessionDecisionEmailHtml(params: {
+  studentFirstName: string;
+  tutorName: string;
+  action: 'ACCEPTED' | 'REJECTED';
+  subject: string;
+  startedAt: string;
+  appUrl: string;
+}): string {
+  const name = params.studentFirstName?.trim() || 'Bonjour';
+  const subjectLabel = params.subject?.trim() || 'votre séance';
+  const startedAtDate = new Date(params.startedAt);
+  const isValidDate = !Number.isNaN(startedAtDate.getTime());
+  const dateLabel = isValidDate
+    ? startedAtDate.toLocaleDateString('fr-FR')
+    : '';
+  const timeLabel = isValidDate
+    ? startedAtDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+    : '';
+  const sessionLabel = dateLabel
+    ? `${subjectLabel} du ${dateLabel}${timeLabel ? ` à ${timeLabel}` : ''}`
+    : subjectLabel;
+  const isAccepted = params.action === 'ACCEPTED';
+  const tutorLabel = params.tutorName?.trim() || 'votre tuteur';
+
+  return `
+  <p>${escapeHtml(name)},</p>
+  <p>${escapeHtml(tutorLabel)} a ${
+    isAccepted ? 'confirmée' : 'refusée'
+  } votre demande de séance <strong>${escapeHtml(sessionLabel)}</strong>.</p>
+  ${
+    isAccepted
+      ? `<p>Rendez-vous dans votre espace student pour consulter les détails de la séance.</p>`
+      : `<p>Nous vous invitons à réserver une nouvelle séance depuis votre espace student.</p>`
+  }
+  <p><a href="${params.appUrl}">Accéder à mon espace student</a></p>
+  <p>L’équipe ${APP_CONFIG.NAME}</p>
+  `;
+}
+
+function buildTutorNewBookingRequestEmailHtml(params: {
+  tutorFirstName: string;
+  studentName: string;
+  subject: string;
+  startedAt: string;
+  notificationsUrl: string;
+}): string {
+  const name = params.tutorFirstName?.trim() || 'Bonjour';
+  const subjectLabel = params.subject?.trim() || 'Cours';
+  const startedAtDate = new Date(params.startedAt);
+  const isValidDate = !Number.isNaN(startedAtDate.getTime());
+  const dateLabel = isValidDate ? startedAtDate.toLocaleDateString('fr-FR') : '';
+  const timeLabel = isValidDate
+    ? startedAtDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+    : '';
+
+  return `
+  <p>${escapeHtml(name)},</p>
+  <p>Vous avez une <strong>nouvelle demande de séance</strong> de ${escapeHtml(params.studentName)}.</p>
+  <ul>
+    <li><strong>Matière :</strong> ${escapeHtml(subjectLabel)}</li>
+    <li><strong>Date :</strong> ${escapeHtml(dateLabel || 'Non précisée')}</li>
+    <li><strong>Heure :</strong> ${escapeHtml(timeLabel || 'Non précisée')}</li>
+  </ul>
+  <p>Connectez-vous à votre espace tuteur pour <strong>répondre à la demande (confirmer ou refuser)</strong>.</p>
+  <p><a href="${params.notificationsUrl}">Voir la demande et répondre</a></p>
+  <p>L’équipe ${APP_CONFIG.NAME}</p>
+  `;
+}
+
+function buildTutorSessionCancelledEmailHtml(params: {
+  tutorFirstName: string;
+  cancelledByName: string;
+  subject: string;
+  startedAt: string;
+  reason?: string | null;
+  notificationsUrl: string;
+}): string {
+  const name = params.tutorFirstName?.trim() || 'Bonjour';
+  const subjectLabel = params.subject?.trim() || 'Cours';
+  const startedAtDate = new Date(params.startedAt);
+  const isValidDate = !Number.isNaN(startedAtDate.getTime());
+  const dateLabel = isValidDate ? startedAtDate.toLocaleDateString('fr-FR') : '';
+  const timeLabel = isValidDate
+    ? startedAtDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+    : '';
+
+  return `
+  <p>${escapeHtml(name)},</p>
+  <p><strong>${escapeHtml(params.cancelledByName)}</strong> a annulé la séance suivante :</p>
+  <ul>
+    <li><strong>Matière :</strong> ${escapeHtml(subjectLabel)}</li>
+    <li><strong>Date :</strong> ${escapeHtml(dateLabel || 'Non précisée')}</li>
+    <li><strong>Heure :</strong> ${escapeHtml(timeLabel || 'Non précisée')}</li>
+    ${
+      params.reason
+        ? `<li><strong>Raison :</strong> ${escapeHtml(params.reason)}</li>`
+        : ''
+    }
+  </ul>
+  <p>Consultez votre espace tuteur pour voir les détails mis à jour.</p>
+  <p><a href="${params.notificationsUrl}">Ouvrir mes notifications tuteur</a></p>
+  <p>L’équipe ${APP_CONFIG.NAME}</p>
+  `;
+}
+
 /**
  * Envoie l’e-mail de vérification à l’utilisateur et un e-mail récap aux admins (élèves uniquement pour le mail admin).
  * Les erreurs Resend sont journalisées ; l’inscription peut quand même réussir.
@@ -368,5 +488,140 @@ export async function sendRegistrationResendEmails(
     if (error) {
       console.error('[email] Envoi notification admins:', error);
     }
+  }
+}
+
+export async function sendStudentTutorAssignmentEmail(options: {
+  studentEmail: string;
+  studentFirstName: string;
+  tutorName: string;
+}): Promise<void> {
+  const resend = getResend();
+  const from = getFromAddress();
+  if (!resend || !from) {
+    return;
+  }
+
+  const base = getAppBaseUrl();
+  const bookingUrl = `${base}/student/tutors`;
+
+  const { error } = await resend.emails.send({
+    from,
+    to: options.studentEmail,
+    subject: `Nouveau tuteur assigné - Réservez votre séance | ${APP_CONFIG.NAME}`,
+    html: buildStudentTutorAssignedEmailHtml({
+      studentFirstName: options.studentFirstName,
+      tutorName: options.tutorName,
+      bookingUrl,
+    }),
+  });
+
+  if (error) {
+    console.error('[email] Envoi e-mail assignation tuteur étudiant:', error);
+  }
+}
+
+export async function sendStudentSessionDecisionEmail(options: {
+  studentEmail: string;
+  studentFirstName: string;
+  tutorName: string;
+  action: 'ACCEPTED' | 'REJECTED';
+  subject: string;
+  startedAt: string;
+}): Promise<void> {
+  const resend = getResend();
+  const from = getFromAddress();
+  if (!resend || !from) {
+    return;
+  }
+
+  const appUrl = `${getAppBaseUrl()}/student`;
+  const isAccepted = options.action === 'ACCEPTED';
+  const subjectLine = isAccepted
+    ? `Séance confirmée par votre tuteur | ${APP_CONFIG.NAME}`
+    : `Séance refusée par votre tuteur | ${APP_CONFIG.NAME}`;
+
+  const { error } = await resend.emails.send({
+    from,
+    to: options.studentEmail,
+    subject: subjectLine,
+    html: buildStudentSessionDecisionEmailHtml({
+      studentFirstName: options.studentFirstName,
+      tutorName: options.tutorName,
+      action: options.action,
+      subject: options.subject,
+      startedAt: options.startedAt,
+      appUrl,
+    }),
+  });
+
+  if (error) {
+    console.error('[email] Envoi e-mail réponse séance étudiant:', error);
+  }
+}
+
+export async function sendTutorNewBookingRequestEmail(options: {
+  tutorEmail: string;
+  tutorFirstName: string;
+  studentName: string;
+  subject: string;
+  startedAt: string;
+}): Promise<void> {
+  const resend = getResend();
+  const from = getFromAddress();
+  if (!resend || !from) {
+    return;
+  }
+
+  const notificationsUrl = `${getAppBaseUrl()}/tutor/notifications`;
+  const { error } = await resend.emails.send({
+    from,
+    to: options.tutorEmail,
+    subject: `Nouvelle demande de cours - Action requise | ${APP_CONFIG.NAME}`,
+    html: buildTutorNewBookingRequestEmailHtml({
+      tutorFirstName: options.tutorFirstName,
+      studentName: options.studentName,
+      subject: options.subject,
+      startedAt: options.startedAt,
+      notificationsUrl,
+    }),
+  });
+
+  if (error) {
+    console.error('[email] Envoi e-mail nouvelle demande de cours tuteur:', error);
+  }
+}
+
+export async function sendTutorSessionCancelledEmail(options: {
+  tutorEmail: string;
+  tutorFirstName: string;
+  cancelledByName: string;
+  subject: string;
+  startedAt: string;
+  reason?: string | null;
+}): Promise<void> {
+  const resend = getResend();
+  const from = getFromAddress();
+  if (!resend || !from) {
+    return;
+  }
+
+  const notificationsUrl = `${getAppBaseUrl()}/tutor/notifications`;
+  const { error } = await resend.emails.send({
+    from,
+    to: options.tutorEmail,
+    subject: `Séance annulée - ${options.subject || 'Cours'} | ${APP_CONFIG.NAME}`,
+    html: buildTutorSessionCancelledEmailHtml({
+      tutorFirstName: options.tutorFirstName,
+      cancelledByName: options.cancelledByName,
+      subject: options.subject,
+      startedAt: options.startedAt,
+      reason: options.reason,
+      notificationsUrl,
+    }),
+  });
+
+  if (error) {
+    console.error('[email] Envoi e-mail annulation séance tuteur:', error);
   }
 }

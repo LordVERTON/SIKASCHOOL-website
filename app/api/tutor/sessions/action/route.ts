@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
 import { canAccessTutorFeatures } from '@/lib/admin-permissions';
+import { sendStudentSessionDecisionEmail } from '@/lib/registration-emails';
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -33,6 +34,21 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Session is not pending' }, { status: 400 });
     }
 
+    const { data: studentData } = await (supabaseAdmin as any)
+      .from('users')
+      .select('email, first_name')
+      .eq('id', (session as any).student_id)
+      .single();
+
+    const studentEmail: string | null = studentData?.email || null;
+    const studentFirstName: string = studentData?.first_name || '';
+    const { data: tutorData } = await (supabaseAdmin as any)
+      .from('users')
+      .select('first_name, last_name')
+      .eq('id', user.id)
+      .single();
+    const tutorName = [tutorData?.first_name, tutorData?.last_name].filter(Boolean).join(' ') || 'Votre tuteur';
+
     if (action === 'REJECT') {
       // Update session status to CANCELLED
       const { error: updateError } = await (supabaseAdmin as any)
@@ -52,16 +68,28 @@ export async function PATCH(request: NextRequest) {
           user_id: (session as any).student_id,
           type: 'BOOKING',
           title: 'Séance refusée',
-          message: `Votre demande de séance de ${(session as any).subject} le ${new Date((session as any).started_at).toLocaleDateString('fr-FR')} a été refusée par votre tuteur.`,
+          message: `${tutorName} a refusé votre demande de séance de ${(session as any).subject} le ${new Date((session as any).started_at).toLocaleDateString('fr-FR')}. Réservez une nouvelle séance depuis votre espace student.`,
           data: {
             session_id: sessionId,
-            action: 'REJECTED'
+            action: 'REJECTED',
+            tutor_name: tutorName
           }
         });
 
       if (notificationError) {
         console.error('Error creating notification:', notificationError);
         // Don't fail the request if notification fails
+      }
+
+      if (studentEmail) {
+        void sendStudentSessionDecisionEmail({
+          studentEmail,
+          studentFirstName,
+          tutorName,
+          action: 'REJECTED',
+          subject: (session as any).subject || 'Séance',
+          startedAt: (session as any).started_at || new Date().toISOString(),
+        });
       }
 
       return NextResponse.json({ success: true, action: 'rejected' });
@@ -86,16 +114,28 @@ export async function PATCH(request: NextRequest) {
           user_id: (session as any).student_id,
           type: 'BOOKING',
           title: 'Séance confirmée',
-          message: `Votre demande de séance de ${(session as any).subject} le ${new Date((session as any).started_at).toLocaleDateString('fr-FR')} à ${new Date((session as any).started_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} a été acceptée par votre tuteur.`,
+          message: `${tutorName} a confirmé votre demande de séance de ${(session as any).subject} le ${new Date((session as any).started_at).toLocaleDateString('fr-FR')} à ${new Date((session as any).started_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}.`,
           data: {
             session_id: sessionId,
-            action: 'ACCEPTED'
+            action: 'ACCEPTED',
+            tutor_name: tutorName
           }
         });
 
       if (notificationError) {
         console.error('Error creating notification:', notificationError);
         // Don't fail the request if notification fails
+      }
+
+      if (studentEmail) {
+        void sendStudentSessionDecisionEmail({
+          studentEmail,
+          studentFirstName,
+          tutorName,
+          action: 'ACCEPTED',
+          subject: (session as any).subject || 'Séance',
+          startedAt: (session as any).started_at || new Date().toISOString(),
+        });
       }
 
       return NextResponse.json({ success: true, action: 'accepted' });

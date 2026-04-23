@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
+import { sendTutorNewBookingRequestEmail } from '@/lib/registration-emails';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -135,7 +136,7 @@ export async function POST(req: NextRequest) {
       }, { status: 500 });
     }
 
-    // Get student name for notification
+    // Get student name and tutor contact for notifications (in-app + email)
     const { data: studentData, error: studentError } = await supabaseAdmin
       .from('users')
       .select('first_name, last_name')
@@ -147,6 +148,14 @@ export async function POST(req: NextRequest) {
     }
 
     const studentName = studentData ? `${(studentData as any).first_name} ${(studentData as any).last_name}` : 'Un étudiant';
+    const { data: tutorData, error: tutorError } = await supabaseAdmin
+      .from('users')
+      .select('email, first_name, last_name')
+      .eq('id', tutor_id)
+      .single();
+    if (tutorError) {
+      console.error('Error fetching tutor data:', tutorError);
+    }
 
     // Create notification for tutor
     const { error: notificationError } = await (supabaseAdmin as any)
@@ -155,7 +164,7 @@ export async function POST(req: NextRequest) {
         user_id: tutor_id,
         type: 'BOOKING',
         title: 'Nouvelle demande de séance',
-        message: `${studentName} souhaite planifier une séance de ${subject} le ${new Date(startedAt).toLocaleDateString('fr-FR')} à ${new Date(startedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`,
+        message: `${studentName} souhaite planifier une séance de ${subject} le ${new Date(startedAt).toLocaleDateString('fr-FR')} à ${new Date(startedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}. Merci de répondre à cette demande (confirmer ou refuser).`,
         data: {
           session_id: data.id,
           student_id: student_id,
@@ -169,6 +178,16 @@ export async function POST(req: NextRequest) {
     if (notificationError) {
       console.error('Error creating notification:', notificationError);
       // Don't fail the session creation if notification fails
+    }
+
+    if (tutorData?.email) {
+      void sendTutorNewBookingRequestEmail({
+        tutorEmail: tutorData.email,
+        tutorFirstName: tutorData.first_name || tutorData.last_name || '',
+        studentName,
+        subject,
+        startedAt,
+      });
     }
 
     // Insert additional participants if provided

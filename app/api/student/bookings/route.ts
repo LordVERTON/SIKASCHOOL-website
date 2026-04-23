@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
+import { sendTutorNewBookingRequestEmail } from '@/lib/registration-emails';
 
 // Create a booking request -> notify tutor
 export async function POST(request: NextRequest) {
@@ -46,7 +47,7 @@ export async function POST(request: NextRequest) {
     const scheduledAtIso = new Date(`${date}T${time}:00`).toISOString();
 
     const title = 'Nouvelle demande de séance';
-    const message = `${user.name || 'Un élève'} souhaite réserver une séance${subject ? ` (${subject})` : ''} le ${new Date(scheduledAtIso).toLocaleString('fr-FR')}.`;
+    const message = `${user.name || 'Un élève'} souhaite réserver une séance${subject ? ` (${subject})` : ''} le ${new Date(scheduledAtIso).toLocaleString('fr-FR')}. Merci de répondre à cette demande (confirmer ou refuser).`;
 
     const data = {
       student_id: user.id,
@@ -97,6 +98,21 @@ export async function POST(request: NextRequest) {
 
     if (sessionErr) {
       return NextResponse.json({ error: 'Unable to create session', details: sessionErr.message || sessionErr }, { status: 500 });
+    }
+
+    const { data: tutorData } = await supabaseAdmin
+      .from('users')
+      .select('email, first_name, last_name')
+      .eq('id', tutorId)
+      .single();
+    if (tutorData?.email) {
+      void sendTutorNewBookingRequestEmail({
+        tutorEmail: tutorData.email,
+        tutorFirstName: tutorData.first_name || tutorData.last_name || '',
+        studentName: user.name || 'Un élève',
+        subject: subject || 'Cours',
+        startedAt: scheduledAtIso,
+      });
     }
 
     return NextResponse.json({ success: true, sessionId: sessionInsert?.id });

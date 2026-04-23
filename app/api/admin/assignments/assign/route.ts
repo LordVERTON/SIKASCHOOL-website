@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getUserSession } from '@/lib/auth-simple';
 import { canAccessAdminFeatures } from '@/lib/admin-permissions';
+import { sendStudentTutorAssignmentEmail } from '@/lib/registration-emails';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
             user_id: studentId,
             type: 'TUTOR_ASSIGNMENT',
             title: 'Tuteur réassigné',
-            message: `Votre tuteur ${tutorName} a été réassigné à votre compte. Préparez votre première séance ensemble !`,
+            message: `Votre tuteur ${tutorName} a été réassigné à votre compte. Connectez-vous à votre espace student pour réserver une nouvelle séance.`,
             data: {
               tutor_id: tutorId,
               tutor_name: tutorName,
@@ -98,6 +99,12 @@ export async function POST(request: NextRequest) {
             },
             is_read: false
           } as any);
+
+        void sendStudentTutorAssignmentEmail({
+          studentEmail: student.email,
+          studentFirstName: student.first_name || '',
+          tutorName,
+        });
 
         return NextResponse.json({
           message: 'Assignation réactivée avec succès',
@@ -132,7 +139,7 @@ export async function POST(request: NextRequest) {
         user_id: studentId,
         type: 'TUTOR_ASSIGNMENT',
         title: 'Nouveau tuteur assigné',
-        message: `Un nouveau tuteur vous a été assigné : ${tutorName}. Préparez votre première séance ensemble !`,
+        message: `Un nouveau tuteur vous a été assigné : ${tutorName}. Connectez-vous à votre espace student pour réserver une nouvelle séance.`,
         data: {
           tutor_id: tutorId,
           tutor_name: tutorName,
@@ -147,6 +154,12 @@ export async function POST(request: NextRequest) {
     if (notificationError) {
       console.error('❌ Erreur lors de la création de la notification d\'assignation:', notificationError);
     }
+
+    void sendStudentTutorAssignmentEmail({
+      studentEmail: student.email,
+      studentFirstName: student.first_name || '',
+      tutorName,
+    });
 
     return NextResponse.json({
       message: 'Assignation créée avec succès',

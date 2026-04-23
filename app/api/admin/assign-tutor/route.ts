@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { getUserSession } from '@/lib/auth-simple';
 import { canAccessAdminFeatures } from '@/lib/admin-permissions';
 import { supabaseAdmin } from '@/lib/supabase';
+import { sendStudentTutorAssignmentEmail } from '@/lib/registration-emails';
 import type { Database } from '@/types/supabase';
 
 // Types supprimés car non utilisés
@@ -112,7 +113,7 @@ export async function POST(request: NextRequest) {
       user_id: studentId,
       type: 'TUTOR_ASSIGNMENT',
       title: 'Nouveau tuteur assigné',
-      message: `Un nouveau tuteur vous a été assigné : ${tutorName}. Préparez votre première séance ensemble !`,
+      message: `Un nouveau tuteur vous a été assigné : ${tutorName}. Connectez-vous à votre espace student pour réserver une nouvelle séance.`,
       data: {
         tutor_id: tutorId,
         tutor_name: tutorName,
@@ -132,6 +133,12 @@ export async function POST(request: NextRequest) {
       console.error('❌ Erreur lors de la création de la notification d\'assignation de tuteur:', notificationError);
       // Ne pas faire échouer la requête si la notification échoue, mais logger l'erreur
     }
+
+    void sendStudentTutorAssignmentEmail({
+      studentEmail: student.email,
+      studentFirstName: (student as any).first_name || '',
+      tutorName,
+    });
 
     return NextResponse.json({
       success: true,
