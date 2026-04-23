@@ -91,7 +91,7 @@ export default function SimpleSignin() {
           return;
         }
         if (!data.email.trim()) {
-          setError("L'email est requis");
+          setError("L’e-mail est requis");
           return;
         }
         if (!data.password) {
@@ -310,7 +310,7 @@ export default function SimpleSignin() {
               <div className="mb-7.5 flex flex-col gap-7.5 lg:mb-12.5 lg:flex-row lg:justify-between lg:gap-14">
                 <input
                   type="email"
-                  placeholder="Votre email"
+                  placeholder="Votre e-mail"
                   name="email"
                   value={data.email}
                   onChange={(e) => setData({ ...data, email: e.target.value })}

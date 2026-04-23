@@ -67,7 +67,7 @@ const Signup = () => {
     }
     
     if (!data.email.trim()) {
-      toast.error('L\'email est requis');
+      toast.error('L’e-mail est requis');
       return;
     }
     
