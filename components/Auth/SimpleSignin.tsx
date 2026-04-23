@@ -54,6 +54,10 @@ export default function SimpleSignin() {
   const [isSignup, setIsSignup] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
+  const [twoFactorRequired, setTwoFactorRequired] = useState(false);
+  const [twoFactorCode, setTwoFactorCode] = useState("");
+  const [twoFactorTicket, setTwoFactorTicket] = useState<string | null>(null);
+  const [twoFactorInfo, setTwoFactorInfo] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -107,6 +111,13 @@ export default function SimpleSignin() {
           }),
         });
       } else {
+        if (twoFactorRequired) {
+          if (!twoFactorCode || twoFactorCode.trim().length !== 6 || !twoFactorTicket) {
+            setError("Entrez le code SMS à 6 chiffres.");
+            setIsLoading(false);
+            return;
+          }
+        }
         // Connexion
         response = await fetch('/api/auth/login', {
           method: 'POST',
@@ -116,11 +127,21 @@ export default function SimpleSignin() {
           body: JSON.stringify({
             email: data.email,
             password: data.password,
+            twoFactorCode: twoFactorRequired ? twoFactorCode : undefined,
+            twoFactorTicket: twoFactorRequired ? twoFactorTicket : undefined,
           }),
         });
       }
 
       const result = await response.json();
+
+      if (response.status === 202 && result?.requiresTwoFactor) {
+        setTwoFactorRequired(true);
+        setTwoFactorTicket(result.twoFactorTicket ?? null);
+        setTwoFactorInfo(typeof result.message === "string" ? result.message : "Code SMS envoyé.");
+        setError("");
+        return;
+      }
 
       if (!response.ok) {
         setError(result.error || (isSignup ? 'Erreur d\'inscription' : 'Erreur de connexion'));
@@ -197,7 +218,13 @@ export default function SimpleSignin() {
               <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
                 <button
                   type="button"
-                  onClick={() => setIsSignup(false)}
+                  onClick={() => {
+                    setIsSignup(false);
+                    setTwoFactorRequired(false);
+                    setTwoFactorCode("");
+                    setTwoFactorTicket(null);
+                    setTwoFactorInfo(null);
+                  }}
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                     !isSignup 
                       ? 'bg-white text-black shadow-sm dark:bg-gray-700 dark:text-white' 
@@ -208,7 +235,13 @@ export default function SimpleSignin() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setIsSignup(true)}
+                  onClick={() => {
+                    setIsSignup(true);
+                    setTwoFactorRequired(false);
+                    setTwoFactorCode("");
+                    setTwoFactorTicket(null);
+                    setTwoFactorInfo(null);
+                  }}
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                     isSignup 
                       ? 'bg-white text-black shadow-sm dark:bg-gray-700 dark:text-white' 
@@ -297,6 +330,53 @@ export default function SimpleSignin() {
               {error && (
                 <div className="mb-5 text-red-600 text-sm text-center">
                   {error}
+                </div>
+              )}
+              {!isSignup && twoFactorRequired && (
+                <div className="mb-5 space-y-3">
+                  {twoFactorInfo && (
+                    <div className="text-center text-xs text-waterloo dark:text-manatee">{twoFactorInfo}</div>
+                  )}
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    placeholder="Code SMS (6 chiffres)"
+                    value={twoFactorCode}
+                    onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    className="w-full border-b border-stroke bg-white! pb-3.5 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:bg-black! dark:focus:border-manatee dark:focus:placeholder:text-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setIsLoading(true);
+                      setError("");
+                      try {
+                        const resp = await fetch('/api/auth/login', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            email: data.email,
+                            password: data.password,
+                          }),
+                        });
+                        const payload = await resp.json().catch(() => ({}));
+                        if (resp.status === 202 && payload?.requiresTwoFactor) {
+                          setTwoFactorTicket(payload.twoFactorTicket ?? null);
+                          setTwoFactorInfo(typeof payload.message === "string" ? payload.message : "Code SMS renvoyé.");
+                        } else if (!resp.ok) {
+                          setError(payload.error || "Échec du renvoi du code.");
+                        }
+                      } catch {
+                        setError("Erreur réseau lors du renvoi du code.");
+                      } finally {
+                        setIsLoading(false);
+                      }
+                    }}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Renvoyer le code
+                  </button>
                 </div>
               )}
 

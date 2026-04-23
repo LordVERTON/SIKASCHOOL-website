@@ -11,7 +11,11 @@ export async function GET() {
 
     const userId = user.id;
 
-    const [{ data: userRow, error: userError }, { data: studentRow, error: studentError }] = await Promise.all([
+    const [
+      { data: userRow, error: userError },
+      { data: studentRow, error: studentError },
+      { data: passwordNotifications, error: passwordNotificationsError },
+    ] = await Promise.all([
       supabaseAdmin
         .from('users')
         .select('id, email, first_name, last_name, avatar_url, timezone, language, created_at, postal_code, phone')
@@ -21,7 +25,14 @@ export async function GET() {
         .from('students')
         .select('grade_level, school_name, theme, notify_email, notify_push, notify_sms, phone, address, city, postal_code, country, date_of_birth, academic_goals, learning_style, parent_phone, parent_email')
         .eq('user_id', userId)
-        .single()
+        .single(),
+      (supabaseAdmin as any)
+        .from('notifications')
+        .select('created_at, data')
+        .eq('user_id', userId)
+        .eq('type', 'PASSWORD')
+        .order('created_at', { ascending: false })
+        .limit(20)
     ]);
 
     if (userError) {
@@ -32,6 +43,9 @@ export async function GET() {
     if (studentError && studentError.code !== 'PGRST116') {
       // PGRST116: No rows found for single() — acceptable if no student profile yet
       console.error('Erreur étudiant:', studentError);
+    }
+    if (passwordNotificationsError) {
+      console.error('Erreur notifications mot de passe:', passwordNotificationsError);
     }
 
     const u: any = userRow as any;
@@ -45,6 +59,12 @@ export async function GET() {
         console.warn('Impossible de parser les informations d\'inscription:', parseErr);
       }
     }
+
+    const latestPasswordNotification = (passwordNotifications || [])[0] as any;
+    const latestPasswordChange =
+      (passwordNotifications || []).find((item: any) => item?.data?.action === 'PASSWORD_CHANGED') ||
+      latestPasswordNotification ||
+      null;
 
     const profile = {
       id: u.id,
@@ -64,6 +84,10 @@ export async function GET() {
       language: u.language || 'fr',
       theme: s.theme || 'system',
       academicGoals: s.academic_goals || '',
+      passwordUpdatedAt:
+        latestPasswordChange?.data?.changed_at ||
+        latestPasswordChange?.created_at ||
+        null,
       intake: intakeDetails,
       notifications: {
         email: s.notify_email ?? true,
