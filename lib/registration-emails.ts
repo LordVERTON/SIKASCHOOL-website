@@ -103,7 +103,7 @@ export async function verifyEmailToken(
       .eq('id', row.user_id);
 
     if (userErr) {
-      console.error('[email] Mise à jour email_verified:', userErr);
+      console.error('[email] Échec de mise à jour email_verified :', userErr);
       return { ok: false, error: 'server_error' };
     }
 
@@ -115,7 +115,7 @@ export async function verifyEmailToken(
 
     return { ok: true };
   } catch (e) {
-    console.error('[email] verifyEmailToken:', e);
+    console.error('[email] Erreur verifyEmailToken :', e);
     return { ok: false, error: 'server_error' };
   }
 }
@@ -200,7 +200,7 @@ export async function insertAdminNewStudentNotifications(
 
   const { error } = await supabase.from('notifications').insert(adminNotifications as any);
   if (error) {
-    console.error('[email] Insert notifications admin:', error);
+    console.error('[email] Échec insertion notifications admin :', error);
   }
 }
 
@@ -228,7 +228,7 @@ export async function insertStudentPasswordChangeNotification(
   } as any);
 
   if (error) {
-    console.error('[email] Insert notification changement mot de passe:', error);
+    console.error('[email] Échec insertion notification changement mot de passe :', error);
   }
 }
 

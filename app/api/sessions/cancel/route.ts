@@ -6,19 +6,37 @@ import {
   sendTutorSessionCancelledEmail,
 } from '@/lib/registration-emails';
 
+type SessionRow = {
+  id: string;
+  student_id: string;
+  tutor_id: string;
+  subject: string | null;
+  started_at: string;
+  status: string;
+};
+
+type UserRow = {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+};
+
 export async function PATCH(request: NextRequest) {
   try {
     const user = await getUserSession();
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
     const body = await request.json();
     const { sessionId, reason } = body as { sessionId?: string; reason?: string };
     
     if (!sessionId) {
-      return NextResponse.json({ error: 'Session ID is required' }, { status: 400 });
+      return NextResponse.json({ error: 'ID de séance requis' }, { status: 400 });
     }
+
+    const cancellationReason = typeof reason === 'string' && reason.trim() ? reason.trim() : null;
 
     // Vérifier que l'utilisateur a le droit d'annuler cette session
     const { data: session, error: sessionError } = await (supabaseAdmin as any)
@@ -28,32 +46,33 @@ export async function PATCH(request: NextRequest) {
       .single();
 
     if (sessionError || !session) {
-      return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Séance introuvable' }, { status: 404 });
     }
+    const currentSession = session as SessionRow;
 
     // Vérifier que l'utilisateur est soit l'étudiant, soit le tuteur de cette session
-    if (user.id !== (session as any).student_id && user.id !== (session as any).tutor_id) {
-      return NextResponse.json({ error: 'You can only cancel your own sessions' }, { status: 403 });
+    if (user.id !== currentSession.student_id && user.id !== currentSession.tutor_id) {
+      return NextResponse.json({ error: 'Vous ne pouvez annuler que vos propres séances' }, { status: 403 });
     }
 
     // Vérifier que la session peut être annulée
-    if ((session as any).status === 'CANCELLED') {
-      return NextResponse.json({ error: 'Session is already cancelled' }, { status: 400 });
+    if (currentSession.status === 'CANCELLED') {
+      return NextResponse.json({ error: 'La séance est déjà annulée' }, { status: 400 });
     }
 
-    if ((session as any).status === 'COMPLETED') {
-      return NextResponse.json({ error: 'Cannot cancel a completed session' }, { status: 400 });
+    if (currentSession.status === 'COMPLETED') {
+      return NextResponse.json({ error: 'Impossible d’annuler une séance terminée' }, { status: 400 });
     }
 
     // Vérifier la restriction des 24h
-    const sessionStartTime = new Date((session as any).started_at);
+    const sessionStartTime = new Date(currentSession.started_at);
     const now = new Date();
     const timeDifference = sessionStartTime.getTime() - now.getTime();
     const hoursUntilSession = timeDifference / (1000 * 60 * 60);
 
     if (hoursUntilSession < 24) {
       return NextResponse.json({ 
-        error: 'Cannot cancel session less than 24 hours before start time',
+        error: 'Impossible d’annuler une séance moins de 24 heures avant son début',
         hoursUntilSession: Math.round(hoursUntilSession * 10) / 10
       }, { status: 400 });
     }
@@ -68,8 +87,8 @@ export async function PATCH(request: NextRequest) {
       .eq('id', sessionId);
 
     if (updateError) {
-      console.error('Error cancelling session:', updateError);
-      return NextResponse.json({ error: 'Failed to cancel session' }, { status: 500 });
+      console.error('Erreur lors de l’annulation de la séance :', updateError);
+      return NextResponse.json({ error: 'Échec de l’annulation de la séance' }, { status: 500 });
     }
 
     // Récupérer les participants de la session
@@ -79,17 +98,17 @@ export async function PATCH(request: NextRequest) {
       .eq('session_id', sessionId);
 
     if (participantsError) {
-      console.error('Error fetching participants:', participantsError);
+      console.error('Erreur lors de la récupération des participants :', participantsError);
     }
 
     // Créer la liste des utilisateurs à notifier
     const userIdsToNotify = new Set<string>();
     
     // Ajouter l'étudiant principal
-    userIdsToNotify.add((session as any).student_id);
+    userIdsToNotify.add(currentSession.student_id);
     
     // Ajouter le tuteur
-    userIdsToNotify.add((session as any).tutor_id);
+    userIdsToNotify.add(currentSession.tutor_id);
     
     // Ajouter les participants supplémentaires
     if (participants) {
@@ -103,17 +122,22 @@ export async function PATCH(request: NextRequest) {
       .in('id', Array.from(userIdsToNotify));
 
     if (usersError) {
-      console.error('Error fetching users:', usersError);
+      console.error('Erreur lors de la récupération des utilisateurs :', usersError);
     }
 
-    const usersMap = new Map();
+    const usersMap = new Map<string, UserRow>();
     if (users) {
-      users.forEach((u: any) => usersMap.set(u.id, u));
+      users.forEach((u: UserRow) => usersMap.set(u.id, u));
     }
 
     const cancelledBy = usersMap.get(user.id);
     const cancelledByName = cancelledBy ? `${cancelledBy.first_name} ${cancelledBy.last_name}` : 'Un utilisateur';
-    const tutorUser = usersMap.get((session as any).tutor_id);
+    const tutorUser = usersMap.get(currentSession.tutor_id);
+    const sessionDateLabel = new Date(currentSession.started_at).toLocaleDateString('fr-FR');
+    const sessionTimeLabel = new Date(currentSession.started_at).toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
 
     // Créer les notifications pour tous les participants
     const notifications = Array.from(userIdsToNotify)
@@ -122,12 +146,12 @@ export async function PATCH(request: NextRequest) {
         user_id: userId,
         type: 'BOOKING',
         title: 'Séance annulée',
-        message: `${cancelledByName} a annulé la séance de ${(session as any).subject} prévue le ${new Date((session as any).started_at).toLocaleDateString('fr-FR')} à ${new Date((session as any).started_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}${reason ? `. Raison: ${reason}` : ''}`,
+        message: `${cancelledByName} a annulé la séance de ${currentSession.subject || 'Cours'} prévue le ${sessionDateLabel} à ${sessionTimeLabel}${cancellationReason ? `. Raison: ${cancellationReason}` : ''}`,
         data: {
           session_id: sessionId,
           action: 'CANCELLED',
           cancelled_by: user.id,
-          reason: reason || null
+          reason: cancellationReason
         }
       }));
 
@@ -137,26 +161,26 @@ export async function PATCH(request: NextRequest) {
         .insert(notifications);
 
       if (notificationError) {
-        console.error('Error creating notifications:', notificationError);
+        console.error('Erreur lors de la création des notifications :', notificationError);
         // Ne pas échouer la requête si les notifications échouent
       }
     }
 
-    if (tutorUser?.email && (session as any).tutor_id !== user.id) {
+    if (tutorUser?.email && currentSession.tutor_id !== user.id) {
       void sendTutorSessionCancelledEmail({
         tutorEmail: tutorUser.email,
         tutorFirstName: tutorUser.first_name || tutorUser.last_name || '',
         cancelledByName,
-        subject: (session as any).subject || 'Cours',
-        startedAt: (session as any).started_at,
-        reason: reason || null,
+        subject: currentSession.subject || 'Cours',
+        startedAt: currentSession.started_at,
+        reason: cancellationReason,
       });
     }
 
     // Si le tuteur annule, notifier tous les étudiants participants (principal + additionnels) par e-mail.
-    if (user.id === (session as any).tutor_id) {
+    if (user.id === currentSession.tutor_id) {
       const studentRecipientIds = Array.from(userIdsToNotify).filter(
-        (id) => id !== user.id && id !== (session as any).tutor_id
+        (id) => id !== currentSession.tutor_id
       );
       const studentParticipantsCount = studentRecipientIds.length;
 
@@ -168,9 +192,9 @@ export async function PATCH(request: NextRequest) {
           studentEmail: student.email,
           studentFirstName: student.first_name || student.last_name || '',
           tutorName: cancelledByName,
-          subject: (session as any).subject || 'Cours',
-          startedAt: (session as any).started_at,
-          reason: reason || null,
+          subject: currentSession.subject || 'Cours',
+          startedAt: currentSession.started_at,
+          reason: cancellationReason,
           studentParticipantsCount,
         });
       }
@@ -178,12 +202,12 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ 
       success: true, 
-      message: 'Session cancelled successfully',
+      message: 'Séance annulée avec succès',
       cancelledBy: cancelledByName
     });
 
   } catch (error) {
-    console.error('Session cancellation endpoint error:', error);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    console.error('Erreur API annulation de séance :', error);
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }
