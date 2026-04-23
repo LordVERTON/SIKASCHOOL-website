@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import nodemailer, { type Transporter } from 'nodemailer';
 import { Resend } from 'resend';
 import { APP_CONFIG, CREDENTIAL_TYPES } from '@/lib/constants';
 import { getAdminTutorEmails } from '@/lib/admin-permissions';
@@ -8,6 +9,15 @@ import { getAdminTutorEmails } from '@/lib/admin-permissions';
 type ServiceSupabase = SupabaseClient<any>;
 
 const VERIFY_TTL_MS = 48 * 60 * 60 * 1000;
+let smtpTransporter: Transporter | null = null;
+
+type EmailPayload = {
+  to: string | string[];
+  subject: string;
+  html: string;
+};
+
+type MailProvider = 'resend' | 'smtp';
 
 export function getAppBaseUrl(): string {
   const explicit = process.env.NEXT_PUBLIC_APP_URL?.trim();
@@ -29,12 +39,96 @@ function getResend(): Resend | null {
 }
 
 function getFromAddress(): string | null {
-  const from = process.env.RESEND_FROM_EMAIL?.trim();
+  const from = process.env.MAIL_FROM_EMAIL?.trim() || process.env.RESEND_FROM_EMAIL?.trim();
   if (!from) {
-    console.warn('[email] RESEND_FROM_EMAIL manquant — configurez une adresse d’expéditeur vérifiée dans Resend.');
+    console.warn('[email] MAIL_FROM_EMAIL/RESEND_FROM_EMAIL manquant — configurez une adresse d’expéditeur.');
     return null;
   }
   return from;
+}
+
+function getMailProvider(): MailProvider {
+  const provider = process.env.MAIL_PROVIDER?.trim().toLowerCase();
+  if (provider === 'smtp' || provider === 'mailpit') {
+    return 'smtp';
+  }
+  if (provider === 'resend') {
+    return 'resend';
+  }
+  if (process.env.RESEND_API_KEY?.trim()) {
+    return 'resend';
+  }
+  return 'smtp';
+}
+
+function getSmtpTransporter(): Transporter | null {
+  if (smtpTransporter) {
+    return smtpTransporter;
+  }
+
+  const host = process.env.SMTP_HOST?.trim();
+  if (!host) {
+    return null;
+  }
+
+  const portRaw = process.env.SMTP_PORT?.trim();
+  const parsedPort = portRaw ? Number(portRaw) : 1025;
+  const port = Number.isFinite(parsedPort) ? parsedPort : 1025;
+  const secure = (process.env.SMTP_SECURE?.trim() || 'false').toLowerCase() === 'true';
+  const user = process.env.SMTP_USER?.trim();
+  const pass = process.env.SMTP_PASS?.trim();
+
+  smtpTransporter = nodemailer.createTransport({
+    host,
+    port,
+    secure,
+    auth: user && pass ? { user, pass } : undefined,
+  });
+
+  return smtpTransporter;
+}
+
+async function sendEmail(payload: EmailPayload): Promise<void> {
+  const provider = getMailProvider();
+  const from = getFromAddress();
+  if (!from) {
+    return;
+  }
+
+  if (provider === 'resend') {
+    const resend = getResend();
+    if (!resend) {
+      console.warn('[email] MAIL_PROVIDER=resend mais RESEND_API_KEY est absent.');
+      return;
+    }
+    const { error } = await resend.emails.send({
+      from,
+      to: payload.to,
+      subject: payload.subject,
+      html: payload.html,
+    });
+    if (error) {
+      console.error('[email] Envoi Resend échoué :', error);
+    }
+    return;
+  }
+
+  const transporter = getSmtpTransporter();
+  if (!transporter) {
+    console.warn('[email] SMTP_HOST absent — configurez Mailpit/SMTP pour les emails en local.');
+    return;
+  }
+
+  try {
+    await transporter.sendMail({
+      from,
+      to: payload.to,
+      subject: payload.subject,
+      html: payload.html,
+    });
+  } catch (error) {
+    console.error('[email] Envoi SMTP échoué :', error);
+  }
 }
 
 /**
@@ -479,15 +573,6 @@ export async function sendRegistrationResendEmails(
     plainPassword?: string | null;
   }
 ): Promise<void> {
-  const resend = getResend();
-  const from = getFromAddress();
-  if (!resend || !from) {
-    if (!process.env.RESEND_API_KEY) {
-      console.warn('[email] RESEND_API_KEY absent — e-mails de confirmation non envoyés.');
-    }
-    return;
-  }
-
   const base = getAppBaseUrl();
   const signinUrl = `${base}/auth/signin`;
   const adminPath =
@@ -500,8 +585,7 @@ export async function sendRegistrationResendEmails(
     : null;
   const plainPassword = options.plainPassword?.trim() || null;
   if (verifyUrl) {
-    const { error } = await resend.emails.send({
-      from,
+    await sendEmail({
       to: options.newUser.email,
       subject: `Confirmez votre adresse e-mail - ${APP_CONFIG.NAME}`,
       html: buildVerificationEmailHtml({
@@ -509,14 +593,10 @@ export async function sendRegistrationResendEmails(
         verifyUrl,
       }),
     });
-    if (error) {
-      console.error('[email] Envoi e-mail de confirmation:', error);
-    }
   }
 
   if (plainPassword) {
-    const { error } = await resend.emails.send({
-      from,
+    await sendEmail({
       to: options.newUser.email,
       subject: `Vos informations de connexion - ${APP_CONFIG.NAME}`,
       html: buildPasswordEmailHtml({
@@ -525,9 +605,6 @@ export async function sendRegistrationResendEmails(
         signinUrl,
       }),
     });
-    if (error) {
-      console.error('[email] Envoi e-mail mot de passe:', error);
-    }
   }
 
   if (options.newUser.role === 'STUDENT') {
@@ -538,15 +615,11 @@ export async function sendRegistrationResendEmails(
     }
     const adminUrl = `${base}${adminPath}`;
     const studentName = `${options.newUser.first_name} ${options.newUser.last_name}`.trim();
-    const { error } = await resend.emails.send({
-      from,
+    await sendEmail({
       to: adminEmails,
       subject: `[${APP_CONFIG.NAME}] Nouvel élève : ${studentName}`,
       html: buildAdminNewStudentHtml(options.newUser, adminUrl),
     });
-    if (error) {
-      console.error('[email] Envoi notification admins:', error);
-    }
   }
 }
 
@@ -555,17 +628,10 @@ export async function sendStudentTutorAssignmentEmail(options: {
   studentFirstName: string;
   tutorName: string;
 }): Promise<void> {
-  const resend = getResend();
-  const from = getFromAddress();
-  if (!resend || !from) {
-    return;
-  }
-
   const base = getAppBaseUrl();
   const bookingUrl = `${base}/student/tutors`;
 
-  const { error } = await resend.emails.send({
-    from,
+  await sendEmail({
     to: options.studentEmail,
     subject: `Nouveau tuteur assigné - Réservez votre séance | ${APP_CONFIG.NAME}`,
     html: buildStudentTutorAssignedEmailHtml({
@@ -574,10 +640,6 @@ export async function sendStudentTutorAssignmentEmail(options: {
       bookingUrl,
     }),
   });
-
-  if (error) {
-    console.error('[email] Envoi e-mail assignation tuteur étudiant:', error);
-  }
 }
 
 export async function sendStudentSessionDecisionEmail(options: {
@@ -588,20 +650,13 @@ export async function sendStudentSessionDecisionEmail(options: {
   subject: string;
   startedAt: string;
 }): Promise<void> {
-  const resend = getResend();
-  const from = getFromAddress();
-  if (!resend || !from) {
-    return;
-  }
-
   const appUrl = `${getAppBaseUrl()}/student`;
   const isAccepted = options.action === 'ACCEPTED';
   const subjectLine = isAccepted
     ? `Séance confirmée par votre tuteur | ${APP_CONFIG.NAME}`
     : `Séance refusée par votre tuteur | ${APP_CONFIG.NAME}`;
 
-  const { error } = await resend.emails.send({
-    from,
+  await sendEmail({
     to: options.studentEmail,
     subject: subjectLine,
     html: buildStudentSessionDecisionEmailHtml({
@@ -613,10 +668,6 @@ export async function sendStudentSessionDecisionEmail(options: {
       appUrl,
     }),
   });
-
-  if (error) {
-    console.error('[email] Envoi e-mail réponse séance étudiant:', error);
-  }
 }
 
 export async function sendTutorNewBookingRequestEmail(options: {
@@ -626,15 +677,8 @@ export async function sendTutorNewBookingRequestEmail(options: {
   subject: string;
   startedAt: string;
 }): Promise<void> {
-  const resend = getResend();
-  const from = getFromAddress();
-  if (!resend || !from) {
-    return;
-  }
-
   const notificationsUrl = `${getAppBaseUrl()}/tutor/notifications`;
-  const { error } = await resend.emails.send({
-    from,
+  await sendEmail({
     to: options.tutorEmail,
     subject: `Nouvelle demande de cours - Action requise | ${APP_CONFIG.NAME}`,
     html: buildTutorNewBookingRequestEmailHtml({
@@ -645,10 +689,6 @@ export async function sendTutorNewBookingRequestEmail(options: {
       notificationsUrl,
     }),
   });
-
-  if (error) {
-    console.error('[email] Envoi e-mail nouvelle demande de cours tuteur:', error);
-  }
 }
 
 export async function sendTutorSessionCancelledEmail(options: {
@@ -659,15 +699,8 @@ export async function sendTutorSessionCancelledEmail(options: {
   startedAt: string;
   reason?: string | null;
 }): Promise<void> {
-  const resend = getResend();
-  const from = getFromAddress();
-  if (!resend || !from) {
-    return;
-  }
-
   const notificationsUrl = `${getAppBaseUrl()}/tutor/notifications`;
-  const { error } = await resend.emails.send({
-    from,
+  await sendEmail({
     to: options.tutorEmail,
     subject: `Séance annulée - ${options.subject || 'Cours'} | ${APP_CONFIG.NAME}`,
     html: buildTutorSessionCancelledEmailHtml({
@@ -679,10 +712,6 @@ export async function sendTutorSessionCancelledEmail(options: {
       notificationsUrl,
     }),
   });
-
-  if (error) {
-    console.error('[email] Envoi e-mail annulation séance tuteur:', error);
-  }
 }
 
 export async function sendStudentSessionCancelledEmail(options: {
@@ -694,15 +723,8 @@ export async function sendStudentSessionCancelledEmail(options: {
   reason?: string | null;
   studentParticipantsCount?: number;
 }): Promise<void> {
-  const resend = getResend();
-  const from = getFromAddress();
-  if (!resend || !from) {
-    return;
-  }
-
   const studentUrl = `${getAppBaseUrl()}/student`;
-  const { error } = await resend.emails.send({
-    from,
+  await sendEmail({
     to: options.studentEmail,
     subject: `Séance annulée - ${options.subject || 'Cours'} | ${APP_CONFIG.NAME}`,
     html: buildStudentSessionCancelledEmailHtml({
@@ -715,10 +737,6 @@ export async function sendStudentSessionCancelledEmail(options: {
       studentUrl,
     }),
   });
-
-  if (error) {
-    console.error('[email] Envoi e-mail annulation séance étudiant:', error);
-  }
 }
 
 export async function sendPasswordResetEmail(options: {
@@ -726,18 +744,8 @@ export async function sendPasswordResetEmail(options: {
   firstName?: string | null;
   resetToken: string;
 }): Promise<void> {
-  const resend = getResend();
-  const from = getFromAddress();
-  if (!resend || !from) {
-    if (!process.env.RESEND_API_KEY) {
-      console.warn('[email] RESEND_API_KEY absent — e-mail de reset non envoyé.');
-    }
-    return;
-  }
-
   const resetUrl = `${getAppBaseUrl()}/auth/reset-password?token=${encodeURIComponent(options.resetToken)}`;
-  const { error } = await resend.emails.send({
-    from,
+  await sendEmail({
     to: options.to,
     subject: `Réinitialisez votre mot de passe - ${APP_CONFIG.NAME}`,
     html: buildPasswordResetEmailHtml({
@@ -745,8 +753,4 @@ export async function sendPasswordResetEmail(options: {
       resetUrl,
     }),
   });
-
-  if (error) {
-    console.error('[email] Envoi e-mail reset password:', error);
-  }
 }
