@@ -40,6 +40,7 @@ export default function TutorNotificationsPage() {
   const unreadCount = useMemo(() => items.filter(n => !n.isRead).length, [items]);
 
   const markAsRead = async (id: string) => {
+    setItems((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
     try {
       const res = await fetch('/api/tutor/notifications', {
         method: 'PATCH',
@@ -48,7 +49,6 @@ export default function TutorNotificationsPage() {
         body: JSON.stringify({ notificationId: id, markAsRead: true }),
       });
       if (!res.ok) throw new Error('Action échouée');
-      await fetchNotifications();
     } catch {
       // Silently fail, not critical
     }
@@ -103,8 +103,12 @@ export default function TutorNotificationsPage() {
             {items.map((n) => (
               <li 
                 key={n.id} 
-                className="rounded-lg border border-stroke bg-white p-5 dark:border-strokedark dark:bg-blacksection cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                onClick={() => !n.isRead && markAsRead(n.id)}
+                className={`rounded-lg border border-stroke bg-white p-5 dark:border-strokedark dark:bg-blacksection cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
+                  !n.isRead ? 'border-l-4 border-l-primary bg-primary/5 dark:bg-primary/10' : ''
+                }`}
+                onClick={() => {
+                  if (!n.isRead) markAsRead(n.id);
+                }}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
@@ -129,17 +133,23 @@ export default function TutorNotificationsPage() {
                     <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{new Date(n.createdAt).toLocaleString('fr-FR')}</p>
                   </div>
                   {n.type === 'BOOKING' && (
-                    <div className="flex shrink-0 gap-2">
+                    <div className="flex shrink-0 gap-2" onClick={(e) => e.stopPropagation()}>
                       <button
                         disabled={actingId === n.id}
-                        onClick={() => actOn(n.id, 'DECLINE')}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          actOn(n.id, 'DECLINE');
+                        }}
                         className="rounded border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
                       >
                         Refuser
                       </button>
                       <button
                         disabled={actingId === n.id}
-                        onClick={() => actOn(n.id, 'CONFIRM')}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          actOn(n.id, 'CONFIRM');
+                        }}
                         className="rounded bg-primary px-3 py-2 text-sm text-white hover:bg-primaryho disabled:opacity-70"
                       >
                         Confirmer

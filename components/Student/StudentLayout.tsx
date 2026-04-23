@@ -6,6 +6,7 @@ import Image from "next/image";
 import StudentSidebar from "./StudentSidebar";
 import LogoutButton from "../Auth/LogoutButton";
 import MobileFooterNav from "../Common/MobileFooterNav";
+import SessionNotificationsPopup from "../Common/SessionNotificationsPopup";
 import { useUnreadNotifications } from "@/hooks/useUnreadNotifications";
 
 interface StudentLayoutProps {
@@ -185,6 +186,11 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
           </div>
         </main>
       </div>
+      <SessionNotificationsPopup
+        apiEndpoint="/api/student/notifications"
+        viewAllHref="/student/notifications"
+      />
+
       {/* Mobile footer navigation */}
       <MobileFooterNav
         items={[

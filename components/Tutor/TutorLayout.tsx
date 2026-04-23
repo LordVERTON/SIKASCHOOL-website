@@ -7,6 +7,7 @@ import LogoutButton from "../Auth/LogoutButton";
 import { hasAdminPermissions } from "@/lib/admin-permissions";
 import { useUnreadAdminNotifications } from "@/hooks/useUnreadAdminNotifications";
 import MobileFooterNav from "../Common/MobileFooterNav";
+import SessionNotificationsPopup from "../Common/SessionNotificationsPopup";
 
 interface TutorLayoutProps {
   children: React.ReactNode;
@@ -357,6 +358,11 @@ export default function TutorLayout({ children }: TutorLayoutProps) {
           </div>
         </main>
       </div>
+      <SessionNotificationsPopup
+        apiEndpoint="/api/tutor/notifications"
+        viewAllHref="/tutor/notifications"
+      />
+
       {/* Mobile footer navigation */}
       <MobileFooterNav
         items={[

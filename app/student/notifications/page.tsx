@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { supabaseBrowser } from "@/lib/supabase-browser";
 import { useAuth } from "@/hooks/useAuth";
@@ -118,8 +118,8 @@ function getActionUrl(notification: NotificationRecord) {
 }
 
 export default function StudentNotifications() {
+  const router = useRouter();
   const { user } = useAuth("STUDENT");
-  const [marking, setMarking] = useState<string | null>(null);
 
   const [notifications, setNotifications] = useState<NotificationRecord[]>([]);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -170,6 +170,7 @@ export default function StudentNotifications() {
   }, [notifications]);
 
   const handleMarkAllRead = useCallback(async () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     try {
       await fetch("/api/student/notifications", {
         method: "PATCH",
@@ -185,7 +186,9 @@ export default function StudentNotifications() {
 
   const handleMarkRead = useCallback(
     async (id: string) => {
-      setMarking(id);
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+      );
       try {
         await fetch("/api/student/notifications", {
           method: "PATCH",
@@ -193,14 +196,24 @@ export default function StudentNotifications() {
           credentials: "include",
           body: JSON.stringify({ notificationId: id })
         });
-        fetchNotifications();
       } catch (err) {
         console.error("Erreur marquage notification:", err);
-      } finally {
-        setMarking(null);
       }
     },
-    [fetchNotifications]
+    []
+  );
+
+  const handleOpenNotification = useCallback(
+    (notification: NotificationRecord) => {
+      if (!notification.isRead) {
+        handleMarkRead(notification.id);
+      }
+      const url = getActionUrl(notification);
+      if (url) {
+        router.push(url);
+      }
+    },
+    [handleMarkRead, router]
   );
 
   // Garder une référence à la dernière version de fetchNotifications pour
@@ -311,9 +324,11 @@ export default function StudentNotifications() {
             {notifications.map((notification) => {
               const actionUrl = getActionUrl(notification);
               return (
-                <div
+                <button
                   key={notification.id}
-                  className={`p-6 transition hover:bg-gray-50 dark:hover:bg-gray-800/40 ${
+                  type="button"
+                  onClick={() => handleOpenNotification(notification)}
+                  className={`block w-full cursor-pointer p-6 text-left transition hover:bg-gray-50 dark:hover:bg-gray-800/40 ${
                     !notification.isRead ? "bg-primary/5 border-l-4 border-l-primary" : ""
                   }`}
                 >
@@ -345,28 +360,13 @@ export default function StudentNotifications() {
 
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <p className="text-xs text-waterloo dark:text-manatee">{formatDate(notification.createdAt)}</p>
-
-                        <div className="flex items-center gap-3">
-                          {!notification.isRead && (
-                            <button
-                              onClick={() => handleMarkRead(notification.id)}
-                              className="text-xs text-primary hover:underline disabled:opacity-50"
-                              disabled={marking === notification.id}
-                            >
-                              {marking === notification.id ? "..." : "Marquer comme lu"}
-                            </button>
-                          )}
-
-                          {actionUrl && (
-                            <Link href={actionUrl} className="text-xs text-primary hover:underline">
-                              Voir →
-                            </Link>
-                          )}
-                        </div>
+                        {actionUrl && (
+                          <span className="text-xs text-primary">Voir →</span>
+                        )}
                       </div>
                     </div>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
