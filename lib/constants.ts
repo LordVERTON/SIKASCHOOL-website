@@ -58,7 +58,11 @@ export const SESSION_CONFIG = {
 // Types de credentials
 export const CREDENTIAL_TYPES = {
   PASSWORD: 'password',
-  EMAIL_VERIFICATION: 'email_verification'
+  EMAIL_VERIFICATION: 'email_verification',
+  SMS_2FA_ENABLED: 'sms_2fa_enabled',
+  SMS_2FA_PHONE: 'sms_2fa_phone',
+  SMS_2FA_SETUP: 'sms_2fa_setup',
+  SMS_2FA_LOGIN: 'sms_2fa_login'
 } as const;
 
 // Messages d'erreur
