@@ -15,13 +15,15 @@ type LiveClassProps = {
 export default function LiveClass({ serverUrl, token, className, onLeavePath }: LiveClassProps) {
   const router = useRouter();
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [enableAudioOnJoin, setEnableAudioOnJoin] = useState(true);
+  const [enableVideoOnJoin, setEnableVideoOnJoin] = useState(true);
   
   const roomOptions = useMemo(
     () => ({
-      video: true,
-      audio: true,
+      video: enableVideoOnJoin,
+      audio: enableAudioOnJoin,
     }),
-    []
+    [enableAudioOnJoin, enableVideoOnJoin]
   );
 
   // Fonction pour rediriger vers le calendrier
@@ -82,6 +84,35 @@ export default function LiveClass({ serverUrl, token, className, onLeavePath }: 
       clearTimeout(timeoutId);
     };
   }, [onLeavePath, router, redirectToCalendar]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const detectMediaDevices = async () => {
+      if (typeof navigator === 'undefined' || !navigator.mediaDevices?.enumerateDevices) {
+        return;
+      }
+
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        if (!isMounted) return;
+
+        const hasMic = devices.some((device) => device.kind === 'audioinput');
+        const hasCamera = devices.some((device) => device.kind === 'videoinput');
+
+        setEnableAudioOnJoin(hasMic);
+        setEnableVideoOnJoin(hasCamera);
+      } catch {
+        // Keep defaults when device detection is unavailable.
+      }
+    };
+
+    void detectMediaDevices();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <div className={className ?? 'h-screen w-full'}>
@@ -156,7 +187,7 @@ export default function LiveClass({ serverUrl, token, className, onLeavePath }: 
           onConnected={() => {
             setConnectionError(null);
           }}
-                  onDisconnected={(_reason) => {
+          onDisconnected={(_reason) => {
             // LiveKit disconnected - toujours rediriger vers le calendrier
             redirectToCalendar();
           }}
@@ -164,6 +195,13 @@ export default function LiveClass({ serverUrl, token, className, onLeavePath }: 
             // LiveKit error
             if (error.message?.includes('timeout') || error.message?.includes('timed out')) {
               setConnectionError('Connexion au serveur de visio expirée. Vérifiez votre connexion internet.');
+            } else if (
+              error.name === 'NotFoundError' ||
+              error.message?.includes('Requested device not found')
+            ) {
+              setConnectionError(
+                'Aucun micro/caméra détecté sur cet appareil. Rejoignez la séance puis activez un appareil audio/vidéo disponible.'
+              );
             } else if (error.message?.includes('unauthorized') || error.message?.includes('permission')) {
               setConnectionError('Accès refusé. Vérifiez vos permissions.');
             } else {
