@@ -13,6 +13,7 @@ const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000; // 1 heure
 
 export async function POST(request: NextRequest) {
   try {
+    const genericSuccessMessage = 'Si cette adresse e-mail existe dans notre système, un lien de réinitialisation a été envoyé.';
     const body = await request.json();
     const { email } = body || {};
 
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    // Check if user exists
+    // Vérifier si l'utilisateur existe
     const { data: user, error: userError } = await supabase
       .from('users')
       .select('id, first_name, email')
@@ -30,10 +31,10 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (userError || !user) {
-      // Don't reveal if email exists or not for security
+      // Ne pas révéler si l'e-mail existe ou non (sécurité)
       return NextResponse.json({ 
         success: true,
-        message: 'Si cette adresse e-mail existe dans notre système, un lien de réinitialisation a été envoyé.'
+        message: genericSuccessMessage
       });
     }
 
@@ -84,7 +85,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ 
       success: true,
-      message: 'Si cette adresse e-mail existe, un lien de réinitialisation a été envoyé.'
+      message: genericSuccessMessage
     });
 
   } catch (error) {

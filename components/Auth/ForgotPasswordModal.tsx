@@ -31,7 +31,8 @@ export default function ForgotPasswordModal({ isOpen, onClose, initialEmail = ""
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || submitting) return;
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail || submitting) return;
 
     setSubmitting(true);
     setError(null);
@@ -40,7 +41,7 @@ export default function ForgotPasswordModal({ isOpen, onClose, initialEmail = ""
       const res = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim() }),
+        body: JSON.stringify({ email: normalizedEmail }),
       });
 
       const data = await res.json();
@@ -49,8 +50,8 @@ export default function ForgotPasswordModal({ isOpen, onClose, initialEmail = ""
         throw new Error(data?.error || "Une erreur est survenue");
       }
 
-      setSubmittedEmail(email.trim());
-      setStorageItem(STORAGE_KEYS.LAST_LEAD_EMAIL, email.trim());
+      setSubmittedEmail(normalizedEmail);
+      setStorageItem(STORAGE_KEYS.LAST_LEAD_EMAIL, normalizedEmail);
       setShowSuccess(true);
     } catch (err: any) {
       setError(err.message || "Une erreur est survenue. Merci de réessayer.");
