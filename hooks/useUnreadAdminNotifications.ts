@@ -12,6 +12,7 @@ export function useUnreadAdminNotifications() {
   const { user, loading: authLoading } = useAuth();
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  const activeRequestRef = useRef<AbortController | null>(null);
 
   const fetchUnreadCount = useCallback(async () => {
     if (!user || authLoading) {
@@ -29,9 +30,16 @@ export function useUnreadAdminNotifications() {
       return;
     }
 
+    activeRequestRef.current?.abort();
+    const controller = new AbortController();
+    activeRequestRef.current = controller;
+
+    const timeoutId = window.setTimeout(() => controller.abort(), 10_000);
+
     try {
       const response = await fetch("/api/tutor/notifications", {
         credentials: "include",
+        signal: controller.signal,
       });
       if (!response.ok) {
         if (response.status !== 401) {
@@ -46,9 +54,24 @@ export function useUnreadAdminNotifications() {
       const count = notifications.filter((n) => !n.isRead).length;
       setUnreadCount(count);
     } catch (err) {
+      // Les erreurs réseau/abort peuvent arriver pendant les transitions de page,
+      // hot-reload dev ou backend temporairement indisponible.
+      if (err instanceof DOMException && err.name === "AbortError") {
+        return;
+      }
+
+      if (err instanceof TypeError) {
+        console.warn(
+          "[useUnreadAdminNotifications] Réseau temporairement indisponible pour /api/tutor/notifications"
+        );
+        setUnreadCount(0);
+        return;
+      }
+
       console.error("Erreur lors du chargement du nombre de notifications:", err);
       setUnreadCount(0);
     } finally {
+      window.clearTimeout(timeoutId);
       setLoading(false);
     }
   }, [user, authLoading]);
@@ -105,6 +128,7 @@ export function useUnreadAdminNotifications() {
     const interval = setInterval(() => fetchRef.current(), 30_000);
 
     return () => {
+      activeRequestRef.current?.abort();
       // removeChannel supprime le canal du cache interne de Supabase,
       // évitant l'erreur "cannot add postgres_changes callbacks after subscribe()"
       // lors du re-mount (StrictMode / re-render).
