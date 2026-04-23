@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { setStorageItem, STORAGE_KEYS } from "@/lib/storage";
 import {
   PHONE_COUNTRIES,
@@ -50,7 +50,6 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
   const [goalOther, setGoalOther] = useState<string>("");
   const [contest, setContest] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
-  const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
 
   // Keep the form email in sync with the hero/header email as long as the
@@ -131,20 +130,6 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
     return Boolean(base && contestOk && goalOk);
   }, [level, subject, civility, lastName, firstName, email, phone, zip, contest, goal, goalOther]);
 
-  const sanitizeNameForPassword = (value: string) =>
-    value
-      .trim()
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]+/g, "");
-
-  const buildInitialPassword = (first: string, last: string) => {
-    const safeFirst = sanitizeNameForPassword(first) || "eleve";
-    const safeLast = sanitizeNameForPassword(last) || "sikaschool";
-    return `${safeFirst}.${safeLast}12345`;
-  };
-
   const handleSubmit = async () => {
     if (!isValid || submitting) return;
     setSubmitting(true);
@@ -195,12 +180,6 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
         throw new Error("lead_failed");
       }
 
-      const displayedPassword =
-        typeof data.initialPassword === "string" && data.initialPassword.trim().length > 0
-          ? data.initialPassword.trim()
-          : buildInitialPassword(firstName, lastName);
-
-      setGeneratedPassword(displayedPassword);
       setSubmittedEmail(email);
       setStorageItem(STORAGE_KEYS.LAST_LEAD_EMAIL, email);
       onPrefillEmail?.(email);
@@ -216,13 +195,6 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
 
   const [showThanks, setShowThanks] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const handleCopyPassword = useCallback(() => {
-    if (!generatedPassword) return;
-    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(generatedPassword).catch(() => undefined);
-    }
-  }, [generatedPassword]);
 
   const signinHref = submittedEmail
     ? `/auth/signin?email=${encodeURIComponent(submittedEmail)}`
@@ -246,39 +218,12 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
           <div className="py-16 text-center">
             <h3 className="mb-3 text-2xl font-semibold text-black dark:text-white">Merci pour votre inscription</h3>
             <p className="mx-auto max-w-xl text-waterloo dark:text-manatee">
-              Vous pouvez dès à présent vous connecter sur votre espace famille avec l&apos;adresse e-mail fournie et le mot de passe ci-dessous.
+              Un e-mail de confirmation contenant vos informations de connexion vous a ete envoye.
+              Verifiez votre boite de reception (et vos spams), puis confirmez votre adresse e-mail avant de vous connecter.
             </p>
-            {generatedPassword && (
-              <div className="mx-auto mt-6 w-fit rounded-lg border border-primary/30 bg-primary/5 px-6 py-4 text-left text-sm text-black dark:text-white">
-                <div className="mb-2 flex items-center gap-3">
-                  <p className="font-semibold text-primary">Mot de passe initial</p>
-                  <button
-                    type="button"
-                    onClick={handleCopyPassword}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary/30 text-primary transition hover:bg-primary hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-primaryho focus-visible:ring-offset-2 dark:ring-offset-black"
-                    title="Copier le mot de passe"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={1.5}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-4 w-4"
-                    >
-                      <path d="M8 8h8v12H8z" />
-                      <path d="M16 4H6a2 2 0 0 0-2 2v12" />
-                    </svg>
-                  </button>
-                </div>
-                <p className="select-all font-mono text-base text-black dark:text-white">{generatedPassword}</p>
-                <p className="mt-3 text-xs text-waterloo dark:text-manatee">
-                  Pensez à le modifier depuis votre espace une fois connecté.
-                </p>
-              </div>
-            )}
+            <p className="mx-auto mt-4 max-w-xl text-xs text-waterloo dark:text-manatee">
+              Si vous ne recevez rien sous quelques minutes, contactez-nous pour renvoyer l&apos;e-mail de confirmation.
+            </p>
             <Link
               href={signinHref}
               onClick={onClose}
