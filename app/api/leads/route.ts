@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 import { supabaseAdmin } from '@/lib/supabase';
+import {
+  insertAdminNewStudentNotifications,
+  sendRegistrationResendEmails,
+  upsertEmailVerificationToken,
+} from '@/lib/registration-emails';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -132,6 +137,19 @@ export async function POST(request: NextRequest) {
         console.error('Lead password reset notification error:', resetNotificationError);
       }
 
+      const verifyToken = await upsertEmailVerificationToken(supabase, existing.id);
+      void sendRegistrationResendEmails(supabase, {
+        newUser: {
+          id: existing.id,
+          email,
+          first_name: firstName,
+          last_name: lastName,
+          role: 'STUDENT',
+        },
+        verifyToken,
+        plainPassword: initialPassword,
+      }).catch((err) => console.error('[leads] E-mails inscription existant:', err));
+
       return NextResponse.json({ success: true, alreadyExists: true, initialPassword });
     }
 
@@ -196,69 +214,26 @@ export async function POST(request: NextRequest) {
       console.error('Lead profile notification error:', profileNotificationError);
     }
 
-    // Créer des notifications pour tous les admins
-    // Récupérer les admins (rôle ADMIN ou tuteurs avec emails spécifiques)
-    const adminEmails = ['daniel.verton@sikaschool.com', 'ruudy.mbouza-bayonne@sikaschool.com', 'admin@sikaschool.com'];
-    
-    const { data: adminUsers, error: adminUsersError } = await supabaseAdmin
-      .from('users')
-      .select('id, email, role')
-      .eq('role', 'ADMIN');
-
-    // Récupérer les utilisateurs avec emails spécifiques (peu importe leur rôle)
-    const { data: adminTutors, error: adminTutorsError } = await supabaseAdmin
-      .from('users')
-      .select('id, email, role')
-      .in('email', adminEmails);
-
-    // Log pour déboguer
-    if (adminUsersError) {
-      console.error('❌ Erreur lors de la récupération des admins (ADMIN):', adminUsersError);
-    }
-    if (adminTutorsError) {
-      console.error('❌ Erreur lors de la récupération des admins (TUTOR):', adminTutorsError);
-    }
-
-    // Combiner et dédupliquer par email
-    const allAdmins: Array<{ id: string; email: string; role: string }> = [
-      ...(adminUsers || []),
-      ...(adminTutors || [])
-    ];
-    const adminsMap = new Map<string, { id: string; email: string; role: string }>();
-    allAdmins.forEach(admin => {
-      if (admin && admin.email) {
-        adminsMap.set(admin.email.toLowerCase(), admin);
-      }
+    await insertAdminNewStudentNotifications(supabaseAdmin as any, {
+      id: newUser.id,
+      email,
+      first_name: firstName,
+      last_name: lastName,
+      role: 'STUDENT',
     });
-    const admins: Array<{ id: string; email: string; role: string }> = Array.from(adminsMap.values());
 
-    if (admins && admins.length > 0) {
-      const studentName = `${firstName} ${lastName}`;
-      const adminNotifications = (admins as any[]).map((admin: any) => ({
-        user_id: admin.id,
-        type: 'SYSTEM',
-        title: 'Nouvelle inscription',
-        message: `${studentName} (${email}) vient de s'inscrire via le formulaire de contact. Veuillez assigner un tuteur à cet élève.`,
-        data: {
-          action: 'NEW_STUDENT_REGISTRATION',
-          student_id: newUser.id,
-          student_name: studentName,
-          student_email: email,
-          source: 'lead_form',
-          registered_at: new Date().toISOString(),
-          intake_details: intakeDetails
-        },
-        is_read: false
-      }));
-
-      const { error: adminNotificationsError } = await (supabaseAdmin as any)
-        .from('notifications')
-        .insert(adminNotifications);
-
-      if (adminNotificationsError) {
-        console.error('❌ Erreur lors de la création des notifications admin:', adminNotificationsError);
-      }
-    }
+    const verifyToken = await upsertEmailVerificationToken(supabase, newUser.id);
+    void sendRegistrationResendEmails(supabase, {
+      newUser: {
+        id: newUser.id,
+        email,
+        first_name: firstName,
+        last_name: lastName,
+        role: 'STUDENT',
+      },
+      verifyToken,
+      plainPassword: initialPassword,
+    }).catch((err) => console.error('[leads] E-mails inscription nouveau:', err));
 
     return NextResponse.json({ success: true, initialPassword });
   } catch (error) {
