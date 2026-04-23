@@ -11,7 +11,7 @@ export async function PUT(
     // Vérifier l'authentification et les permissions admin
     const user = await getUserSession();
     if (!user || !canAccessAdminFeatures(user)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
     const { userId } = await params;
@@ -25,7 +25,7 @@ export async function PUT(
       .single();
 
     if (userError || !existingUser) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 404 });
     }
 
     // Vérifier que l'email n'est pas déjà utilisé par un autre utilisateur
@@ -38,7 +38,7 @@ export async function PUT(
         .single();
 
       if (emailExists) {
-        return NextResponse.json({ error: 'Email already exists' }, { status: 400 });
+        return NextResponse.json({ error: 'Un utilisateur avec cet e-mail existe déjà' }, { status: 400 });
       }
     }
 
@@ -61,16 +61,16 @@ export async function PUT(
 
     if (updateError) {
       console.error('Erreur lors de la mise à jour de l\'utilisateur:', updateError);
-      return NextResponse.json({ error: 'Failed to update user' }, { status: 500 });
+      return NextResponse.json({ error: 'Impossible de mettre à jour l’utilisateur' }, { status: 500 });
     }
 
     return NextResponse.json({ 
       user: updatedUser,
-      message: 'User updated successfully' 
+      message: 'Utilisateur mis à jour avec succès' 
     });
   } catch (error) {
     console.error('Erreur dans /api/admin/users/[userId] PUT:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });
   }
 }
 
@@ -82,7 +82,7 @@ export async function DELETE(
     // Vérifier l'authentification et les permissions admin
     const user = await getUserSession();
     if (!user || !canAccessAdminFeatures(user)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
     const { userId } = await params;
@@ -95,13 +95,13 @@ export async function DELETE(
       .single();
 
     if (userError || !existingUser) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 404 });
     }
 
     // Empêcher la suppression des tuteurs admin
     if ((existingUser as any).email === 'daniel.verton@sikaschool.com' || 
         (existingUser as any).email === 'ruudy.mbouza-bayonne@sikaschool.com') {
-      return NextResponse.json({ error: 'Cannot delete admin users' }, { status: 403 });
+      return NextResponse.json({ error: 'Suppression des administrateurs interdite' }, { status: 403 });
     }
 
     // Supprimer l'utilisateur (cascade supprimera les credentials et autres données liées)
@@ -112,14 +112,14 @@ export async function DELETE(
 
     if (deleteError) {
       console.error('Erreur lors de la suppression de l\'utilisateur:', deleteError);
-      return NextResponse.json({ error: 'Failed to delete user' }, { status: 500 });
+      return NextResponse.json({ error: 'Impossible de supprimer l’utilisateur' }, { status: 500 });
     }
 
     return NextResponse.json({ 
-      message: 'User deleted successfully' 
+      message: 'Utilisateur supprimé avec succès' 
     });
   } catch (error) {
     console.error('Erreur dans /api/admin/users/[userId] DELETE:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });
   }
 }

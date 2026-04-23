@@ -1,13 +1,13 @@
 /**
- * Simple authentication system without NextAuth.
- * Relies on Supabase for managing users and credentials.
+ * Système d’authentification simple sans NextAuth.
+ * S’appuie sur Supabase pour gérer utilisateurs et identifiants.
  */
 
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { supabaseAdmin } from './supabase';
-// Dynamic bcryptjs import avoids build issues in the Edge runtime
+// L'import dynamique de bcryptjs évite certains problèmes de build Edge
 import {
   SESSION_CONFIG,
   // CREDENTIAL_TYPES,
@@ -100,22 +100,22 @@ function decodeSession(token: string): SessionPayload | null {
     }
     return decoded;
   } catch (error) {
-    console.error('[auth] Session decoding failed:', error, ERROR_MESSAGES.SESSION_ERROR);
+    console.error('[auth] Échec du décodage de session :', error, ERROR_MESSAGES.SESSION_ERROR);
     return null;
   }
 }
 
 /**
- * Authenticate a user using email and password.
- * @param email - User email
- * @param password - Plain text password
- * @returns User object if the authentication succeeds, null otherwise
+ * Authentifie un utilisateur avec e-mail + mot de passe.
+ * @param email - E-mail utilisateur
+ * @param password - Mot de passe en clair
+ * @returns Utilisateur si l’authentification réussit, sinon null
  */
 export async function authenticateUser(email: string, password: string): Promise<User | null> {
   try {
-    console.warn('[auth] Authentication attempt for:', email);
+    console.warn('[auth] Tentative de connexion pour :', email);
 
-    // Retrieve the user from Supabase
+    // Récupérer l'utilisateur depuis Supabase
     const { data, error } = await supabaseAdmin
       .from('users')
       .select('id, email, first_name, last_name, role, is_active, password_hash')
@@ -126,22 +126,22 @@ export async function authenticateUser(email: string, password: string): Promise
     const user = data as SupabaseAuthUser | null;
 
     if (error || !user) {
-      console.warn('[auth] User not found or inactive:', email, error?.message ?? '');
+      console.warn('[auth] Utilisateur introuvable ou inactif :', email, error?.message ?? '');
       return null;
     }
 
-    console.warn('[auth] User found:', user.email, 'Role:', user.role);
+    console.warn('[auth] Utilisateur trouvé :', user.email, 'Rôle :', user.role);
 
-    // Validate the password stored in the users table
+    // Vérifier le mot de passe stocké dans la table users
     const bcrypt = await import('bcryptjs');
     const isValidPassword = await bcrypt.compare(password, user.password_hash);
 
     if (!isValidPassword) {
-      console.warn('[auth] Invalid password for:', user.email);
+      console.warn('[auth] Mot de passe invalide pour :', user.email);
       return null;
     }
 
-    console.warn('[auth] Authentication successful for:', user.email);
+    console.warn('[auth] Connexion réussie pour :', user.email);
 
     return {
       id: user.id,
@@ -150,14 +150,14 @@ export async function authenticateUser(email: string, password: string): Promise
       role: user.role,
     };
   } catch (error) {
-    console.error('[auth] Authentication error:', error, ERROR_MESSAGES.AUTHENTICATION_ERROR);
+    console.error('[auth] Erreur d’authentification :', error, ERROR_MESSAGES.AUTHENTICATION_ERROR);
     return null;
   }
 }
 
 /**
- * Persist the user session in a signed HTTP only cookie.
- * @param user - User object to store
+ * Persiste la session utilisateur dans un cookie HTTPOnly signé.
+ * @param user - Utilisateur à stocker
  */
 export async function setUserSession(user: User): Promise<void> {
   const cookieStore = await cookies();
@@ -171,8 +171,8 @@ export async function setUserSession(user: User): Promise<void> {
 }
 
 /**
- * Retrieve the user session from the signed cookie.
- * @returns User object if the session is valid, null otherwise
+ * Récupère la session utilisateur depuis le cookie signé.
+ * @returns Utilisateur si la session est valide, sinon null
  */
 export async function getUserSession(): Promise<User | null> {
   try {
@@ -186,13 +186,13 @@ export async function getUserSession(): Promise<User | null> {
     const session = decodeSession(sessionCookie.value);
     return session?.user ?? null;
   } catch (error) {
-    console.error('[auth] Session error:', error, ERROR_MESSAGES.SESSION_ERROR);
+    console.error('[auth] Erreur de session :', error, ERROR_MESSAGES.SESSION_ERROR);
     return null;
   }
 }
 
 /**
- * Remove the user session from cookies.
+ * Supprime la session utilisateur des cookies.
  */
 export async function clearUserSession(): Promise<void> {
   const cookieStore = await cookies();
@@ -200,9 +200,9 @@ export async function clearUserSession(): Promise<void> {
 }
 
 /**
- * Ensure the user is authenticated and optionally enforce a role.
- * @param requiredRole - Role required to access the resource
- * @returns User object if authenticated and authorized
+ * Garantit que l’utilisateur est authentifié et, optionnellement, qu’il a le bon rôle.
+ * @param requiredRole - Rôle requis pour accéder à la ressource
+ * @returns Utilisateur authentifié et autorisé
  */
 export async function requireAuth(requiredRole?: UserRole): Promise<User> {
   const user = await getUserSession();
@@ -212,7 +212,7 @@ export async function requireAuth(requiredRole?: UserRole): Promise<User> {
   }
 
   if (requiredRole && user.role !== requiredRole) {
-    // Redirect to the appropriate area for the detected role
+    // Rediriger vers l'espace adapté au rôle détecté
     const redirectPath = ROLE_REDIRECTS[user.role] || '/';
     redirect(redirectPath);
   }

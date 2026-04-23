@@ -314,7 +314,7 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
                   setEmail(e.target.value);
                   setEmailManuallyEdited(true);
                 }}
-                placeholder="Email"
+                placeholder="E-mail"
                 type="email"
                 className="w-full rounded-full bg-white px-4 py-2 text-black"
               />

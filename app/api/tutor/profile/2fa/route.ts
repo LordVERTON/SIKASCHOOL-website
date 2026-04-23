@@ -58,12 +58,12 @@ export async function POST(request: Request) {
       const code = await createSetupCode(user.id, phone);
       const sms = await sendTwilioSms(
         phone,
-        `SikaSchool: votre code de verification 2FA est ${code}. Il expire dans 10 minutes.`
+        `SikaSchool: votre code de vérification pour la double authentification est ${code}. Il expire dans 10 minutes.`
       );
       if (!sms.ok) {
         return NextResponse.json({ error: sms.error || 'Erreur envoi SMS' }, { status: 502 });
       }
-      return NextResponse.json({ success: true, message: 'Code SMS envoyé.' });
+      return NextResponse.json({ success: true, message: 'Code SMS envoyé' });
     }
 
     if (action === 'verify_setup_code') {
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
       await saveSms2faPhone(user.id, phone);
       await setSms2faEnabled(user.id, true);
       await clearSetupCode(user.id);
-      return NextResponse.json({ success: true, message: '2FA SMS activée.' });
+      return NextResponse.json({ success: true, message: 'Double authentification SMS activée' });
     }
 
     return NextResponse.json({ error: 'Action invalide' }, { status: 400 });

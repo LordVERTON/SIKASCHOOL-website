@@ -8,7 +8,7 @@ export async function GET() {
     // Vérifier l'authentification
     const user = await getUserSession();
     if (!user || !canAccessAdminFeatures(user)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
     // Récupérer tous les utilisateurs
@@ -18,12 +18,12 @@ export async function GET() {
       .order('created_at', { ascending: false });
 
     if (error) {
-      return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });
+      return NextResponse.json({ error: 'Impossible de récupérer les utilisateurs' }, { status: 500 });
     }
 
     return NextResponse.json(users || []);
       } catch {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });
   }
 }
 
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     // Vérifier l'authentification
     const user = await getUserSession();
     if (!user || !canAccessAdminFeatures(user)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
     const { first_name, last_name, email, role, is_active } = await request.json();
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (existingUser) {
-      return NextResponse.json({ error: 'Email already exists' }, { status: 400 });
+      return NextResponse.json({ error: 'Un utilisateur avec cet e-mail existe déjà' }, { status: 400 });
     }
 
     // Créer un mot de passe temporaire
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
 
     if (userError) {
       console.error('Erreur lors de la création de l\'utilisateur:', userError);
-      return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
+      return NextResponse.json({ error: 'Impossible de créer l’utilisateur' }, { status: 500 });
     }
 
     // Ajouter les credentials (utiliser le même hash)
@@ -86,15 +86,15 @@ export async function POST(request: NextRequest) {
     if (credError) {
       // Supprimer l'utilisateur créé si les credentials échouent
       await supabaseAdmin.from('users').delete().eq('id', (newUser as any).id);
-      return NextResponse.json({ error: 'Failed to create credentials' }, { status: 500 });
+      return NextResponse.json({ error: 'Impossible de créer les identifiants' }, { status: 500 });
     }
 
     return NextResponse.json({ 
       user: newUser, 
       tempPassword,
-      message: 'User created successfully' 
+      message: 'Utilisateur créé avec succès' 
     });
       } catch {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });
   }
 }

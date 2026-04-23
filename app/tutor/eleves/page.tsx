@@ -292,7 +292,7 @@ export default function TutorEleves() {
                           <div className="text-black dark:text-white">{r.nom}</div>
                         </div>
                         <div>
-                          <span className="font-medium text-waterloo dark:text-manatee">Email:</span>
+                          <span className="font-medium text-waterloo dark:text-manatee">E-mail :</span>
                           <div className="text-black dark:text-white">{r.email}</div>
                         </div>
                         <div>

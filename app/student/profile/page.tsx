@@ -193,7 +193,7 @@ export default function StudentProfile() {
       }
       setTwoFactorEnabled(true);
       setTwoFactorPhoneMasked(twoFactorPhoneInput);
-      setTwoFactorMessage('2FA SMS activée avec succès.');
+      setTwoFactorMessage('Double authentification SMS activée avec succès');
       setShowTwoFactorSetup(false);
       setTwoFactorCodeInput("");
     } catch {
@@ -216,13 +216,13 @@ export default function StudentProfile() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setTwoFactorError(data?.error || 'Impossible de désactiver la 2FA.');
+        setTwoFactorError(data?.error || 'Impossible de désactiver la double authentification');
         return;
       }
       setTwoFactorEnabled(false);
       setShowTwoFactorSetup(false);
       setTwoFactorCodeInput("");
-      setTwoFactorMessage('2FA SMS désactivée.');
+      setTwoFactorMessage('Double authentification SMS désactivée');
     } catch {
       setTwoFactorError('Erreur réseau lors de la désactivation.');
     } finally {
@@ -300,8 +300,8 @@ export default function StudentProfile() {
   const notificationSettings = [
     {
       id: "email",
-      label: "Notifications par email",
-      description: "Recevoir des notifications par email",
+      label: "Notifications par e-mail",
+      description: "Recevoir des notifications par e-mail",
       enabled: profile?.notifications?.email ?? true
     },
     {
@@ -473,7 +473,7 @@ export default function StudentProfile() {
                   
                   <div>
                     <label className="block text-sm font-medium text-black dark:text-white mb-2">
-                      Email
+                      E-mail
                     </label>
                     <input
                       type="email"

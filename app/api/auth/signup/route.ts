@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(normalizedEmail)) {
       return NextResponse.json(
-        { error: 'Format d\'email invalide' },
+        { error: 'Format d\'e-mail invalide' },
         { status: 400 }
       );
     }
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     if (existingUser) {
       return NextResponse.json(
-        { error: 'Un compte avec cet email existe déjà' },
+        { error: 'Un compte avec cet e-mail existe déjà' },
         { status: 409 }
       );
     }
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     if (userError) {
       console.error('❌ Erreur lors de la création de l\'utilisateur:', userError);
       return NextResponse.json(
-        { error: `Erreur lors de la création du compte: ${userError.message}` },
+        { error: 'Erreur lors de la création du compte' },
         { status: 500 }
       );
     }
@@ -177,7 +177,7 @@ export async function POST(request: NextRequest) {
     // Gestion spécifique des erreurs de connexion
     if (error instanceof Error && error.message.includes('fetch failed')) {
       return NextResponse.json(
-        { error: 'Erreur de connexion à la base de données. Veuillez réessayer.' },
+        { error: 'Erreur de connexion à la base de données, veuillez réessayer' },
         { status: 503 }
       );
     }

@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
 
     if (!email || !password) {
       return NextResponse.json(
-        { error: 'Email et mot de passe requis' },
+        { error: 'E-mail et mot de passe requis' },
         { status: 400 }
       );
     }
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Email ou mot de passe incorrect' },
+        { error: 'E-mail ou mot de passe incorrect' },
         { status: 401 }
       );
     }
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     if (twoFactorEnabled) {
       if (!isTwilioConfigured()) {
         return NextResponse.json(
-          { error: '2FA activée mais Twilio non configuré côté serveur.' },
+          { error: '2FA activée mais Twilio non configuré côté serveur' },
           { status: 500 }
         );
       }
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       const phone = await getSms2faPhone(user.id);
       if (!phone) {
         return NextResponse.json(
-          { error: '2FA activée mais numéro SMS introuvable. Contactez le support.' },
+          { error: '2FA activée mais numéro SMS introuvable, contactez le support' },
           { status: 500 }
         );
       }
@@ -58,14 +58,14 @@ export async function POST(request: NextRequest) {
           `SikaSchool: votre code de connexion est ${challenge.code}. Il expire dans 10 minutes.`
         );
         if (!sms.ok) {
-          return NextResponse.json({ error: sms.error || 'Impossible d’envoyer le code SMS.' }, { status: 502 });
+          return NextResponse.json({ error: sms.error || 'Impossible d’envoyer le code SMS' }, { status: 502 });
         }
         return NextResponse.json(
           {
             success: false,
             requiresTwoFactor: true,
             twoFactorTicket: challenge.ticket,
-            message: `Code SMS envoyé vers ${maskPhone(phone)}.`,
+            message: `Code SMS envoyé vers ${maskPhone(phone)}`,
           },
           { status: 202 }
         );
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
 
       const valid = await verifyLoginChallenge(user.id, String(twoFactorTicket), String(twoFactorCode).trim());
       if (!valid) {
-        return NextResponse.json({ error: 'Code 2FA invalide ou expiré' }, { status: 401 });
+        return NextResponse.json({ error: 'Code de double authentification invalide ou expiré' }, { status: 401 });
       }
       await clearLoginChallenge(user.id);
     }
