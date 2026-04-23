@@ -182,6 +182,16 @@ export default function TutorLayout({ children }: TutorLayoutProps) {
               </svg>
               Paiements
             </Link>
+            <Link
+              href="/tutor/profile"
+              className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-waterloo hover:bg-gray-50 hover:text-black dark:text-manatee dark:hover:bg-gray-800 dark:hover:text-white"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <svg className="mr-3 h-5 w-5 text-waterloo group-hover:text-black dark:text-manatee dark:group-hover:text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 2a5 5 0 100 10 5 5 0 000-10zM3 18a7 7 0 1114 0H3z" />
+              </svg>
+              Profil
+            </Link>
             {isAdmin && (
               <Link
                 href="/tutor/administration"
@@ -310,6 +320,17 @@ export default function TutorLayout({ children }: TutorLayoutProps) {
                       Paiements
                     </Link>
                   </li>
+                  <li>
+                    <Link
+                      href="/tutor/profile"
+                      className="group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold text-waterloo hover:text-black hover:bg-gray-50 dark:text-manatee dark:hover:text-white dark:hover:bg-gray-800"
+                    >
+                      <svg className="h-6 w-6 shrink-0 text-waterloo group-hover:text-black dark:text-manatee dark:group-hover:text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 2a5 5 0 100 10 5 5 0 000-10zM3 18a7 7 0 1114 0H3z" />
+                      </svg>
+                      Profil
+                    </Link>
+                  </li>
                   {isAdmin && (
                     <li>
                       <Link
@@ -388,7 +409,7 @@ export default function TutorLayout({ children }: TutorLayoutProps) {
             ),
           },
           {
-            href: "/tutor/notifications",
+            href: "/tutor/profile",
             label: "Profil",
             icon: (
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12a5 5 0 100-10 5 5 0 000 10z"/><path d="M4 20a8 8 0 0116 0v1H4v-1z"/></svg>
