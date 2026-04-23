@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import ConfirmationModal from "@/components/ConfirmationModal";
 import AlertModal from "@/components/AlertModal";
+import { useAuth } from '@/hooks/useAuth';
+import { useRealtimeSessions } from '@/hooks/useRealtimeSessions';
 
 interface DashboardData {
   stats: Array<{ label: string; value: string; color: string; icon: string }>;
@@ -39,6 +41,7 @@ interface DashboardData {
 }
 
 export default function TutorHome() {
+  const { user, loading: authLoading } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [cancellingSessionId, setCancellingSessionId] = useState<string | null>(null);
@@ -49,21 +52,31 @@ export default function TutorHome() {
   const [alertType, setAlertType] = useState<'success' | 'error' | 'warning' | 'info'>('info');
   const [sessionToCancel, setSessionToCancel] = useState<string | null>(null);
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await fetch('/api/tutor/dashboard', { credentials: 'include' });
-        if (res.ok) {
-          setData(await res.json());
-        } else {
-          setData(null);
-        }
-      } finally {
-        setLoading(false);
+  const loadDashboard = useCallback(async () => {
+    try {
+      const res = await fetch('/api/tutor/dashboard', { credentials: 'include', cache: 'no-store' });
+      if (res.ok) {
+        setData(await res.json());
+      } else {
+        setData(null);
       }
-    };
-    load();
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void loadDashboard();
+  }, [loadDashboard]);
+
+  useRealtimeSessions({
+    userId: user?.id,
+    role: "tutor",
+    enabled: !!user && !authLoading,
+    onChange: () => {
+      void loadDashboard();
+    },
+  });
 
   const handleCancelSession = (sessionId: string) => {
     setSessionToCancel(sessionId);
@@ -84,11 +97,7 @@ export default function TutorHome() {
       });
 
       if (res.ok) {
-        // Recharger les données du dashboard
-        const res = await fetch('/api/tutor/dashboard', { credentials: 'include' });
-        if (res.ok) {
-          setData(await res.json());
-        }
+        await loadDashboard();
         setAlertTitle('Succès');
         setAlertMessage('Séance annulée avec succès. Les participants ont été notifiés.');
         setAlertType('success');
