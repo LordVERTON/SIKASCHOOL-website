@@ -9,6 +9,9 @@ import type {
   DashboardUser,
 } from '@/types/dashboard';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET() {
   try {
     // Vérifier l'authentification
@@ -397,7 +400,9 @@ export async function GET() {
 
     // Données du dashboard prêtes
 
-    return NextResponse.json(dashboardData);
+    return NextResponse.json(dashboardData, {
+      headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate' },
+    });
 
       } catch (error) {
     console.error('❌ Erreur API dashboard étudiant:', error);
@@ -471,6 +476,8 @@ export async function GET() {
       }
     };
     
-    return NextResponse.json(fallbackData);
+    return NextResponse.json(fallbackData, {
+      headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate' },
+    });
   }
 }

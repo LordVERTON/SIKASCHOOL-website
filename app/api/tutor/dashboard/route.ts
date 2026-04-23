@@ -3,6 +3,9 @@ import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
 import { canAccessTutorFeatures } from '@/lib/admin-permissions';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET() {
   try {
     const user = await getUserSession();
@@ -160,15 +163,24 @@ export async function GET() {
       memberSince: new Date(tutorInfo.created_at).toLocaleDateString('fr-FR')
     } : null;
 
-    return NextResponse.json({ 
-      stats, 
-      upcomingSessions: upcoming, 
-      recentSessions: recent, 
-      quickActions,
-      tutorInfo: tutorData
-    });
+    return NextResponse.json(
+      {
+        stats,
+        upcomingSessions: upcoming,
+        recentSessions: recent,
+        quickActions,
+        tutorInfo: tutorData,
+      },
+      { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate' } }
+    );
   } catch {
-    return NextResponse.json({ error: 'Erreur interne' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Erreur interne' },
+      {
+        status: 500,
+        headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate' },
+      }
+    );
   }
 }
 
