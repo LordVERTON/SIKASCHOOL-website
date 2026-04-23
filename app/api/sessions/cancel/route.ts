@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
-import { sendTutorSessionCancelledEmail } from '@/lib/registration-emails';
+import {
+  sendStudentSessionCancelledEmail,
+  sendTutorSessionCancelledEmail,
+} from '@/lib/registration-emails';
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -148,6 +151,29 @@ export async function PATCH(request: NextRequest) {
         startedAt: (session as any).started_at,
         reason: reason || null,
       });
+    }
+
+    // Si le tuteur annule, notifier tous les étudiants participants (principal + additionnels) par e-mail.
+    if (user.id === (session as any).tutor_id) {
+      const studentRecipientIds = Array.from(userIdsToNotify).filter(
+        (id) => id !== user.id && id !== (session as any).tutor_id
+      );
+      const studentParticipantsCount = studentRecipientIds.length;
+
+      for (const studentId of studentRecipientIds) {
+        const student = usersMap.get(studentId);
+        if (!student?.email) continue;
+
+        void sendStudentSessionCancelledEmail({
+          studentEmail: student.email,
+          studentFirstName: student.first_name || student.last_name || '',
+          tutorName: cancelledByName,
+          subject: (session as any).subject || 'Cours',
+          startedAt: (session as any).started_at,
+          reason: reason || null,
+          studentParticipantsCount,
+        });
+      }
     }
 
     return NextResponse.json({ 

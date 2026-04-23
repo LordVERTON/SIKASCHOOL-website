@@ -273,6 +273,21 @@ function buildPasswordEmailHtml(params: {
   `;
 }
 
+function buildPasswordResetEmailHtml(params: {
+  firstName: string;
+  resetUrl: string;
+}): string {
+  const name = params.firstName?.trim() || 'Bonjour';
+  return `
+  <p>${escapeHtml(name)},</p>
+  <p>Vous avez demandé la réinitialisation de votre mot de passe ${APP_CONFIG.NAME}.</p>
+  <p>Pour choisir un nouveau mot de passe, cliquez sur le lien ci-dessous (valable 1 heure) :</p>
+  <p><a href="${params.resetUrl}">Réinitialiser mon mot de passe</a></p>
+  <p>Si vous n’êtes pas à l’origine de cette demande, ignorez ce message.</p>
+  <p>Besoin d’aide ? Contactez <a href="mailto:${APP_CONFIG.SUPPORT_EMAIL}">${APP_CONFIG.SUPPORT_EMAIL}</a>.</p>
+  `;
+}
+
 function buildAdminNewStudentHtml(student: NewUserRow, adminUrl: string): string {
   const name = `${student.first_name} ${student.last_name}`.trim();
   return `
@@ -403,6 +418,50 @@ function buildTutorSessionCancelledEmailHtml(params: {
   </ul>
   <p>Consultez votre espace tuteur pour voir les détails mis à jour.</p>
   <p><a href="${params.notificationsUrl}">Ouvrir mes notifications tuteur</a></p>
+  <p>L’équipe ${APP_CONFIG.NAME}</p>
+  `;
+}
+
+function buildStudentSessionCancelledEmailHtml(params: {
+  studentFirstName: string;
+  tutorName: string;
+  subject: string;
+  startedAt: string;
+  reason?: string | null;
+  studentParticipantsCount?: number;
+  studentUrl: string;
+}): string {
+  const name = params.studentFirstName?.trim() || 'Bonjour';
+  const subjectLabel = params.subject?.trim() || 'Cours';
+  const startedAtDate = new Date(params.startedAt);
+  const isValidDate = !Number.isNaN(startedAtDate.getTime());
+  const dateLabel = isValidDate ? startedAtDate.toLocaleDateString('fr-FR') : '';
+  const timeLabel = isValidDate
+    ? startedAtDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+    : '';
+  const tutorLabel = params.tutorName?.trim() || 'Votre tuteur';
+  const isGroupSession = (params.studentParticipantsCount ?? 1) > 1;
+
+  return `
+  <p>${escapeHtml(name)},</p>
+  <p><strong>${escapeHtml(tutorLabel)}</strong> a annulé la séance suivante :</p>
+  <ul>
+    <li><strong>Matière :</strong> ${escapeHtml(subjectLabel)}</li>
+    <li><strong>Date :</strong> ${escapeHtml(dateLabel || 'Non précisée')}</li>
+    <li><strong>Heure :</strong> ${escapeHtml(timeLabel || 'Non précisée')}</li>
+    ${
+      params.reason
+        ? `<li><strong>Raison :</strong> ${escapeHtml(params.reason)}</li>`
+        : ''
+    }
+  </ul>
+  ${
+    isGroupSession
+      ? `<p><strong>Information :</strong> cette séance était une séance de groupe (${params.studentParticipantsCount} élèves concernés).</p>`
+      : ''
+  }
+  <p>Consultez votre espace étudiant pour réserver une autre séance si besoin.</p>
+  <p><a href="${params.studentUrl}">Accéder à mon espace student</a></p>
   <p>L’équipe ${APP_CONFIG.NAME}</p>
   `;
 }
@@ -623,5 +682,71 @@ export async function sendTutorSessionCancelledEmail(options: {
 
   if (error) {
     console.error('[email] Envoi e-mail annulation séance tuteur:', error);
+  }
+}
+
+export async function sendStudentSessionCancelledEmail(options: {
+  studentEmail: string;
+  studentFirstName: string;
+  tutorName: string;
+  subject: string;
+  startedAt: string;
+  reason?: string | null;
+  studentParticipantsCount?: number;
+}): Promise<void> {
+  const resend = getResend();
+  const from = getFromAddress();
+  if (!resend || !from) {
+    return;
+  }
+
+  const studentUrl = `${getAppBaseUrl()}/student`;
+  const { error } = await resend.emails.send({
+    from,
+    to: options.studentEmail,
+    subject: `Séance annulée - ${options.subject || 'Cours'} | ${APP_CONFIG.NAME}`,
+    html: buildStudentSessionCancelledEmailHtml({
+      studentFirstName: options.studentFirstName,
+      tutorName: options.tutorName,
+      subject: options.subject,
+      startedAt: options.startedAt,
+      reason: options.reason,
+      studentParticipantsCount: options.studentParticipantsCount,
+      studentUrl,
+    }),
+  });
+
+  if (error) {
+    console.error('[email] Envoi e-mail annulation séance étudiant:', error);
+  }
+}
+
+export async function sendPasswordResetEmail(options: {
+  to: string;
+  firstName?: string | null;
+  resetToken: string;
+}): Promise<void> {
+  const resend = getResend();
+  const from = getFromAddress();
+  if (!resend || !from) {
+    if (!process.env.RESEND_API_KEY) {
+      console.warn('[email] RESEND_API_KEY absent — e-mail de reset non envoyé.');
+    }
+    return;
+  }
+
+  const resetUrl = `${getAppBaseUrl()}/auth/reset-password?token=${encodeURIComponent(options.resetToken)}`;
+  const { error } = await resend.emails.send({
+    from,
+    to: options.to,
+    subject: `Réinitialisez votre mot de passe - ${APP_CONFIG.NAME}`,
+    html: buildPasswordResetEmailHtml({
+      firstName: options.firstName?.trim() || 'Bonjour',
+      resetUrl,
+    }),
+  });
+
+  if (error) {
+    console.error('[email] Envoi e-mail reset password:', error);
   }
 }
