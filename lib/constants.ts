@@ -21,10 +21,15 @@ export const PUBLIC_ROUTES = [
   '/book',
   '/auth/signin',
   '/auth/signup',
+  '/auth/verify-email',
   '/legal',
   '/api/auth/login',
   '/api/auth/logout',
   '/api/auth/me',
+  '/api/auth/register',
+  '/api/auth/signup',
+  '/api/auth/forgot-password',
+  '/api/auth/verify-email',
   '/api/webhooks/stripe'
 ] as const;
 
@@ -52,7 +57,8 @@ export const SESSION_CONFIG = {
 
 // Types de credentials
 export const CREDENTIAL_TYPES = {
-  PASSWORD: 'password'
+  PASSWORD: 'password',
+  EMAIL_VERIFICATION: 'email_verification'
 } as const;
 
 // Messages d'erreur

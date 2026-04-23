@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 import { setUserSession } from '@/lib/auth-simple';
+import {
+  insertAdminNewStudentNotifications,
+  sendRegistrationResendEmails,
+  upsertEmailVerificationToken,
+} from '@/lib/registration-emails';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -55,7 +60,8 @@ export async function POST(request: NextRequest) {
         last_name: lastName,
         phone: normalizedPhone,
         role,
-        is_active: true
+        is_active: true,
+        email_verified: false,
       })
       .select('id, email, first_name, last_name, role')
       .single();
@@ -102,6 +108,26 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const newUserRow = {
+      id: newUser.id,
+      email: newUser.email,
+      first_name: newUser.first_name,
+      last_name: newUser.last_name,
+      role: newUser.role,
+    };
+
+    const verifyToken = await upsertEmailVerificationToken(supabase, newUser.id);
+
+    if (role === 'STUDENT') {
+      await insertAdminNewStudentNotifications(supabase, newUserRow);
+    }
+
+    void sendRegistrationResendEmails(supabase, {
+      newUser: newUserRow,
+      verifyToken,
+      plainPassword: password,
+    }).catch((err) => console.error('[register] E-mails inscription:', err));
+
     // Set session so user stays logged in immediately after signup
     await setUserSession({
       id: newUser.id,
@@ -112,6 +138,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      message: verifyToken
+        ? 'Consultez votre e-mail : confirmation d’adresse, rappel de votre mot de passe et invitation à le modifier après connexion.'
+        : 'Consultez votre e-mail : rappel de votre mot de passe (si l’envoi est configuré).',
       user: {
         id: newUser.id,
         email: newUser.email,

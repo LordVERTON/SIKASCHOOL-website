@@ -95,7 +95,11 @@ const Signup = () => {
       const result = await response.json();
 
       if (response.ok) {
-        toast.success('Compte créé avec succès ! Vous pouvez maintenant vous connecter.');
+        const msg =
+          typeof result.message === 'string' && result.message.trim()
+            ? result.message.trim()
+            : 'Compte créé avec succès ! Vous pouvez maintenant vous connecter.';
+        toast.success(msg);
         // Rediriger vers la page de connexion
         router.push('/auth/signin');
       } else {

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { getStorageItem, removeStorageItem, STORAGE_KEYS } from "@/lib/storage";
 import ForgotPasswordModal from "./ForgotPasswordModal";
+import { toast } from "react-hot-toast";
 
 const EyeIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg
@@ -127,6 +128,18 @@ export default function SimpleSignin() {
       }
 
       if (result.success) {
+        if (typeof window !== "undefined") {
+          try {
+            Object.keys(sessionStorage)
+              .filter((k) => k.startsWith("sika:notif-popup-shown"))
+              .forEach((k) => sessionStorage.removeItem(k));
+          } catch {
+            // ignore
+          }
+        }
+        if (isSignup && typeof result.message === "string" && result.message.trim()) {
+          toast.success(result.message.trim());
+        }
         // Rediriger vers l'espace approprié selon le rôle
         switch (result.user.role) {
           case 'TUTOR':

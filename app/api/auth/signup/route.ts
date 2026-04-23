@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { setUserSession } from '@/lib/auth-simple';
 import bcrypt from 'bcryptjs';
+import {
+  insertAdminNewStudentNotifications,
+  sendRegistrationResendEmails,
+  upsertEmailVerificationToken,
+} from '@/lib/registration-emails';
 
 export async function POST(request: NextRequest) {
   try {
@@ -121,67 +126,22 @@ export async function POST(request: NextRequest) {
       console.error('❌ Erreur lors de la création de la notification de profil:', profileNotificationError);
     }
 
-    // Créer des notifications pour tous les admins
-    // Récupérer les admins (rôle ADMIN ou tuteurs avec emails spécifiques)
-    const adminEmails = ['daniel.verton@sikaschool.com', 'ruudy.mbouza-bayonne@sikaschool.com', 'admin@sikaschool.com'];
-    
-    const { data: adminUsers, error: adminUsersError } = await supabaseAdmin
-      .from('users')
-      .select('id, email, role')
-      .eq('role', 'ADMIN');
+    const newUserRow = {
+      id: newUser.id,
+      email: newUser.email,
+      first_name: newUser.first_name,
+      last_name: newUser.last_name,
+      role: newUser.role,
+    };
 
-    // Récupérer les utilisateurs avec emails spécifiques (peu importe leur rôle)
-    const { data: adminTutors, error: adminTutorsError } = await supabaseAdmin
-      .from('users')
-      .select('id, email, role')
-      .in('email', adminEmails);
+    await insertAdminNewStudentNotifications(supabaseAdmin, newUserRow);
 
-    // Log pour déboguer
-    if (adminUsersError) {
-      console.error('❌ Erreur lors de la récupération des admins (ADMIN):', adminUsersError);
-    }
-    if (adminTutorsError) {
-      console.error('❌ Erreur lors de la récupération des admins (TUTOR):', adminTutorsError);
-    }
-
-    // Combiner et dédupliquer par email
-    const allAdmins: Array<{ id: string; email: string; role: string }> = [
-      ...(adminUsers || []),
-      ...(adminTutors || [])
-    ];
-    const adminsMap = new Map<string, { id: string; email: string; role: string }>();
-    allAdmins.forEach(admin => {
-      if (admin && admin.email) {
-        adminsMap.set(admin.email.toLowerCase(), admin);
-      }
-    });
-    const admins: Array<{ id: string; email: string; role: string }> = Array.from(adminsMap.values());
-
-    if (admins && admins.length > 0) {
-      const studentName = `${newUser.first_name} ${newUser.last_name}`;
-      const adminNotifications = (admins as any[]).map((admin: any) => ({
-        user_id: admin.id,
-        type: 'SYSTEM',
-        title: 'Nouvelle inscription',
-        message: `${studentName} (${newUser.email}) vient de s'inscrire sur la plateforme. Veuillez assigner un tuteur à cet élève.`,
-        data: {
-          action: 'NEW_STUDENT_REGISTRATION',
-          student_id: newUser.id,
-          student_name: studentName,
-          student_email: newUser.email,
-          registered_at: new Date().toISOString()
-        },
-        is_read: false
-      }));
-
-      const { error: adminNotificationsError } = await (supabaseAdmin as any)
-        .from('notifications')
-        .insert(adminNotifications);
-
-      if (adminNotificationsError) {
-        console.error('❌ Erreur lors de la création des notifications admin:', adminNotificationsError);
-      }
-    }
+    const verifyToken = await upsertEmailVerificationToken(supabaseAdmin, newUser.id);
+    void sendRegistrationResendEmails(supabaseAdmin, {
+      newUser: newUserRow,
+      verifyToken,
+      plainPassword: password,
+    }).catch((err) => console.error('[signup] E-mails inscription:', err));
 
     // Définir la session pour garder l'utilisateur connecté
     await setUserSession({
@@ -194,7 +154,9 @@ export async function POST(request: NextRequest) {
     // Compte étudiant créé avec succès
     return NextResponse.json({
       success: true,
-      message: 'Compte créé avec succès',
+      message: verifyToken
+        ? 'Compte créé. Consultez votre e-mail : validation de l’adresse, rappel de votre mot de passe et invitation à le modifier après connexion.'
+        : 'Compte créé. Consultez votre e-mail (rappel de votre mot de passe si l’envoi est configuré).',
       user: {
         id: newUser.id,
         email: newUser.email,
