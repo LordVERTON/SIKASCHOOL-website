@@ -77,7 +77,8 @@ export default function AITutorConversationsPage() {
   };
 
   const deleteConversation = async (id: string) => {
-    if (!confirm('Supprimer cette discussion ?')) return;
+    // eslint-disable-next-line no-alert
+    if (!window.confirm('Supprimer cette discussion ?')) return;
     const res = await fetch(`/api/student/ai-tutor/conversations/${id}`, {
       method: 'DELETE',
       credentials: 'include',

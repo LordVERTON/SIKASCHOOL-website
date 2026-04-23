@@ -291,7 +291,8 @@ export default function AITutorChatPage({
         <button
           onClick={async () => {
             if (!conversationId) return;
-            if (!confirm('Supprimer cette discussion ?')) return;
+            // eslint-disable-next-line no-alert
+            if (!window.confirm('Supprimer cette discussion ?')) return;
             const res = await fetch(
               `/api/student/ai-tutor/conversations/${conversationId}`,
               { method: 'DELETE', credentials: 'include' }
