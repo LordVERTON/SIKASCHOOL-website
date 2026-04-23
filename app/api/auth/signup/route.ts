@@ -21,9 +21,13 @@ export async function POST(request: NextRequest) {
     }
 
     const { firstName, lastName, email, password, phone } = await request.json();
+    const normalizedFirstName = typeof firstName === 'string' ? firstName.trim() : '';
+    const normalizedLastName = typeof lastName === 'string' ? lastName.trim() : '';
+    const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+    const rawPassword = typeof password === 'string' ? password : '';
 
     // Validation des données
-    if (!firstName || !lastName || !email || !password) {
+    if (!normalizedFirstName || !normalizedLastName || !normalizedEmail || !rawPassword) {
       return NextResponse.json(
         { error: 'Tous les champs sont requis' },
         { status: 400 }
@@ -32,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     // Validation de l'email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(normalizedEmail)) {
       return NextResponse.json(
         { error: 'Format d\'email invalide' },
         { status: 400 }
@@ -40,7 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validation du mot de passe (minimum 6 caractères)
-    if (password.length < 6) {
+    if (rawPassword.length < 6) {
       return NextResponse.json(
         { error: 'Le mot de passe doit contenir au moins 6 caractères' },
         { status: 400 }
@@ -51,7 +55,7 @@ export async function POST(request: NextRequest) {
         const { data: existingUser, error: _checkError } = await supabaseAdmin
       .from('users')
       .select('id')
-      .eq('email', email)
+      .eq('email', normalizedEmail)
       .single();
 
     if (existingUser) {
@@ -63,7 +67,7 @@ export async function POST(request: NextRequest) {
 
     // Hasher le mot de passe
     const saltRounds = 12;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const hashedPassword = await bcrypt.hash(rawPassword, saltRounds);
     const normalizedPhone = typeof phone === 'string' ? phone.trim() : null;
 
     // Créer l'utilisateur dans la base de données
@@ -71,10 +75,10 @@ export async function POST(request: NextRequest) {
     const { data: newUser, error: userError } = await supabaseAdmin
       .from('users')
       .insert({
-        email,
+        email: normalizedEmail,
         password_hash: hashedPassword, // Ajouter le mot de passe hashé
-        first_name: firstName,
-        last_name: lastName,
+        first_name: normalizedFirstName,
+        last_name: normalizedLastName,
         phone: normalizedPhone,
         role: 'STUDENT',
         is_active: true,
@@ -142,7 +146,7 @@ export async function POST(request: NextRequest) {
     void sendRegistrationResendEmails(supabaseAdmin, {
       newUser: newUserRow,
       verifyToken,
-      plainPassword: password,
+      plainPassword: rawPassword,
     }).catch((err) => console.error('[signup] E-mails inscription:', err));
 
     // Définir la session pour garder l'utilisateur connecté

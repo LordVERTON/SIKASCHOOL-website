@@ -90,11 +90,26 @@ export default function SimpleSignin() {
           setError('Prénom et nom requis pour l\'inscription');
           return;
         }
+        if (!data.email.trim()) {
+          setError("L'email est requis");
+          return;
+        }
+        if (!data.password) {
+          setError('Le mot de passe est requis');
+          return;
+        }
+        if (data.password.length < 6) {
+          setError('Le mot de passe doit contenir au moins 6 caractères');
+          return;
+        }
         // Validation simple du téléphone (optionnelle)
         if (!data.phone || data.phone.replace(/\D/g, '').length < 8) {
           setError('Numéro de téléphone invalide');
           return;
         }
+
+        const signupEmail = data.email.trim().toLowerCase();
+        const signupPassword = data.password;
         
         response = await fetch('/api/auth/register', {
           method: 'POST',
@@ -102,11 +117,11 @@ export default function SimpleSignin() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            email: data.email,
-            password: data.password,
-            firstName: data.firstName,
-            lastName: data.lastName,
-            phone: data.phone,
+            email: signupEmail,
+            password: signupPassword,
+            firstName: data.firstName.trim(),
+            lastName: data.lastName.trim(),
+            phone: data.phone.trim(),
             role: 'STUDENT' // Rôle par défaut
           }),
         });

@@ -16,8 +16,12 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 export async function POST(request: NextRequest) {
   try {
     const { email, password, firstName, lastName, phone, role = 'STUDENT' } = await request.json();
+    const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+    const rawPassword = typeof password === 'string' ? password : '';
+    const normalizedFirstName = typeof firstName === 'string' ? firstName.trim() : '';
+    const normalizedLastName = typeof lastName === 'string' ? lastName.trim() : '';
 
-    if (!email || !password || !firstName || !lastName) {
+    if (!normalizedEmail || !rawPassword || !normalizedFirstName || !normalizedLastName) {
       return NextResponse.json(
         { error: 'Tous les champs sont requis' },
         { status: 400 }
@@ -30,7 +34,7 @@ export async function POST(request: NextRequest) {
     const { data: existingUser, error: checkError } = await supabase
       .from('users')
       .select('id')
-      .eq('email', email)
+      .eq('email', normalizedEmail)
       .single();
 
     if (checkError && checkError.code !== 'PGRST116') {
@@ -49,16 +53,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Hasher le mot de passe
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const hashedPassword = await bcrypt.hash(rawPassword, 12);
 
     // Créer l'utilisateur
     const { data: newUser, error: userError } = await supabase
       .from('users')
       .insert({
-        email,
+        email: normalizedEmail,
         password_hash: hashedPassword,
-        first_name: firstName,
-        last_name: lastName,
+        first_name: normalizedFirstName,
+        last_name: normalizedLastName,
         phone: normalizedPhone,
         role,
         is_active: true,
@@ -127,7 +131,7 @@ export async function POST(request: NextRequest) {
     void sendRegistrationResendEmails(supabase, {
       newUser: newUserRow,
       verifyToken,
-      plainPassword: password,
+      plainPassword: rawPassword,
     }).catch((err) => console.error('[register] E-mails inscription:', err));
 
     // Set session so user stays logged in immediately after signup
