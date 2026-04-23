@@ -10,6 +10,13 @@ import type { Database } from '@/types/supabase';
 // Types supprimés car non utilisés
 
 type UsersRow = Database['public']['Tables']['users']['Row'];
+type UserLookup = {
+  id: string;
+  role: UsersRow['role'];
+  first_name: string | null;
+  last_name: string | null;
+  email: string;
+};
 
 const assignTutorSchema = z
   .object({
@@ -30,7 +37,7 @@ const deassignSchema = z
   })
   .strict();
 
-async function ensureUserExists(id: string, role: UsersRow['role']) {
+async function ensureUserExists(id: string, role: UsersRow['role']): Promise<UserLookup | null> {
   const { data, error } = await supabaseAdmin
     .from('users')
     .select('id, role, first_name, last_name, email')
@@ -42,7 +49,7 @@ async function ensureUserExists(id: string, role: UsersRow['role']) {
     return null;
   }
 
-  return data;
+  return data as UserLookup;
 }
 
 export async function POST(request: NextRequest) {

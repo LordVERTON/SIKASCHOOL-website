@@ -33,7 +33,7 @@ export async function GET() {
     }
 
     const userId = user.id;
-    const [userRes, tutorRes, notifRes, prefsRes, passwordNotificationsRes] = await Promise.all([
+    const results = await Promise.all([
       supabaseAdmin
         .from('users')
         .select(
@@ -68,6 +68,11 @@ export async function GET() {
         .order('created_at', { ascending: false })
         .limit(20),
     ]);
+    const userRes = results[0] as any;
+    const tutorRes = results[1] as any;
+    const notifRes = results[2] as any;
+    const prefsRes = results[3] as any;
+    const passwordNotificationsRes = results[4] as any;
 
     if (userRes.error || !userRes.data) {
       return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 404 });
@@ -145,11 +150,12 @@ export async function PATCH(request: Request) {
       if (!normalizedEmail) {
         return NextResponse.json({ error: 'Email invalide' }, { status: 400 });
       }
-      const { data: emailOwner, error: emailCheckError } = await supabaseAdmin
+      const { data: emailOwnerRow, error: emailCheckError } = await supabaseAdmin
         .from('users')
         .select('id')
         .eq('email', normalizedEmail)
         .maybeSingle();
+      const emailOwner = emailOwnerRow as { id: string } | null;
 
       if (emailCheckError) {
         console.error('Erreur vérification email tuteur:', emailCheckError);

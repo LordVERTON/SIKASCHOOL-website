@@ -148,11 +148,12 @@ export async function POST(req: NextRequest) {
     }
 
     const studentName = studentData ? `${(studentData as any).first_name} ${(studentData as any).last_name}` : 'Un étudiant';
-    const { data: tutorData, error: tutorError } = await supabaseAdmin
+    const { data: tutorRow, error: tutorError } = await supabaseAdmin
       .from('users')
       .select('email, first_name, last_name')
       .eq('id', tutor_id)
       .single();
+    const tutorData = tutorRow as { email: string | null; first_name: string | null; last_name: string | null } | null;
     if (tutorError) {
       console.error('Error fetching tutor data:', tutorError);
     }

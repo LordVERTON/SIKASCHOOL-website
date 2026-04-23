@@ -100,11 +100,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unable to create session', details: sessionErr.message || sessionErr }, { status: 500 });
     }
 
-    const { data: tutorData } = await supabaseAdmin
+    const { data: tutorRow } = await supabaseAdmin
       .from('users')
       .select('email, first_name, last_name')
       .eq('id', tutorId)
       .single();
+    const tutorData = tutorRow as { email: string | null; first_name: string | null; last_name: string | null } | null;
     if (tutorData?.email) {
       void sendTutorNewBookingRequestEmail({
         tutorEmail: tutorData.email,
