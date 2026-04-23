@@ -171,7 +171,7 @@ export async function clearSetupCode(userId: string): Promise<void> {
     .eq('credential_type', CREDENTIAL_TYPES.SMS_2FA_SETUP);
 }
 
-export async function createLoginChallenge(userId: string, phone: string): Promise<{ ticket: string; code: string }> {
+export async function createLoginChallenge(userId: string, _phone: string): Promise<{ ticket: string; code: string }> {
   const code = generateOtpCode();
   const ticket = generateTicket();
   const expiresAt = new Date(Date.now() + OTP_TTL_MS).toISOString();
