@@ -10,6 +10,7 @@ interface Tutor {
 interface CreateSessionModalProps {
   date?: string | null;
   tutors: Tutor[];
+  preselectedTutorId?: string | null;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -17,6 +18,7 @@ interface CreateSessionModalProps {
 export default function CreateSessionModal({ 
   date, 
   tutors, 
+  preselectedTutorId,
   onClose, 
   onSuccess 
 }: CreateSessionModalProps) {
@@ -37,6 +39,12 @@ export default function CreateSessionModal({
       setSessionDate(today.toISOString().split('T')[0]);
     }
   }, [date]);
+
+  useEffect(() => {
+    if (preselectedTutorId && tutors.some(t => t.id === preselectedTutorId)) {
+      setSelectedTutor(preselectedTutorId);
+    }
+  }, [preselectedTutorId, tutors]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

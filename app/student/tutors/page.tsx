@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import CreateSessionModal from '@/components/Student/CreateSessionModal';
+import AlertModal from '@/components/AlertModal';
 
 interface Tutor {
   id: string;
@@ -24,6 +26,11 @@ export default function TutorsPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('');
+  const [bookingTutorId, setBookingTutorId] = useState<string | null>(null);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertType, setAlertType] = useState<'success' | 'error' | 'warning' | 'info'>('success');
 
   useEffect(() => {
     const fetchTutors = async () => {
@@ -218,8 +225,10 @@ export default function TutorsPage() {
               </div>
 
               <div className="flex space-x-2">
-                <Link
-                  href={`/student/booking?tutor=${tutor.id}`}
+                <button
+                  type="button"
+                  disabled={!tutor.isAvailable}
+                  onClick={() => setBookingTutorId(tutor.id)}
                   className={`flex-1 py-2 px-4 rounded-lg text-center transition ${
                     tutor.isAvailable
                       ? 'bg-primary text-white hover:opacity-90'
@@ -227,7 +236,7 @@ export default function TutorsPage() {
                   }`}
                 >
                   {tutor.isAvailable ? 'Réserver' : 'Indisponible'}
-                </Link>
+                </button>
                 <button className="py-2 px-4 border border-stroke dark:border-strokedark text-black dark:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition">
                   Profil
                 </button>
@@ -274,6 +283,29 @@ export default function TutorsPage() {
           </Link>
         </div>
       </div>
+
+      {bookingTutorId && (
+        <CreateSessionModal
+          tutors={tutors.map(t => ({ id: t.id, name: t.name }))}
+          preselectedTutorId={bookingTutorId}
+          onClose={() => setBookingTutorId(null)}
+          onSuccess={() => {
+            setBookingTutorId(null);
+            setAlertTitle('Séance demandée');
+            setAlertMessage('Votre demande de séance a bien été envoyée au tuteur.');
+            setAlertType('success');
+            setShowAlert(true);
+          }}
+        />
+      )}
+
+      <AlertModal
+        isOpen={showAlert}
+        onClose={() => setShowAlert(false)}
+        title={alertTitle}
+        message={alertMessage}
+        type={alertType}
+      />
     </main>
   );
 }
