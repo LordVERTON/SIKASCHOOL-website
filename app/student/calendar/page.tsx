@@ -4,8 +4,11 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import AlertModal from "@/components/AlertModal";
+import { useAuth } from "@/hooks/useAuth";
+import { useRealtimeSessions } from "@/hooks/useRealtimeSessions";
 
 export default function StudentCalendar() {
+  const { user, loading: authLoading } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
@@ -29,28 +32,41 @@ export default function StudentCalendar() {
 
   const dayNames = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
 
-  // Fetch sessions for current month
-  useEffect(() => {
+  const loadSessions = useMemo(() => async () => {
     const start = new Date(currentYear, currentMonth, 1);
     const end = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999);
     const startISO = start.toISOString();
     const endISO = end.toISOString();
-    const load = async () => {
-      const res = await fetch(`/api/student/sessions?start=${encodeURIComponent(startISO)}&end=${encodeURIComponent(endISO)}`, { credentials: 'include' });
-      if (res.ok) {
-        const data = await res.json();
-        setSessions((data.sessions || []).map((s: any) => ({
-          id: s.id,
-          started_at: s.started_at,
-          subject: s.course,
-          type: s.type,
-          status: s.status,
-          tutor: s.tutor,
-        })));
-      }
-    };
-    load();
+    const res = await fetch(`/api/student/sessions?start=${encodeURIComponent(startISO)}&end=${encodeURIComponent(endISO)}`, {
+      credentials: 'include',
+      cache: 'no-store',
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setSessions((data.sessions || []).map((s: any) => ({
+        id: s.id,
+        started_at: s.started_at,
+        subject: s.course,
+        type: s.type,
+        status: s.status,
+        tutor: s.tutor,
+      })));
+    }
   }, [currentMonth, currentYear]);
+
+  // Fetch sessions for current month
+  useEffect(() => {
+    void loadSessions();
+  }, [loadSessions]);
+
+  useRealtimeSessions({
+    userId: user?.id,
+    role: "student",
+    enabled: !!user && !authLoading,
+    onChange: () => {
+      void loadSessions();
+    },
+  });
 
   useEffect(() => {
     const loadTutors = async () => {
@@ -129,23 +145,7 @@ export default function StudentCalendar() {
       });
 
       if (res.ok) {
-        // Reload sessions
-        const start = new Date(currentYear, currentMonth, 1);
-        const end = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999);
-        const startISO = start.toISOString();
-        const endISO = end.toISOString();
-        const loadRes = await fetch(`/api/student/sessions?start=${encodeURIComponent(startISO)}&end=${encodeURIComponent(endISO)}`, { credentials: 'include' });
-        if (loadRes.ok) {
-          const data = await loadRes.json();
-          setSessions((data.sessions || []).map((s: any) => ({
-            id: s.id,
-            started_at: s.started_at,
-            subject: s.course,
-            type: s.type,
-            status: s.status,
-            tutor: s.tutor,
-          })));
-        }
+        await loadSessions();
         setAlertTitle('Succès');
         setAlertMessage('Séance annulée avec succès. Les participants ont été notifiés.');
         setAlertType('success');
@@ -482,23 +482,7 @@ export default function StudentCalendar() {
             setShowCreateModal(false);
             setCreateDate(null);
             setSelectedDate(null);
-            // Reload sessions
-            const start = new Date(currentYear, currentMonth, 1);
-            const end = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999);
-            const startISO = start.toISOString();
-            const endISO = end.toISOString();
-            fetch(`/api/student/sessions?start=${encodeURIComponent(startISO)}&end=${encodeURIComponent(endISO)}`, { credentials: 'include' })
-              .then(res => res.json())
-              .then(data => {
-                setSessions((data.sessions || []).map((s: any) => ({
-                  id: s.id,
-                  started_at: s.started_at,
-                  subject: s.course,
-                  type: s.type,
-                  status: s.status,
-                  tutor: s.tutor,
-                })));
-              });
+            void loadSessions();
           }}
         />
       )}

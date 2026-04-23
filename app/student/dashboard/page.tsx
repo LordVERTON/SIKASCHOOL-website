@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import CreateSessionModal from '@/components/Student/CreateSessionModal';
 import { formatHours } from '@/lib/time-utils';
+import { useRealtimeSessions } from '@/hooks/useRealtimeSessions';
 
 interface DashboardData {
   stats: Array<{
@@ -109,18 +110,17 @@ export default function StudentDashboard() {
     }
   }, [user]);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      if (!user) {
-        console.warn('❌ Pas d\'utilisateur connecté');
-        setLoading(false);
-        return;
-      }
-      
-      try {
-        setError(null);
-        console.warn('🔄 Récupération des sessions pour le dashboard:', user);
-        console.warn('👤 Utilisateur:', { id: user.id, name: user.name, role: user.role });
+  const fetchDashboardData = useCallback(async () => {
+    if (!user) {
+      console.warn('❌ Pas d\'utilisateur connecté');
+      setLoading(false);
+      return;
+    }
+    
+    try {
+      setError(null);
+      console.warn('🔄 Récupération des sessions pour le dashboard:', user);
+      console.warn('👤 Utilisateur:', { id: user.id, name: user.name, role: user.role });
         
         // Récupérer toutes les sessions (même logique que /student/history)
         const sessionsResponse = await fetch('/api/student/sessions', {
@@ -129,6 +129,7 @@ export default function StudentDashboard() {
             'Content-Type': 'application/json',
           },
           credentials: 'include',
+          cache: 'no-store',
         });
         
         console.warn('📡 Réponse API sessions:', sessionsResponse.status, sessionsResponse.statusText);
@@ -277,17 +278,27 @@ export default function StudentDashboard() {
             setError(`Erreur lors du chargement des sessions: ${errorData.error || 'Erreur inconnue'}`);
           }
         }
-      } catch (error) {
-        console.warn('❌ Erreur réseau:', error);
-        setError('Erreur de connexion. Veuillez vérifier votre connexion internet.');
-      } finally {
-        console.warn('✅ Fin du chargement');
-        setLoading(false);
-      }
-    };
-
-    fetchDashboardData();
+    } catch (error) {
+      console.warn('❌ Erreur réseau:', error);
+      setError('Erreur de connexion. Veuillez vérifier votre connexion internet.');
+    } finally {
+      console.warn('✅ Fin du chargement');
+      setLoading(false);
+    }
   }, [user]);
+
+  useEffect(() => {
+    void fetchDashboardData();
+  }, [fetchDashboardData]);
+
+  useRealtimeSessions({
+    userId: user?.id,
+    role: "student",
+    enabled: !!user && !authLoading,
+    onChange: () => {
+      void fetchDashboardData();
+    },
+  });
 
   // Calcul de la note globale
   useEffect(() => {
@@ -338,8 +349,7 @@ export default function StudentDashboard() {
   };
 
   const handleSessionSuccess = () => {
-    // Recharger les données du dashboard
-    window.location.reload();
+    void fetchDashboardData();
   };
 
 

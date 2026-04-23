@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { formatMinutes } from '@/lib/time-utils';
+import { useAuth } from '@/hooks/useAuth';
+import { useRealtimeSessions } from '@/hooks/useRealtimeSessions';
 
 interface Session {
   id: string;
@@ -23,30 +25,40 @@ interface Session {
 }
 
 export default function HistoryPage() {
+  const { user, loading: authLoading } = useAuth();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'completed' | 'pending'>('all');
 
-  useEffect(() => {
-    const fetchSessions = async () => {
-      try {
-        const statusParam = filter === 'all' ? '' : (filter === 'completed' ? 'COMPLETED' : 'IN_PROGRESS');
-        const url = `/api/student/sessions${statusParam ? `?status=${statusParam}` : ''}`;
-        const response = await fetch(url, { credentials: 'include' });
-        if (response.ok) {
-          const data = await response.json();
-          setSessions(data.sessions || []);
-        }
-      } catch (error) {
-        console.error('Error fetching sessions:', error);
-      } finally {
-        setLoading(false);
+  const fetchSessions = useCallback(async () => {
+    try {
+      const statusParam = filter === 'all' ? '' : (filter === 'completed' ? 'COMPLETED' : 'IN_PROGRESS');
+      const url = `/api/student/sessions${statusParam ? `?status=${statusParam}` : ''}`;
+      const response = await fetch(url, { credentials: 'include', cache: 'no-store' });
+      if (response.ok) {
+        const data = await response.json();
+        setSessions(data.sessions || []);
       }
-    };
-
-    setLoading(true);
-    fetchSessions();
+    } catch (error) {
+      console.error('Error fetching sessions:', error);
+    } finally {
+      setLoading(false);
+    }
   }, [filter]);
+
+  useEffect(() => {
+    setLoading(true);
+    void fetchSessions();
+  }, [fetchSessions]);
+
+  useRealtimeSessions({
+    userId: user?.id,
+    role: "student",
+    enabled: !!user && !authLoading,
+    onChange: () => {
+      void fetchSessions();
+    },
+  });
 
   const filteredSessions = sessions.filter(session => {
     if (filter === 'all') return true;
