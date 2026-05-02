@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
-import { supabaseAdmin } from '@/lib/supabase';
+import { isSupabaseUnreachableError, supabaseAdmin } from '@/lib/supabase';
 
 export async function GET() {
   try {
@@ -17,6 +17,14 @@ export async function GET() {
       .order('created_at', { ascending: false });
 
     if (error) {
+      if (isSupabaseUnreachableError(error)) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(
+            '[notifications] Supabase injoignable (ex. npx supabase start). Réponse vide.',
+          );
+        }
+        return NextResponse.json([]);
+      }
       throw error;
     }
 
@@ -32,6 +40,14 @@ export async function GET() {
 
     return NextResponse.json(formattedNotifications);
   } catch (error) {
+    if (isSupabaseUnreachableError(error)) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(
+          '[notifications] Supabase injoignable (ex. npx supabase start). Réponse vide.',
+        );
+      }
+      return NextResponse.json([]);
+    }
     console.error('Erreur récupération notifications étudiant:', error);
     return NextResponse.json(
       { error: 'Erreur lors de la récupération des notifications' },
@@ -61,7 +77,15 @@ export async function PATCH(request: NextRequest) {
         .eq('user_id', user.id)
         .eq('is_read', false);
 
-      if (error) throw error;
+      if (error) {
+        if (isSupabaseUnreachableError(error)) {
+          return NextResponse.json(
+            { error: 'Base de données indisponible', code: 'SUPABASE_UNREACHABLE' },
+            { status: 503 },
+          );
+        }
+        throw error;
+      }
 
       return NextResponse.json({ success: true });
     } else if (notificationId) {
@@ -74,13 +98,27 @@ export async function PATCH(request: NextRequest) {
         .eq('id', notificationId)
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        if (isSupabaseUnreachableError(error)) {
+          return NextResponse.json(
+            { error: 'Base de données indisponible', code: 'SUPABASE_UNREACHABLE' },
+            { status: 503 },
+          );
+        }
+        throw error;
+      }
 
       return NextResponse.json({ success: true });
     }
 
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   } catch (error) {
+    if (isSupabaseUnreachableError(error)) {
+      return NextResponse.json(
+        { error: 'Base de données indisponible', code: 'SUPABASE_UNREACHABLE' },
+        { status: 503 },
+      );
+    }
     console.error('Erreur mise à jour notifications étudiant:', error);
     return NextResponse.json(
       { error: 'Erreur lors de la mise à jour des notifications' },
