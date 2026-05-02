@@ -30,19 +30,15 @@ npm run start
 - `npm run lint:fix` - Fix ESLint issues automatically
 - `npm run type-check` - Run TypeScript type checking
 - `npm run security:audit` - Run npm security audit
-- `npm run security:check` - Run comprehensive security checks
+- `npm run security:check` - Same as audit via `scripts/security-check.js` (convenience)
 - `npm run format` - Format code with Prettier
 - `npm run format:check` - Check code formatting
-- `npm run test` - Run tests
-- `npm run test:watch` - Run tests in watch mode
-- `npm run test:coverage` - Run tests with coverage
+- `npm run dev:mailpit:start` / `dev:mailpit:stop` - Conteneur Mailpit local (voir README)
 
 ### Pre-commit Checklist
 - [ ] Run `npm run lint:fix`
 - [ ] Run `npm run type-check`
 - [ ] Run `npm run security:check`
-- [ ] Run `npm run test`
-- [ ] Ensure all tests pass
 - [ ] Check for console errors in browser
 
 ## Architecture
@@ -62,7 +58,7 @@ npm run start
 │   ├── logger.ts         # Logging utilities
 │   └── ...
 ├── public/               # Static assets
-├── scripts/              # Build and utility scripts
+├── scripts/              # Utilitaires npm (Mailpit, security-check, …)
 └── types/                # TypeScript type definitions
 ```
 

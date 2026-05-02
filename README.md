@@ -15,6 +15,7 @@ Plateforme éducative complète construite sur **Next.js 15 (App Router)** et **
 - [Architecture technique](#architecture-technique)
 - [Structure du projet](#structure-du-projet)
 - [Démarrage](#démarrage)
+- [Base de données et nouveau collaborateur](#base-de-données-et-nouveau-collaborateur)
 - [Variables d'environnement](#variables-denvironnement)
 - [Routes API](#routes-api)
 - [Schéma base de données](#schéma-base-de-données)
@@ -161,14 +162,13 @@ lib/
 
 components/                   UI (Hero, Header, Pricing, Booking, Auth, ...)
 hooks/                        useAuth, useUnreadNotifications, ...
-supabase/                     Scripts SQL (schéma + migrations + seed)
-  create-ai-tutor-tables.sql  Tables Sika AI
-  create-message-thread-participants.sql
-  schema-*.sql, add-*.sql, fix-*.sql, seed-*.sql
+supabase/                     Voir supabase/README.md
+  migrations/                Schéma (`db reset` local / `db push` cloud)
+  seed.sql                   Données de test (`db reset` uniquement en local)
 docs/
   SIKA_AI_TUTOR.md            Documentation Sika AI
   LIVEKIT_SETUP.md            Setup LiveKit
-  SUPABASE_SETUP.md           Setup Supabase
+  SUPABASE_SETUP.md           Renvoi README (Supabase / migrations)
 ```
 
 ---
@@ -188,18 +188,45 @@ docs/
 git clone https://github.com/LordVERTON/SIKASCHOOL-website.git
 cd SIKASCHOOL-website
 npm install --legacy-peer-deps
-cp .env.example .env.local   # ou créer manuellement (voir ci-dessous)
+cp .env.example .env.local   # puis renseigner JWT_SECRET et les clés Supabase (voir ci-dessous)
 ```
 
-### Configuration Supabase
+### Workflow Supabase local (Docker)
 
-1. Créer un projet Supabase.
-2. Exécuter dans l'éditeur SQL de Supabase (ou via la CLI) :
-   - `supabase/schema-fixed.sql` (ou `schema-simple.sql`) — schéma principal
-   - `supabase/create-message-thread-participants.sql` — messagerie multi-participants
-   - `supabase/create-ai-tutor-tables.sql` — **tables du tuteur IA**
-   - Tout autre `add-*.sql` / `fix-*.sql` pertinent selon votre état
-3. Activer Realtime sur `notifications`, `messages`, `ai_tutor_messages`.
+Prérequis : **Docker** installé et démarré.
+
+```bash
+npm install --legacy-peer-deps
+cp .env.example .env.local
+npx supabase start
+npx supabase db reset
+npm run dev
+```
+
+Après `supabase start`, copier dans `.env.local` l’URL et les clés **`anon`** / **`service_role`** affichées par `npx supabase status` (elles remplacent les placeholders de `.env.example` pour le mode local). Définir aussi un **`JWT_SECRET`** suffisamment long pour signer les cookies de session.
+
+- **`npx supabase start`** lance la stack Supabase locale (Postgres, Studio, Auth, etc.) dans Docker.
+- **`npx supabase db reset`** recrée la base locale, applique tout ce qui est dans **`supabase/migrations/`**, puis exécute **`supabase/seed.sql`** (données de test uniquement — aucune création de table dans ce fichier).
+- **`supabase/migrations/`** contient la **structure** versionnée (schéma actuel : une migration initiale `20260101120000_initial_schema.sql` ; les évolutions futures seront de nouveaux fichiers `YYYYMMDDHHMMSS_*.sql`).
+- Pour repartir d’une base locale propre : relancer **`npx supabase db reset`** (données locales effacées).
+
+#### Optionnel — appliquer le schéma sur un projet Supabase Cloud
+
+```bash
+npx supabase login
+npx supabase link --project-ref <project-ref>
+npx supabase db push
+```
+
+En **production**, ne pas charger `seed.sql` sur le Cloud : uniquement **`db push`** (schéma). Les données viennent des utilisateurs réels et des flux métier.
+
+> **Historique Cloud désynchronisé** (vieux `schema_migrations` vs fichiers actuels du dépôt) : voir [Nommage des migrations / réparation historique](#nommage-des-fichiers-de-migration-et-historique-cloud) et **`supabase/README.md`**.
+
+### Configuration Supabase (résumé)
+
+Pour créer ou reproduire la base sur **un nouveau projet Supabase** (nouveau collaborateur, environnement de staging, etc.), suivre la section **[Base de données et nouveau collaborateur](#base-de-données-et-nouveau-collaborateur)** : les fichiers dans **`supabase/migrations/`** sont la référence à jour ; **`supabase db push`** applique le schéma sur le projet lié.
+
+Un court renvoi est conservé dans **[docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md)** ; le flux à suivre reste celui du README ci-dessus (migrations + CLI).
 
 ### Configuration LiveKit
 
@@ -247,6 +274,106 @@ npm run dev:mailpit:stop
 npm run build
 npm run start
 ```
+
+---
+
+## Base de données et nouveau collaborateur
+
+Objectif : tout développeur peut partir d’un **nouveau projet PostgreSQL** (en pratique **Supabase**) et obtenir **le même schéma** que celui versionné dans le dépôt, sans dépendre d’un dump manuel non suivi.
+
+### Principe
+
+- Le schéma de référence est dans **`supabase/migrations/`** (fichiers `YYYYMMDDHHMMSS_description.sql`). Actuellement une migration initiale unique **`20260101120000_initial_schema.sql`** regroupe tables Stripe, messagerie (RLS + Realtime), Sika AI, etc.
+- La commande **`npx supabase db push`** applique, sur le projet **lié**, toutes les migrations pas encore enregistrées côté Supabase.
+- Éviter de créer des tables **uniquement** depuis le dashboard sans fichier de migration (sinon décalage prod ↔ Git).
+
+### Nouveau projet Supabase (recommandé pour un collaborateur)
+
+1. **Créer un projet** sur [supabase.com/dashboard](https://supabase.com/dashboard) (plan gratuit possible pour le dev).
+
+2. **Récupérer les clés** : *Project Settings → API*  
+   - `NEXT_PUBLIC_SUPABASE_URL`  
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`  
+   - `SUPABASE_SERVICE_ROLE_KEY` (secret, uniquement serveur / CI)
+
+3. **Les mettre dans `.env.local`** (voir aussi [Variables d'environnement](#variables-denvironnement)).
+
+4. **Installer la CLI** (une fois) et **se connecter** :
+   ```bash
+   npx supabase login
+   ```
+
+5. **Lier ce dépôt au projet** (remplacer `<project-ref>` par l’identifiant dans l’URL du dashboard : `…/project/<project-ref>`) :
+   ```bash
+   npx supabase link --project-ref <project-ref> --yes
+   ```
+   Si la CLI signale une différence de **version Postgres**, aligner **`supabase/config.toml`** (`[db] major_version = …`) avec la version du projet (indiquée dans le message ou dans les paramètres du projet).
+
+6. **Appliquer toutes les migrations** :
+   ```bash
+   npx supabase db push --yes
+   ```
+
+7. **Realtime** (pour badges notifications, calendrier, messagerie si vous utilisez `postgres_changes`) : dans le dashboard, **Database → Replication** (ou équivalent), activer les tables concernées (`notifications`, `sessions`, `messages`, `message_threads`, etc.) selon vos besoins.
+
+8. **Données de démo** : en **local**, `npx supabase db reset` exécute `supabase/seed.sql` après les migrations. En **production** (Cloud), ne pas charger le seed automatiquement ; n’utiliser que les migrations + données métier réelles.
+
+### Rattraper un schéma déjà modifié dans le dashboard
+
+Si quelqu’un a changé la base **sans** fichier de migration :
+
+```bash
+npx supabase db pull nom_migration_descriptive
+```
+
+Relire le fichier généré sous `supabase/migrations/`, l’ajuster si besoin, committer, puis **`db push`** sur les autres environnements si une migration unique doit aussi s’appliquer ailleurs.
+
+### Alternative locale (Docker)
+
+Pour une stack Postgres **locale** identique à Supabase (Studio local, Auth, etc.) :
+
+```bash
+npx supabase start
+npx supabase db reset   # applique migrations + seed.sql si configuré
+```
+
+Voir la [documentation officielle Supabase CLI](https://supabase.com/docs/guides/cli). Les URLs et clés locales diffèrent du cloud ; adapter `.env.local` en conséquence.
+
+### Nommage des fichiers de migration et historique Cloud
+
+#### Convention obligatoire (CLI Supabase)
+
+Chaque fichier sous `supabase/migrations/` doit commencer par un **horodatage** reconnu par la CLI, au format **`YYYYMMDDHHMMSS`** (souvent **14 chiffres**), puis **`_`** et un nom descriptif :  
+`20260101120000_initial_schema.sql`.
+
+- Un fichier du type **`0001_initial_schema.sql`** ou **`initial_schema.sql`** sans préfixe date/heure est **hors convention** : il peut être **ignoré**, mal ordonné ou refusé selon la version de la CLI. Le dépôt utilise donc **`20260101120000_initial_schema.sql`** comme équivalent logique d’une « migration initiale » unique — le nombre `20260101120000` est un **timestamp figé** pour l’ordre d’application, pas la date de création réelle du projet.
+
+- Les anciens noms du style `2026-04-20-001_*.sql` sans timestamp compact **14 chiffres** posent le même problème : à renommer si vous réintroduisez des fichiers dans ce format.
+
+Documentation officielle : [Supabase CLI — migrations](https://supabase.com/docs/guides/cli/local-development#database-migrations).
+
+#### Historique Cloud désynchronisé (après fusion / renommage des migrations)
+
+Si le projet distant enregistre encore des versions dans **`supabase_migrations.schema_migrations`** qui **ne correspondent plus** aux fichiers présents dans le dépôt (ex. anciennes migrations supprimées après fusion en un seul fichier), la CLI peut refuser `db pull`, `db push` ou afficher un décalage Local / Remote.
+
+**Option recommandée pour un environnement de dev / staging** : créer un **nouveau projet Supabase vide**, `link`, puis `npx supabase db push` (schéma aligné sans ambiguïté).
+
+**Option « même projet » (à faire avec prudence)** — sauvegarder la base avant toute manipulation :
+
+1. Afficher l’état :  
+   `npx supabase migration list --linked`
+2. Pour chaque **version présente sur Remote** qui **n’a plus de fichier homologue** dans `supabase/migrations/`, retirer la ligne d’historique côté distant **sans exécuter de SQL** :  
+   `npx supabase migration repair <version> --status reverted --linked --yes`  
+   (`reverted` **supprime** l’entrée dans la table d’historique ; cela **ne annule pas** le schéma déjà appliqué.)
+3. Ensuite, soit :
+   - **`npx supabase db push --yes`** pour appliquer la migration locale encore non listée (ici `20260101120000`) — le SQL est majoritairement **idempotent** (`IF NOT EXISTS`, etc.), soit  
+   - si vous êtes certain que le schéma distant **correspond déjà** au fichier fusionné :  
+     `npx supabase migration repair 20260101120000 --status applied --linked --yes`  
+     pour **enregistrer** la migration comme appliquée sans la rejouer.
+
+Référence : [`supabase migration repair`](https://supabase.com/docs/reference/cli/supabase-migration-repair).
+
+Le détail pas à pas et les cas limites sont aussi décrits dans **`supabase/README.md`**.
 
 ---
 
@@ -349,7 +476,7 @@ RESEND_FROM_EMAIL="SikaSchool <noreply@sikaschool.app>"
 
 ## Schéma base de données
 
-Tables principales (voir `supabase/` pour les scripts SQL exacts) :
+Tables principales (DDL : `supabase/migrations/20260101120000_initial_schema.sql`) :
 
 | Table | Rôle |
 | --- | --- |
@@ -357,7 +484,9 @@ Tables principales (voir `supabase/` pour les scripts SQL exacts) :
 | `students` | Profil élève + intake JSON |
 | `tutors` | Profil tuteur (bio, matières, tarifs, commission) |
 | `sessions` | Sessions de cours (statut, durée, type, notes) |
-| `assignments` | Liens tuteur ↔ élève (actifs/historique) |
+| `assignments` | Devoirs / cours (legacy LMS) |
+| `tutor_student_assignments` | Attributions admin tuteur ↔ élève |
+| `payments`, `student_credits`, `subscriptions`, `student_credit_ledger` | Stripe / crédits séances |
 | `notifications` | Notifications temps réel (type, data JSONB, is_read) |
 | `message_threads` | Fils de messagerie humain-humain |
 | `message_thread_participants` | Participants d'un thread (N:N) |
@@ -422,10 +551,9 @@ Les tables Sika AI disposent d'un trigger `AFTER INSERT` qui met automatiquement
 
 - [docs/SIKA_AI_TUTOR.md](docs/SIKA_AI_TUTOR.md) — **Guide Sika AI** (installation, architecture, sécurité, coûts)
 - [docs/LIVEKIT_SETUP.md](docs/LIVEKIT_SETUP.md) — Setup vidéo LiveKit
-- [docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md) — Setup Supabase
+- [docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md) — Renvoi vers la section base de données du README
 - [DEVELOPMENT.md](DEVELOPMENT.md) — Guide développeur
 - [SECURITY.md](SECURITY.md) — Politique sécurité
-- [README_student_section.md](README_student_section.md) — Portail élève en détail
 
 ---
 
@@ -444,7 +572,7 @@ Les tables Sika AI disposent d'un trigger `AFTER INSERT` qui met automatiquement
 | `npm run format` | Prettier write |
 | `npm run format:check` | Prettier check |
 | `npm run security:audit` | `npm audit` |
-| `npm run security:check` | Script maison `scripts/security-check.js` |
+| `npm run security:check` | Exécute `npm audit` via `scripts/security-check.js` |
 | `npm run db:types` | Génère `lib/database.types.ts` depuis Supabase |
 
 ---
