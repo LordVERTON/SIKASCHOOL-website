@@ -229,14 +229,7 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
           <div className="py-16 text-center">
             <h3 className="mb-3 text-2xl font-semibold text-black dark:text-white">Merci pour votre inscription</h3>
             <p className="mx-auto max-w-xl text-waterloo dark:text-manatee">
-              Un e-mail de confirmation contenant vos informations de connexion vous a ete envoye.
-              Verifiez votre boite de reception (et vos spams), puis confirmez votre adresse e-mail avant de vous connecter.
-            </p>
-            <p className="mx-auto mt-3 max-w-xl text-sm text-waterloo dark:text-manatee">
-              Apres votre premiere connexion, pensez a changer votre mot de passe depuis votre espace.
-            </p>
-            <p className="mx-auto mt-4 max-w-xl text-xs text-waterloo dark:text-manatee">
-              Si vous ne recevez rien sous quelques minutes, contactez-nous pour renvoyer l&apos;e-mail de confirmation.
+              Vérifiez vos e-mails (dont les spams) pour vos identifiants et la confirmation, connectez-vous ci-dessous, puis changez votre mot de passe après la première connexion.
             </p>
             <button
               type="button"
