@@ -38,3 +38,10 @@ yarn-error.log*
 
 # cursor local config
 .cursor/
+
+# Supabase CLI (local)
+supabase/.temp/
+supabase/.branches/
+
+# TypeScript incremental
+tsconfig.tsbuildinfo
