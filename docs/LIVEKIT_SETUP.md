@@ -30,13 +30,9 @@ LIVEKIT_HTTP_URL=https://your-livekit-server.com
 2. Configurez les clés API dans votre serveur
 3. Assurez-vous que les ports WebSocket et HTTP sont accessibles
 
-## Test de la configuration
+## Vérification
 
-Exécutez le script de test pour vérifier votre configuration :
-
-```bash
-node scripts/test-livekit-connection.js
-```
+Avec les variables renseignées dans `.env.local`, lancez l’app (`npm run dev`) et ouvrez une salle de cours (live) : la connexion WebSocket et le token signé côté API valident en pratique la configuration.
 
 ## Dépannage
 

@@ -44,7 +44,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 Exécute la migration SQL une seule fois :
 
 1. Ouvre ton projet dans [Supabase Studio](https://supabase.com/dashboard) → **SQL Editor**
-2. Copie-colle le contenu de [`supabase/migrations/2026-04-20-001_stripe_payments.sql`](../supabase/migrations/2026-04-20-001_stripe_payments.sql)
+2. Copie-colle la partie **Stripe** du fichier [`supabase/migrations/20260101120000_initial_schema.sql`](../supabase/migrations/20260101120000_initial_schema.sql) (tables `payments`, `student_credits`, etc.), ou applique les migrations via `npx supabase db push`.
 3. Clique sur **Run**
 
 Tables créées :

@@ -29,7 +29,7 @@ lib/ai-tutor/
   agent.ts                             # Agent LangGraph (createReactAgent + vision)
 
 supabase/
-  create-ai-tutor-tables.sql           # Schéma ai_tutor_conversations / ai_tutor_messages
+  migrations/20260101120000_initial_schema.sql   # Dont ai_tutor_* + schéma principal
 ```
 
 ## Stack
@@ -78,14 +78,9 @@ SIKA_AI_MODEL=gpt-4o-mini      # optionnel, défaut gpt-4o-mini
 
 ### 3. Schéma Supabase
 
-Exécuter le script SQL :
-
-```bash
-# via Supabase CLI
-supabase db execute --file supabase/create-ai-tutor-tables.sql
-
-# ou coller le contenu dans l'éditeur SQL Supabase Studio
-```
+Les tables sont créées par **`supabase/migrations/20260101120000_initial_schema.sql`**
+(et donc par `npx supabase db push` / `db reset`). Aucun script SQL séparé
+n’est nécessaire pour le schéma.
 
 Tables créées :
 
