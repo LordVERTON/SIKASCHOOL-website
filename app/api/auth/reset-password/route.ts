@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { createClient } from '@supabase/supabase-js';
 import { CREDENTIAL_TYPES } from '@/lib/constants';
+import { syncSupabaseAuthIdentity } from '@/lib/supabase-auth-sync';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -52,6 +53,22 @@ export async function POST(request: NextRequest) {
     if (updateError) {
       console.error('Erreur lors de la mise à jour du mot de passe:', updateError);
       return NextResponse.json({ error: 'Impossible de réinitialiser le mot de passe' }, { status: 500 });
+    }
+
+    const { data: userRow } = await supabase
+      .from('users')
+      .select('email')
+      .eq('id', credential.user_id)
+      .single();
+    const userEmail = userRow && typeof (userRow as any).email === 'string' ? (userRow as any).email : '';
+    if (userEmail) {
+      void syncSupabaseAuthIdentity({
+        userId: credential.user_id,
+        email: userEmail,
+        password,
+      }).then((s) => {
+        if (!s.ok) console.warn('[reset-password] Sync Supabase Auth:', s.message);
+      });
     }
 
     await supabase

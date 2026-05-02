@@ -82,6 +82,10 @@ export default function HistoryPage() {
 
   const getStatusText = (status: string) => {
     switch (status) {
+      case 'PENDING':
+        return 'En attente';
+      case 'SCHEDULED':
+        return 'Programmée';
       case 'COMPLETED':
         return 'Terminée';
       case 'IN_PROGRESS':
@@ -89,7 +93,7 @@ export default function HistoryPage() {
       case 'CANCELLED':
         return 'Annulée';
       default:
-        return status;
+        return 'Statut inconnu';
     }
   };
 

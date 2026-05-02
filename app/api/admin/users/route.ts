@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
 import { canAccessAdminFeatures } from '@/lib/admin-permissions';
+import { syncSupabaseAuthIdentity } from '@/lib/supabase-auth-sync';
 
 export async function GET() {
   try {
@@ -87,6 +88,15 @@ export async function POST(request: NextRequest) {
       // Supprimer l'utilisateur créé si les credentials échouent
       await supabaseAdmin.from('users').delete().eq('id', (newUser as any).id);
       return NextResponse.json({ error: 'Impossible de créer les identifiants' }, { status: 500 });
+    }
+
+    const syncAdmin = await syncSupabaseAuthIdentity({
+      userId: (newUser as any).id,
+      email: String(email).trim().toLowerCase(),
+      password: tempPassword,
+    });
+    if (!syncAdmin.ok) {
+      console.warn('[admin/users] Sync Supabase Auth:', syncAdmin.message);
     }
 
     return NextResponse.json({ 

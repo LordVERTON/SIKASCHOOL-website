@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 import { canAccessAdminFeatures } from '@/lib/admin-permissions';
 import bcrypt from 'bcryptjs';
 
@@ -27,7 +27,7 @@ export async function POST(
       updated_at: new Date().toISOString()
     } as any;
 
-    const { error: updateError } = await (supabase as any)
+    const { error: updateError } = await (supabaseAdmin as any)
       .from('user_credentials')
       .update(updateData)
       .eq('user_id', userId)

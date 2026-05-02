@@ -137,7 +137,7 @@ export async function PATCH(request: NextRequest) {
           user_id: data.student_id,
           type: 'BOOKING',
           title: 'Séance refusée',
-          message: `${tutorName} a refusé votre demande de séance de ${data.subject} le ${new Date(data.started_at).toLocaleDateString('fr-FR')}. Réservez une nouvelle séance depuis votre espace student.`,
+          message: `${tutorName} a refusé votre demande de séance de ${data.subject} le ${new Date(data.started_at).toLocaleDateString('fr-FR')}. Réservez une nouvelle séance depuis votre espace étudiant.`,
           data: {
             session_id: data.session_id,
             action: 'REJECTED',

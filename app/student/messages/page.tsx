@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useRealtimeMessageThreadsInbox } from "@/hooks/useRealtimeMessageThreadsInbox";
 
 interface MessageThread {
   id: string;
@@ -27,7 +28,7 @@ interface MessageThread {
 }
 
 export default function StudentMessages() {
-  const { user: _user } = useAuth();
+  const { user } = useAuth();
   const [threads, setThreads] = useState<MessageThread[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,30 +40,38 @@ export default function StudentMessages() {
   const [content, setContent] = useState("");
   const [creating, setCreating] = useState(false);
 
-  useEffect(() => {
-    const loadThreads = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch('/api/student/messages', {
-          credentials: 'include'
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          setThreads(data.threads || []);
-        } else {
-          setError('Erreur lors du chargement des messages');
-        }
-      } catch (err) {
-        console.error('Erreur lors du chargement des messages:', err);
-        setError('Erreur lors du chargement des messages');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const loadThreads = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/student/messages', {
+        credentials: 'include',
+      });
 
-    loadThreads();
+      if (response.ok) {
+        const data = await response.json();
+        setThreads(data.threads || []);
+      } else {
+        setError('Erreur lors du chargement des messages');
+      }
+    } catch (err) {
+      console.error('Erreur lors du chargement des messages:', err);
+      setError('Erreur lors du chargement des messages');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void loadThreads();
+  }, [loadThreads]);
+
+  useRealtimeMessageThreadsInbox({
+    userId: user?.id,
+    enabled: !!user?.id,
+    onInvalidate: () => {
+      void loadThreads();
+    },
+  });
 
   const openNewModal = async () => {
     try {

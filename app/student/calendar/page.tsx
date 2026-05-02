@@ -126,6 +126,23 @@ export default function StudentCalendar() {
     return hoursUntilSession >= 24;
   };
 
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "PENDING":
+        return "En attente";
+      case "SCHEDULED":
+        return "Programmée";
+      case "IN_PROGRESS":
+        return "En cours";
+      case "COMPLETED":
+        return "Terminée";
+      case "CANCELLED":
+        return "Annulée";
+      default:
+        return "Statut inconnu";
+    }
+  };
+
   const handleCancelSession = (sessionId: string) => {
     setSessionToCancel(sessionId);
     setShowConfirmModal(true);
@@ -294,7 +311,7 @@ export default function StudentCalendar() {
                                 </div>
                               </div>
                               <div className="shrink-0 flex items-center gap-2">
-                                <span className={`text-xs px-2 py-0.5 rounded-full ${s.status === 'PENDING' ? 'bg-red-100 text-red-700' : s.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' : s.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>{s.status}</span>
+                                <span className={`text-xs px-2 py-0.5 rounded-full ${s.status === 'PENDING' ? 'bg-red-100 text-red-700' : s.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' : s.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>{getStatusLabel(s.status)}</span>
                               </div>
                             </div>
                             <div className="mt-3 flex items-center justify-end gap-2">
@@ -431,7 +448,7 @@ export default function StudentCalendar() {
                   <div className="flex items-center justify-between">
                     <div className="text-sm text-black dark:text-white font-medium">{s.subject} • {s.tutor}</div>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${s.status === 'PENDING' ? 'bg-red-100 text-red-700' : s.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' : s.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
-                      {s.status}
+                      {getStatusLabel(s.status)}
                     </span>
                   </div>
                   <div className="text-xs text-waterloo dark:text-manatee mt-1">

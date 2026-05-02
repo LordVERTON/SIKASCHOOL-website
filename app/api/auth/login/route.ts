@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateUser, setUserSession } from '@/lib/auth-simple';
+import { syncSupabaseAuthIdentity } from '@/lib/supabase-auth-sync';
 import {
   clearLoginChallenge,
   createLoginChallenge,
@@ -76,6 +77,15 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Code de double authentification invalide ou expiré' }, { status: 401 });
       }
       await clearLoginChallenge(user.id);
+    }
+
+    const synced = await syncSupabaseAuthIdentity({
+      userId: user.id,
+      email: user.email,
+      password: String(password),
+    });
+    if (!synced.ok) {
+      console.warn('[login] Sync Supabase Auth (Realtime):', synced.message);
     }
 
     await setUserSession(user);

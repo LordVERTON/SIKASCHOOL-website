@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useRealtimeMessageThreadsInbox } from '@/hooks/useRealtimeMessageThreadsInbox';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -63,6 +64,14 @@ export default function TutorMessagesPage() {
       fetchThreads();
     }
   }, [user?.id, fetchThreads]);
+
+  useRealtimeMessageThreadsInbox({
+    userId: user?.id,
+    enabled: !!user?.id,
+    onInvalidate: () => {
+      void fetchThreads();
+    },
+  });
 
   const openNewModal = async () => {
     if (!user?.id) return;

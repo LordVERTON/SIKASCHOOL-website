@@ -6,6 +6,7 @@ import Image from "next/image";
 import { getStorageItem, removeStorageItem, STORAGE_KEYS } from "@/lib/storage";
 import ForgotPasswordModal from "./ForgotPasswordModal";
 import { toast } from "react-hot-toast";
+import { supabaseBrowser } from "@/lib/supabase-browser";
 
 const EyeIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg
@@ -83,7 +84,8 @@ export default function SimpleSignin() {
 
     try {
       let response;
-      
+      let supabaseCredentials: { email: string; password: string } | null = null;
+
       if (isSignup) {
         // Inscription
         if (!data.firstName || !data.lastName) {
@@ -110,7 +112,8 @@ export default function SimpleSignin() {
 
         const signupEmail = data.email.trim().toLowerCase();
         const signupPassword = data.password;
-        
+        supabaseCredentials = { email: signupEmail, password: signupPassword };
+
         response = await fetch('/api/auth/register', {
           method: 'POST',
           headers: {
@@ -134,6 +137,10 @@ export default function SimpleSignin() {
           }
         }
         // Connexion
+        supabaseCredentials = {
+          email: data.email.trim().toLowerCase(),
+          password: data.password,
+        };
         response = await fetch('/api/auth/login', {
           method: 'POST',
           headers: {
@@ -164,6 +171,12 @@ export default function SimpleSignin() {
       }
 
       if (result.success) {
+        if (supabaseCredentials) {
+          const { error: sbAuthErr } = await supabaseBrowser.auth.signInWithPassword(supabaseCredentials);
+          if (sbAuthErr) {
+            console.warn("[signin] Session Supabase (Realtime):", sbAuthErr.message);
+          }
+        }
         if (typeof window !== "undefined") {
           try {
             Object.keys(sessionStorage)

@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
             user_id: studentId,
             type: 'TUTOR_ASSIGNMENT',
             title: 'Tuteur réassigné',
-            message: `Votre tuteur ${tutorName} a été réassigné à votre compte. Connectez-vous à votre espace student pour réserver une nouvelle séance.`,
+            message: `Votre tuteur ${tutorName} a été réassigné à votre compte. Connectez-vous à votre espace étudiant pour réserver une nouvelle séance.`,
             data: {
               tutor_id: tutorId,
               tutor_name: tutorName,
@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
         user_id: studentId,
         type: 'TUTOR_ASSIGNMENT',
         title: 'Nouveau tuteur assigné',
-        message: `Un nouveau tuteur vous a été assigné : ${tutorName}. Connectez-vous à votre espace student pour réserver une nouvelle séance.`,
+        message: `Un nouveau tuteur vous a été assigné : ${tutorName}. Connectez-vous à votre espace étudiant pour réserver une nouvelle séance.`,
         data: {
           tutor_id: tutorId,
           tutor_name: tutorName,

@@ -8,6 +8,7 @@ import {
   sendRegistrationResendEmails,
   upsertEmailVerificationToken,
 } from '@/lib/registration-emails';
+import { syncSupabaseAuthIdentity } from '@/lib/supabase-auth-sync';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -151,6 +152,15 @@ export async function POST(request: NextRequest) {
         plainPassword: initialPassword,
       }).catch((err) => console.error('[leads] E-mails inscription existant:', err));
 
+      const syncLead = await syncSupabaseAuthIdentity({
+        userId: existing.id,
+        email,
+        password: initialPassword,
+      });
+      if (!syncLead.ok) {
+        console.warn('[leads] Sync Supabase Auth (existant):', syncLead.message);
+      }
+
       return NextResponse.json({ success: true, alreadyExists: true, initialPassword });
     }
 
@@ -236,6 +246,15 @@ export async function POST(request: NextRequest) {
       verifyToken,
       plainPassword: initialPassword,
     }).catch((err) => console.error('[leads] E-mails inscription nouveau:', err));
+
+    const syncNew = await syncSupabaseAuthIdentity({
+      userId: newUser.id,
+      email,
+      password: initialPassword,
+    });
+    if (!syncNew.ok) {
+      console.warn('[leads] Sync Supabase Auth (nouveau):', syncNew.message);
+    }
 
     return NextResponse.json({ success: true, initialPassword });
   } catch (error) {

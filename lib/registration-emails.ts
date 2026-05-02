@@ -342,8 +342,8 @@ function buildVerificationEmailHtml(params: {
   return `
   <p>${escapeHtml(name)},</p>
   <p>Merci de rejoindre ${APP_CONFIG.NAME}.</p>
-  <p><strong>Confirmez votre adresse e-mail</strong> (lien valable 48 h) :</p>
-  <p><a href="${params.verifyUrl}">Confirmer mon adresse e-mail</a></p>
+  <p>Pour confirmer votre adresse e-mail, cliquez sur le lien ci-dessous. Ce lien reste valable 48&nbsp;h&nbsp;:</p>
+  <p><a href="${params.verifyUrl}">Je confirme mon adresse e-mail</a></p>
   <p>Si vous n’êtes pas à l’origine de cette inscription, ignorez ce message.</p>
   `;
 }
@@ -406,7 +406,7 @@ function buildStudentTutorAssignedEmailHtml(params: {
   <p>${escapeHtml(name)},</p>
   <p>Bonne nouvelle : <strong>${escapeHtml(params.tutorName)}</strong> vient d'être assigné(e) à votre suivi sur ${APP_CONFIG.NAME}.</p>
   <p>Vous pouvez dès maintenant vous connecter à votre espace étudiant pour <strong>réserver une nouvelle séance</strong>.</p>
-  <p><a href="${params.bookingUrl}">Accéder à mon espace student et réserver</a></p>
+  <p><a href="${params.bookingUrl}">Accéder à mon espace étudiant et réserver</a></p>
   <p>À très vite sur ${APP_CONFIG.NAME}.</p>
   `;
 }
@@ -438,14 +438,14 @@ function buildStudentSessionDecisionEmailHtml(params: {
   return `
   <p>${escapeHtml(name)},</p>
   <p>${escapeHtml(tutorLabel)} a ${
-    isAccepted ? 'confirmée' : 'refusée'
+    isAccepted ? 'confirmé' : 'refusé'
   } votre demande de séance <strong>${escapeHtml(sessionLabel)}</strong>.</p>
   ${
     isAccepted
-      ? `<p>Rendez-vous dans votre espace student pour consulter les détails de la séance.</p>`
-      : `<p>Nous vous invitons à réserver une nouvelle séance depuis votre espace student.</p>`
+      ? `<p>Rendez-vous dans votre espace étudiant pour consulter les détails de la séance.</p>`
+      : `<p>Nous vous invitons à réserver une nouvelle séance depuis votre espace étudiant.</p>`
   }
-  <p><a href="${params.appUrl}">Accéder à mon espace student</a></p>
+  <p><a href="${params.appUrl}">Accéder à mon espace étudiant</a></p>
   <p>L’équipe ${APP_CONFIG.NAME}</p>
   `;
 }
@@ -555,7 +555,7 @@ function buildStudentSessionCancelledEmailHtml(params: {
       : ''
   }
   <p>Consultez votre espace étudiant pour réserver une autre séance si besoin.</p>
-  <p><a href="${params.studentUrl}">Accéder à mon espace student</a></p>
+  <p><a href="${params.studentUrl}">Accéder à mon espace étudiant</a></p>
   <p>L’équipe ${APP_CONFIG.NAME}</p>
   `;
 }

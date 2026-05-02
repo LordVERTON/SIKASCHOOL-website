@@ -201,7 +201,7 @@ export default function TutorHome() {
                       }`}>
                         {s.status === 'PENDING' ? 'En attente' : 
                          s.status === 'IN_PROGRESS' ? 'En cours' : 
-                         'Confirmée'}
+                         'Programmée'}
                       </span>
                     </div>
                     <p className="text-sm text-waterloo dark:text-manatee">avec {s.participants} • {s.duration}min</p>

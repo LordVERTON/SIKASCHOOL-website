@@ -3,8 +3,9 @@ import { Metadata } from "next";
 import { Suspense } from "react";
 
 export const metadata: Metadata = {
-  title: "Confirmer l'e-mail - SikaSchool",
-  description: "Confirmez votre adresse e-mail pour votre compte SikaSchool",
+  title: "Confirmation de votre adresse e-mail | SikaSchool",
+  description:
+    "Page ouverte après le clic sur le lien reçu par e-mail : elle confirme votre adresse e-mail avant la première connexion à SikaSchool.",
 };
 
 export default function VerifyEmailPage() {

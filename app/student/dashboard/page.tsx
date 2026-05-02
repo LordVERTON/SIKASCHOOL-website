@@ -91,6 +91,23 @@ interface DashboardData {
   }>;
 }
 
+const getSessionStatusLabel = (status: string) => {
+  switch (status) {
+    case 'PENDING':
+      return 'En attente';
+    case 'SCHEDULED':
+      return 'Programmée';
+    case 'IN_PROGRESS':
+      return 'En cours';
+    case 'COMPLETED':
+      return 'Terminée';
+    case 'CANCELLED':
+      return 'Annulée';
+    default:
+      return 'Statut inconnu';
+  }
+};
+
 
 export default function StudentDashboard() {
   const { user, loading: authLoading, error: authError } = useAuth('STUDENT');
@@ -570,10 +587,7 @@ export default function StudentDashboard() {
                           session.status === 'IN_PROGRESS' ? 'bg-green-100 text-green-700' :
                           'bg-gray-100 text-gray-700'
                         }`}>
-                          {session.status === 'PENDING' ? 'En attente' :
-                           session.status === 'SCHEDULED' ? 'Confirmée' :
-                           session.status === 'IN_PROGRESS' ? 'En cours' :
-                           session.status}
+                          {getSessionStatusLabel(session.status)}
                         </span>
                       </div>
                       <p className="text-sm text-waterloo dark:text-manatee">
@@ -646,8 +660,7 @@ export default function StudentDashboard() {
                           session.status === 'COMPLETED' ? 'text-green-600' : 
                           session.status === 'IN_PROGRESS' ? 'text-blue-600' : 'text-gray-600'
                         }`}>
-                          {session.status === 'COMPLETED' ? 'Terminée' : 
-                           session.status === 'IN_PROGRESS' ? 'En cours' : session.status}
+                          {getSessionStatusLabel(session.status)}
                         </div>
                         {session.studentRating > 0 && (
                           <div className="text-xs text-yellow-500 mt-1">

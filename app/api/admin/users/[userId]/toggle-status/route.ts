@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 import { canAccessAdminFeatures } from '@/lib/admin-permissions';
 
 export async function PATCH(
@@ -23,7 +23,7 @@ export async function PATCH(
       updated_at: new Date().toISOString()
     } as any;
 
-    const { error } = await (supabase as any)
+    const { error } = await (supabaseAdmin as any)
       .from('users')
       .update(updateData)
       .eq('id', userId);

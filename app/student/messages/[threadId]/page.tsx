@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
+import { useRealtimeThreadMessages } from "@/hooks/useRealtimeThreadMessages";
 
 interface Message {
   id: string;
@@ -29,8 +30,9 @@ interface Thread {
 }
 
 export default function MessageThread({ params }: { params: Promise<{ threadId: string }> }) {
-  const { user: _user } = useAuth();
+  const { user } = useAuth();
   const _router = useRouter();
+  const [resolvedThreadId, setResolvedThreadId] = useState<string | null>(null);
   const [thread, setThread] = useState<Thread | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,40 +44,58 @@ export default function MessageThread({ params }: { params: Promise<{ threadId: 
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    const loadThread = async () => {
-      try {
-        setLoading(true);
-        const resolvedParams = await params;
-        const response = await fetch(`/api/student/messages/${resolvedParams.threadId}`, {
-          credentials: 'include'
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          setThread(data.thread);
-          setMessages(data.messages || []);
-        } else {
-          setError('Erreur lors du chargement de la conversation');
-        }
-      } catch (err) {
-        console.error('Erreur lors du chargement de la conversation:', err);
-        setError('Erreur lors du chargement de la conversation');
-      } finally {
-        setLoading(false);
-      }
+    let cancelled = false;
+    void params.then((p) => {
+      if (!cancelled) setResolvedThreadId(p.threadId);
+    });
+    return () => {
+      cancelled = true;
     };
-
-    loadThread();
   }, [params]);
+
+  const loadThread = useCallback(async () => {
+    if (!resolvedThreadId) return;
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/student/messages/${resolvedThreadId}`, {
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setThread(data.thread);
+        setMessages(data.messages || []);
+      } else {
+        setError("Erreur lors du chargement de la conversation");
+      }
+    } catch (err) {
+      console.error("Erreur lors du chargement de la conversation:", err);
+      setError("Erreur lors du chargement de la conversation");
+    } finally {
+      setLoading(false);
+    }
+  }, [resolvedThreadId]);
+
+  useEffect(() => {
+    void loadThread();
+  }, [loadThread]);
+
+  useRealtimeThreadMessages({
+    threadId: resolvedThreadId,
+    userId: user?.id,
+    enabled: !!resolvedThreadId && !!user?.id,
+    onInvalidate: () => {
+      void loadThread();
+    },
+  });
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || sending) return;
+    if (!newMessage.trim() || sending || !resolvedThreadId) return;
 
     try {
       setSending(true);
-      const resolvedParams = await params;
-      const response = await fetch(`/api/student/messages/${resolvedParams.threadId}`, {
+      const response = await fetch(`/api/student/messages/${resolvedThreadId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -87,7 +107,7 @@ export default function MessageThread({ params }: { params: Promise<{ threadId: 
       if (response.ok) {
         // Message envoyé: recharger le thread pour rafraîchir immédiatement l'affichage
         setNewMessage("");
-        const refreshed = await fetch(`/api/student/messages/${resolvedParams.threadId}`, { credentials: 'include' });
+        const refreshed = await fetch(`/api/student/messages/${resolvedThreadId}`, { credentials: 'include' });
         if (refreshed.ok) {
           const refreshedData = await refreshed.json();
           setThread(refreshedData.thread);
@@ -122,11 +142,10 @@ export default function MessageThread({ params }: { params: Promise<{ threadId: 
   };
 
   const handleEditSubject = async () => {
-    if (!thread) return;
+    if (!thread || !resolvedThreadId) return;
     if (!subjectInput.trim()) return;
     try {
-      const resolvedParams = await params;
-      const res = await fetch(`/api/student/messages/${resolvedParams.threadId}`, {
+      const res = await fetch(`/api/student/messages/${resolvedThreadId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -145,11 +164,10 @@ export default function MessageThread({ params }: { params: Promise<{ threadId: 
   };
 
   const handleDeleteThread = async () => {
-    if (!thread || deleting) return;
+    if (!thread || deleting || !resolvedThreadId) return;
     try {
       setDeleting(true);
-      const resolvedParams = await params;
-      const res = await fetch(`/api/student/messages/${resolvedParams.threadId}`, {
+      const res = await fetch(`/api/student/messages/${resolvedThreadId}`, {
         method: 'DELETE',
         credentials: 'include'
       });

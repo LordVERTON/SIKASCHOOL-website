@@ -110,6 +110,23 @@ export default function TutorCalendar() {
     return hoursUntilSession >= 24;
   };
 
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "PENDING":
+        return "En attente";
+      case "SCHEDULED":
+        return "Programmée";
+      case "IN_PROGRESS":
+        return "En cours";
+      case "COMPLETED":
+        return "Terminée";
+      case "CANCELLED":
+        return "Annulée";
+      default:
+        return "Statut inconnu";
+    }
+  };
+
   const handleSessionAction = async (sessionId: string, action: 'ACCEPT' | 'REJECT') => {
     try {
       setActingSessionId(sessionId);
@@ -281,7 +298,7 @@ export default function TutorCalendar() {
                                   {s.started_at.split('T')[1]?.split(':').slice(0,2).join(':')} • {s.type}
                                 </div>
                               </div>
-                              <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full ${s.status === 'PENDING' ? 'bg-red-100 text-red-700' : s.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' : s.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>{s.status}</span>
+                              <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full ${s.status === 'PENDING' ? 'bg-red-100 text-red-700' : s.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' : s.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>{getStatusLabel(s.status)}</span>
                             </div>
                             <div className="mt-3 flex items-center justify-end gap-2">
                               {s.status === 'PENDING' && (
@@ -397,7 +414,7 @@ export default function TutorCalendar() {
                   <div key={idx} className="rounded-lg border border-stroke dark:border-strokedark p-3">
                     <div className="flex items-center justify-between">
                       <div className="text-sm text-black dark:text-white font-medium">{s.course} • {(s.participants || []).join(', ')}</div>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${s.status === 'PENDING' ? 'bg-red-100 text-red-700' : s.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' : s.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>{s.status}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${s.status === 'PENDING' ? 'bg-red-100 text-red-700' : s.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' : s.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>{getStatusLabel(s.status)}</span>
                     </div>
                     <div className="text-xs text-waterloo dark:text-manatee mt-1">{s.started_at.split('T')[1]?.split(':').slice(0,2).join(':')}</div>
                     <div className="mt-3 flex justify-end gap-2">

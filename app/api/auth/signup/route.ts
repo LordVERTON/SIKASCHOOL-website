@@ -8,6 +8,7 @@ import {
   sendRegistrationResendEmails,
   upsertEmailVerificationToken,
 } from '@/lib/registration-emails';
+import { syncSupabaseAuthIdentity } from '@/lib/supabase-auth-sync';
 
 export async function POST(request: NextRequest) {
   try {
@@ -148,6 +149,15 @@ export async function POST(request: NextRequest) {
       verifyToken,
       plainPassword: rawPassword,
     }).catch((err) => console.error('[signup] E-mails inscription:', err));
+
+    const sync = await syncSupabaseAuthIdentity({
+      userId: newUser.id,
+      email: newUser.email,
+      password: rawPassword,
+    });
+    if (!sync.ok) {
+      console.warn('[signup] Sync Supabase Auth:', sync.message);
+    }
 
     // Définir la session pour garder l'utilisateur connecté
     await setUserSession({

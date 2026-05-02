@@ -14,6 +14,7 @@ import {
   type UserRole
 } from '@/lib/constants';
 import { logger } from '@/lib/logger';
+import { supabaseBrowser } from '@/lib/supabase-browser';
 
 // Types
 interface User {
@@ -118,6 +119,7 @@ export function useAuth(requiredRole?: UserRole | UserRole[]): UseAuthReturn {
    */
   const logout = useCallback(async () => {
     try {
+      await supabaseBrowser.auth.signOut();
       await fetch(API_ENDPOINTS.AUTH.LOGOUT, { method: 'POST' });
       setUser(null);
       router.push('/');

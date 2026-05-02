@@ -57,6 +57,23 @@ interface Payment {
   created_at: string;
 }
 
+const getSessionStatusLabel = (status: string) => {
+  switch (status) {
+    case 'PENDING':
+      return 'En attente';
+    case 'SCHEDULED':
+      return 'Programmée';
+    case 'IN_PROGRESS':
+      return 'En cours';
+    case 'COMPLETED':
+      return 'Terminée';
+    case 'CANCELLED':
+      return 'Annulée';
+    default:
+      return 'Statut inconnu';
+  }
+};
+
 function AdministrationPageContent() {
   const { user, loading } = useAuth(['TUTOR', 'ADMIN']);
   const searchParams = useSearchParams();
@@ -704,7 +721,7 @@ function AdministrationPageContent() {
                             session.status === 'CANCELLED' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
                             'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
                           }`}>
-                            {session.status}
+                            {getSessionStatusLabel(session.status)}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">

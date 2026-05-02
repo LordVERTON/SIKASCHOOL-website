@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useRealtimeThreadMessages } from '@/hooks/useRealtimeThreadMessages';
 import { useRouter } from 'next/navigation';
 
 interface Message {
@@ -75,6 +76,14 @@ export default function TutorThreadPage({ params }: { params: Promise<{ threadId
     }
   }, [threadId, user?.id, fetchThread]);
 
+  useRealtimeThreadMessages({
+    threadId: threadId || null,
+    userId: user?.id,
+    enabled: !!threadId && !!user?.id,
+    onInvalidate: () => {
+      void fetchThread();
+    },
+  });
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();

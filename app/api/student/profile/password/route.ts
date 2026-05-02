@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
+import { syncSupabaseAuthIdentity } from '@/lib/supabase-auth-sync';
 
 export async function PATCH(request: Request) {
   try {
@@ -50,6 +51,14 @@ export async function PATCH(request: Request) {
       console.error('Erreur mise à jour mot de passe étudiant:', updateError);
       return NextResponse.json({ error: 'Échec de la mise à jour du mot de passe' }, { status: 500 });
     }
+
+    void syncSupabaseAuthIdentity({
+      userId: user.id,
+      email: user.email,
+      password: newPassword,
+    }).then((s) => {
+      if (!s.ok) console.warn('[student/password] Sync Supabase Auth:', s.message);
+    });
 
     await (supabaseAdmin as any).from('notifications').insert({
       user_id: user.id,

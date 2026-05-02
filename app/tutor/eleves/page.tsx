@@ -256,7 +256,7 @@ export default function TutorEleves() {
                                                session.status === 'SCHEDULED' ? 'Programmée' :
                                                session.status === 'PENDING' ? 'En attente' :
                                                session.status === 'IN_PROGRESS' ? 'En cours' :
-                                               session.status}
+                                               'Statut inconnu'}
                                             </span>
                                           </td>
                                         </tr>
