@@ -131,29 +131,40 @@ export default function TutorHome() {
   if (!data) return <div className="p-6">Aucune donnée</div>;
 
   return (
-    <main className="pb-20 pt-15 lg:pb-25 xl:pb-30">
-      <div className="mx-auto max-w-c-1315 px-4 md:px-8 xl:px-0">
+    <main className="pb-20 pt-2 lg:pb-25 lg:pt-15 xl:pb-30">
+      <div className="mx-auto max-w-c-1315 px-1 md:px-8 xl:px-0">
         <div className="animate_top">
-          <div className="flex items-center justify-between">
+          <div className="rounded-[28px] bg-white px-5 py-6 shadow-[0_16px_40px_rgba(15,23,42,0.06)] dark:bg-blacksection lg:rounded-none lg:bg-transparent lg:p-0 lg:shadow-none lg:dark:bg-transparent">
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-black dark:text-white xl:text-sectiontitle3">
+              <p className="text-sm font-medium text-primary lg:hidden">Espace tuteur</p>
+              <h1 className="mt-2 text-3xl font-bold leading-tight text-black dark:text-white lg:mt-0 xl:text-sectiontitle3">
                 {data.tutorInfo ? `Bonjour ${data.tutorInfo.name.split(' ')[0]} !` : 'Espace Tuteur'}
               </h1>
-              <p className="mt-4 text-para2 text-waterloo dark:text-manatee">
+              <p className="mt-3 text-base text-waterloo dark:text-manatee lg:mt-4 lg:text-para2">
                 {data.tutorInfo ? `Membre depuis ${data.tutorInfo.memberSince}` : 'Vos séances, messages et raccourcis utiles.'}
               </p>
             </div>
             {data.tutorInfo && (
-              <div className="text-right">
+              <div className="hidden text-right sm:block">
                 <p className="text-sm text-waterloo dark:text-manatee">{data.tutorInfo.email}</p>
                 <p className="text-xs text-waterloo dark:text-manatee">Tuteur certifié</p>
               </div>
             )}
           </div>
+          <div className="mt-5 grid grid-cols-3 gap-2 lg:hidden">
+            {data.stats.slice(0, 3).map((stat, index) => (
+              <div key={index} className="rounded-2xl bg-[#f7f8fb] p-3 dark:bg-black">
+                <div className={`text-xl font-semibold ${stat.color}`}>{stat.value}</div>
+                <div className="mt-1 text-[11px] leading-tight text-waterloo dark:text-manatee">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+          </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="mt-10 grid gap-7.5 md:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-10 hidden gap-7.5 md:grid-cols-2 lg:grid lg:grid-cols-4">
           {data.stats.map((stat, index) => (
             <div key={index} className="animate_top rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection">
               <div className="flex items-center justify-between">
@@ -168,7 +179,16 @@ export default function TutorHome() {
         </div>
 
         {/* Quick actions */}
-        <div className="mt-10 animate_top rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection">
+        <div className="mt-5 grid grid-cols-2 gap-3 lg:hidden">
+          <Link href="/tutor/calendar" className="rounded-2xl bg-primary px-4 py-3 text-center text-sm font-semibold text-white">
+            Créer une séance
+          </Link>
+          <Link href="/tutor/eleves" className="rounded-2xl bg-white px-4 py-3 text-center text-sm font-semibold text-primary shadow-[0_10px_24px_rgba(15,23,42,0.05)] dark:bg-blacksection">
+            Mes élèves
+          </Link>
+        </div>
+
+        <div className="mt-10 hidden animate_top rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection lg:block">
           <h2 className="text-xl font-semibold text-black dark:text-white mb-6">Actions rapides</h2>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {data.quickActions.map((a, idx) => (
@@ -181,18 +201,18 @@ export default function TutorHome() {
           </div>
         </div>
 
-        <div className="mt-10 grid gap-7.5 lg:grid-cols-2">
+        <div className="mt-5 grid gap-5 lg:mt-10 lg:grid-cols-2 lg:gap-7.5">
           {/* Upcoming */}
-          <div className="animate_top rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection">
+          <div className="animate_top rounded-[24px] bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.05)] dark:bg-blacksection lg:rounded-lg lg:border lg:border-stroke lg:p-7.5 lg:dark:border-strokedark">
             <h2 className="text-xl font-semibold text-black dark:text-white mb-6">Prochaines séances</h2>
-            <div className="space-y-4">
+            <div className="space-y-3 lg:space-y-4">
               {data.upcomingSessions.map((s) => (
-                <div key={s.id} className="flex items-center p-4 rounded-lg border border-stroke dark:border-strokedark">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mr-4">
+                <div key={s.id} className="flex items-center rounded-2xl border border-stroke p-4 dark:border-strokedark lg:rounded-lg">
+                  <div className="mr-4 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
                     <span className="text-primary font-semibold text-sm">{s.time}</span>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-3">
                       <h3 className="font-medium text-black dark:text-white">{s.subject}</h3>
                       <span className={`text-xs px-2 py-1 rounded-full ${
                         s.status === 'PENDING' ? 'bg-red-100 text-red-700' : 
@@ -204,14 +224,14 @@ export default function TutorHome() {
                          'Programmée'}
                       </span>
                     </div>
-                    <p className="text-sm text-waterloo dark:text-manatee">avec {s.participants} • {s.duration}min</p>
-                    <p className="text-xs text-waterloo dark:text-manatee mt-1">
+                    <p className="truncate text-sm text-waterloo dark:text-manatee">avec {s.participants} • {s.duration}min</p>
+                    <p className="mt-1 text-xs text-waterloo dark:text-manatee">
                       {s.date === new Date().toLocaleDateString('fr-FR') ? 'Aujourd\'hui' : s.date} • {s.time} • {s.type}
                     </p>
-                    <div className="text-xs text-waterloo dark:text-manatee mt-1">
+                    <div className="mt-1 hidden text-xs text-waterloo dark:text-manatee lg:block">
                       {s.date === new Date().toLocaleDateString('fr-FR') ? '🕐 Aujourd\'hui' : s.date === new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleDateString('fr-FR') ? '🕐 Demain' : '🕐 ' + s.date}
                     </div>
-                    <div className="flex gap-2 mt-3">
+                    <div className="mt-3 flex gap-2">
                       {s.status === 'IN_PROGRESS' || s.status === 'SCHEDULED' ? (
                         <a
                           href={`/live/${s.id}`}
@@ -237,7 +257,7 @@ export default function TutorHome() {
           </div>
 
           {/* Recent */}
-          <div className="animate_top rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection">
+          <div className="animate_top rounded-[24px] bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.05)] dark:bg-blacksection lg:rounded-lg lg:border lg:border-stroke lg:p-7.5 lg:dark:border-strokedark">
             <h2 className="text-xl font-semibold text-black dark:text-white mb-6">Séances récentes</h2>
             <div className="space-y-4">
               {data.recentSessions.map((s) => (
