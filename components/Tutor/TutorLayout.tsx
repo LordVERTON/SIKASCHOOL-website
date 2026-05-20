@@ -58,9 +58,9 @@ export default function TutorLayout({ children }: TutorLayoutProps) {
   const isAdmin = userEmail && userRole ? hasAdminPermissions({ email: userEmail, role: userRole }) : false;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-black">
+    <div className="min-h-screen bg-[#f7f8fb] dark:bg-black">
       {/* Logo SikaSchool en haut à droite (auto-hide on scroll) */}
-      <div className={`fixed top-4 right-4 z-50 transition-transform duration-300 ${hideLogo ? '-translate-y-20' : 'translate-y-0'}`}>
+      <div className={`fixed top-4 right-4 z-50 hidden transition-transform duration-300 lg:block ${hideLogo ? '-translate-y-20' : 'translate-y-0'}`}>
         <Image
           src="/images/logo/logo-light.svg"
           alt="SikaSchool Logo"
@@ -358,8 +358,53 @@ export default function TutorLayout({ children }: TutorLayoutProps) {
 
       {/* Main content */}
       <div className="lg:pl-64">
+        <header className="sticky top-0 z-30 border-b border-stroke bg-white/95 px-4 py-3 backdrop-blur dark:border-strokedark dark:bg-black/85 lg:hidden">
+          <div className="flex items-center justify-between">
+            <Link href="/tutor" className="flex items-center gap-2">
+              <Image
+                src="/images/logo/logo-light.svg"
+                alt="SikaSchool"
+                width={118}
+                height={34}
+                className="h-8 w-auto dark:hidden"
+                priority
+              />
+              <Image
+                src="/images/logo/logo-dark.svg"
+                alt="SikaSchool"
+                width={118}
+                height={34}
+                className="hidden h-8 w-auto dark:block"
+                priority
+              />
+            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/tutor/notifications"
+                aria-label="Notifications"
+                className="relative flex h-10 w-10 items-center justify-center rounded-full text-waterloo transition hover:bg-primary/10 hover:text-primary dark:text-manatee"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5-6.71V3a2 2 0 1 0-4 0v1.29A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z" />
+                </svg>
+                {unreadCount > 0 && <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-black" />}
+              </Link>
+              <button
+                type="button"
+                aria-label="Ouvrir le menu"
+                className="flex h-10 w-10 items-center justify-center rounded-full text-primary transition hover:bg-primary/10"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M4 12h16M4 17h16" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </header>
+
         {/* Mobile menu button */}
-        <div className="fixed top-4 left-4 z-40 lg:hidden">
+        <div className="hidden">
           <button
             type="button"
             className="p-2 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-md shadow-md"
@@ -373,7 +418,7 @@ export default function TutorLayout({ children }: TutorLayoutProps) {
         </div>
 
         {/* Page content */}
-        <main className="py-6">
+        <main className="pb-24 pt-4 lg:py-6">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             {children}
           </div>
@@ -389,30 +434,39 @@ export default function TutorLayout({ children }: TutorLayoutProps) {
         items={[
           {
             href: "/tutor",
-            label: "Mes cours",
+            label: "Accueil",
             icon: (
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 6a3 3 0 013-3h12a3 3 0 013 3v12a1 1 0 01-1 1H7a4 4 0 01-4-4V6z"/><path d="M7 8h10v2H7zM7 12h10v2H7z"/></svg>
-            ),
-          },
-          {
-            href: "/tutor/messages",
-            label: "Messages",
-            icon: (
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 7a2 2 0 00-2-2H5a2 2 0 00-2 2v10l4-3h12a2 2 0 002-2V7z"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10.5V20h14v-9.5"/><path d="M9 20v-6h6v6"/></svg>
             ),
           },
           {
             href: "/tutor/calendar",
             label: "Calendrier",
             icon: (
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 2a1 1 0 00-1 1v1H5a3 3 0 00-3 3v11a3 3 0 003 3h14a3 3 0 003-3V7a3 3 0 00-3-3h-1V3a1 1 0 10-2 0v1H8V3A1 1 0 007 2zM5 10h14v9H5v-9z"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 3v3M17 3v3M4 8h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/></svg>
             ),
           },
           {
-            href: "/tutor/profile",
-            label: "Profil",
+            href: "/tutor/calendar",
+            label: "Créer",
+            primary: true,
             icon: (
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12a5 5 0 100-10 5 5 0 000 10z"/><path d="M4 20a8 8 0 0116 0v1H4v-1z"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M12 5v14M5 12h14"/></svg>
+            ),
+          },
+          {
+            href: "/tutor/eleves",
+            label: "Élèves",
+            icon: (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 11a4 4 0 1 0-8 0"/><path d="M4 21a8 8 0 0 1 16 0"/><path d="M19 8v4M21 10h-4"/></svg>
+            ),
+          },
+          {
+            href: "/tutor/notifications",
+            label: "Alertes",
+            badge: unreadCount,
+            icon: (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
             ),
           },
         ]}
