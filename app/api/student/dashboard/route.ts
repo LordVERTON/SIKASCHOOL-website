@@ -37,7 +37,7 @@ export async function GET() {
         session_type,
         status,
         started_at,
-        completed_at,
+        ended_at,
         duration_minutes,
         topics_covered,
         homework_assigned,
@@ -79,7 +79,7 @@ export async function GET() {
           session_type,
           status,
           started_at,
-          completed_at,
+          ended_at,
           duration_minutes,
           topics_covered,
           homework_assigned,
@@ -186,8 +186,6 @@ export async function GET() {
     // Calculer les statistiques détaillées
     const _totalSessions = (sessions as any)?.length || 0;
     const completedSessions = (sessions as any)?.filter((s: any) => s.status === 'COMPLETED').length || 0;
-    const pendingSessions = (sessions as any)?.filter((s: any) => s.status === 'PENDING').length || 0;
-    const scheduledSessions = (sessions as any)?.filter((s: any) => s.status === 'SCHEDULED').length || 0;
     const _cancelledSessions = (sessions as any)?.filter((s: any) => s.status === 'CANCELLED').length || 0;
     
     // Calculer les heures totales (seulement les sessions terminées)
@@ -209,10 +207,9 @@ export async function GET() {
 
     // Séances à venir (prochaines 7 jours) - inclure PENDING et SCHEDULED
     const now = new Date();
-    const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     const upcomingSessions = (sessions as any)?.filter((s: any) => {
       const sessionDate = new Date(s.started_at);
-      return sessionDate >= now && sessionDate <= nextWeek && 
+      return sessionDate >= now &&
              (s.status === 'SCHEDULED' || s.status === 'PENDING' || s.status === 'IN_PROGRESS');
     })
     .sort((a: any, b: any) => new Date(a.started_at).getTime() - new Date(b.started_at).getTime())
@@ -306,7 +303,7 @@ export async function GET() {
         },
         {
           label: 'Séances à venir',
-          value: (scheduledSessions + pendingSessions).toString(),
+          value: String(upcomingSessions.length),
           color: 'text-purple-600',
           icon: '📅'
         },

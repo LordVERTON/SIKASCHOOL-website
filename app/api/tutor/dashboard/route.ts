@@ -27,7 +27,7 @@ export async function GET() {
         status, 
         started_at, 
         duration_minutes,
-        completed_at,
+        ended_at,
         student_rating,
         topics_covered,
         homework_assigned

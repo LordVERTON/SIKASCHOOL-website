@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     // Optionally mark session as completed if not already
     await (supabaseAdmin as any)
       .from('sessions')
-      .update({ status: 'COMPLETED', completed_at: new Date().toISOString() } as any)
+      .update({ status: 'COMPLETED', ended_at: new Date().toISOString() } as any)
       .eq('id', sessionId)
       .eq('status', 'IN_PROGRESS');
 

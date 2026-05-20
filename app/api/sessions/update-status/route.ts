@@ -69,7 +69,7 @@ export async function POST(_request: NextRequest) {
           .from('sessions')
           .update({ 
             status: 'COMPLETED',
-            completed_at: now.toISOString(),
+            ended_at: now.toISOString(),
             updated_at: now.toISOString()
           })
           .in('id', completedSessionIds);
@@ -104,7 +104,7 @@ export async function POST(_request: NextRequest) {
       if (toComplete.length > 0) {
         const { error: completeErr } = await (supabaseAdmin as any)
           .from('sessions')
-          .update({ status: 'COMPLETED', completed_at: now.toISOString(), updated_at: now.toISOString() })
+          .update({ status: 'COMPLETED', ended_at: now.toISOString(), updated_at: now.toISOString() })
           .in('id', toComplete);
         if (completeErr) console.error('Error completing past sessions:', completeErr);
       }

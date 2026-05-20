@@ -41,7 +41,7 @@ export async function GET(req: Request) {
         session_type,
         status,
         started_at,
-        completed_at,
+        ended_at,
         duration_minutes,
         topics_covered,
         homework_assigned,

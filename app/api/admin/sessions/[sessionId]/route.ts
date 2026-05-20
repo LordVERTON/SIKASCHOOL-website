@@ -57,7 +57,7 @@ export async function PUT(
       tutor_id,
       subject,
       level,
-      type,
+      session_type: type || 'NOTA',
       status,
       duration_minutes,
       student_rating,
