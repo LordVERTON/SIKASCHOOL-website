@@ -128,9 +128,13 @@ ADMIN_NEW_STUDENT_NOTIFY_EMAILS=sikaschoolservice@gmail.com,mbouza.ruudy@gmail.c
 ### Lancer l’app
 
 ```bash
-npm run dev          # http://localhost:3000
+npm run dev          # https://localhost:3000
 npm run build && npm run start   # prod locale
 ```
+
+Le script `dev` utilise `next dev --experimental-https`. Next.js genere un certificat local auto-signe et le reutilise aux prochains demarrages. C'est utile pour tester les cookies `Secure`, OAuth, LiveKit, service workers et les APIs navigateur qui demandent un contexte securise.
+
+Avec un certificat auto-signe, le navigateur peut afficher un avertissement de securite au premier acces. C'est normal en developpement local.
 
 ### Ouvrir le localhost sur un telephone mobile
 
@@ -163,7 +167,7 @@ Ne pas utiliser :
 4. Sur le telephone, ouvrir dans le navigateur :
 
 ```text
-http://172.20.10.3:3000
+https://172.20.10.3:3000
 ```
 
 Si la page ne charge pas :
@@ -171,7 +175,7 @@ Si la page ne charge pas :
 - verifier que le PC et le telephone sont bien sur le meme Wi-Fi ;
 - accepter l'autorisation du pare-feu Windows pour Node.js / Next.js ;
 - couper temporairement le VPN si le telephone n'arrive pas a joindre le PC ;
-- verifier que l'adresse `Network` affichee par `npm run dev` correspond bien a la carte Wi-Fi, ici `http://172.20.10.3:3000` ;
+- verifier que l'adresse `Network` affichee par `npm run dev` correspond bien a la carte Wi-Fi, ici `https://172.20.10.3:3000` ;
 - eviter les reseaux invites ou partages de connexion qui bloquent parfois les appareils entre eux.
 
 ---
