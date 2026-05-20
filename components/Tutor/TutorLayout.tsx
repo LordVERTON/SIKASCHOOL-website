@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import LogoutButton from "../Auth/LogoutButton";
+import CreateTutorSessionModal from "./CreateTutorSessionModal";
 import { hasAdminPermissions } from "@/lib/admin-permissions";
 import { useUnreadAdminNotifications } from "@/hooks/useUnreadAdminNotifications";
 import MobileFooterNav from "../Common/MobileFooterNav";
@@ -19,6 +20,8 @@ export default function TutorLayout({ children }: TutorLayoutProps) {
   const [lastScrollY, setLastScrollY] = useState(0);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [showCreateSession, setShowCreateSession] = useState(false);
+  const [assignedStudents, setAssignedStudents] = useState<Array<{ id: string; name: string }>>([]);
   const { unreadCount } = useUnreadAdminNotifications();
 
   useEffect(() => {
@@ -53,6 +56,20 @@ export default function TutorLayout({ children }: TutorLayoutProps) {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, [lastScrollY]);
+
+  useEffect(() => {
+    if (!showCreateSession || assignedStudents.length > 0) return;
+
+    const loadStudents = async () => {
+      const res = await fetch("/api/tutor/students", { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
+        setAssignedStudents((data.students || []).map((s: any) => ({ id: s.id, name: s.name })));
+      }
+    };
+
+    void loadStudents();
+  }, [assignedStudents.length, showCreateSession]);
 
   // Vérifier si l'utilisateur a les permissions admin
   const isAdmin = userEmail && userRole ? hasAdminPermissions({ email: userEmail, role: userRole }) : false;
@@ -359,7 +376,7 @@ export default function TutorLayout({ children }: TutorLayoutProps) {
       {/* Main content */}
       <div className="lg:pl-64">
         <header className="sticky top-0 z-30 border-b border-stroke bg-white/95 px-4 py-3 backdrop-blur dark:border-strokedark dark:bg-black/85 lg:hidden">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-center">
             <Link href="/tutor" className="flex items-center gap-2">
               <Image
                 src="/images/logo/logo-light.svg"
@@ -378,28 +395,6 @@ export default function TutorLayout({ children }: TutorLayoutProps) {
                 priority
               />
             </Link>
-            <div className="flex items-center gap-2">
-              <Link
-                href="/tutor/notifications"
-                aria-label="Notifications"
-                className="relative flex h-10 w-10 items-center justify-center rounded-full text-waterloo transition hover:bg-primary/10 hover:text-primary dark:text-manatee"
-              >
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5-6.71V3a2 2 0 1 0-4 0v1.29A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z" />
-                </svg>
-                {unreadCount > 0 && <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-black" />}
-              </Link>
-              <button
-                type="button"
-                aria-label="Ouvrir le menu"
-                className="flex h-10 w-10 items-center justify-center rounded-full text-primary transition hover:bg-primary/10"
-                onClick={() => setSidebarOpen(true)}
-              >
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M4 12h16M4 17h16" />
-                </svg>
-              </button>
-            </div>
           </div>
         </header>
 
@@ -450,15 +445,9 @@ export default function TutorLayout({ children }: TutorLayoutProps) {
             href: "/tutor/calendar",
             label: "Créer",
             primary: true,
+            onClick: () => setShowCreateSession(true),
             icon: (
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M12 5v14M5 12h14"/></svg>
-            ),
-          },
-          {
-            href: "/tutor/eleves",
-            label: "Élèves",
-            icon: (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 11a4 4 0 1 0-8 0"/><path d="M4 21a8 8 0 0 1 16 0"/><path d="M19 8v4M21 10h-4"/></svg>
             ),
           },
           {
@@ -470,7 +459,77 @@ export default function TutorLayout({ children }: TutorLayoutProps) {
             ),
           },
         ]}
+        menuItems={[
+          {
+            href: "/tutor/messages",
+            label: "Messages",
+            icon: (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 5h16v12H7l-3 3V5Z"/><path d="M8 9h8M8 13h5"/></svg>
+            ),
+          },
+          {
+            href: "/tutor/eleves",
+            label: "Eleves",
+            icon: (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 11a4 4 0 1 0-8 0"/><path d="M4 21a8 8 0 0 1 16 0"/><path d="M19 8v4M21 10h-4"/></svg>
+            ),
+          },
+          {
+            href: "/tutor/history",
+            label: "Historique",
+            icon: (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 8v5l3 2"/><path d="M4 12a8 8 0 1 0 2.35-5.65"/><path d="M4 4v5h5"/></svg>
+            ),
+          },
+          {
+            href: "/tutor/disponibilites",
+            label: "Dispos",
+            icon: (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 3v3M17 3v3M4 8h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/><path d="M9 14l2 2 4-5"/></svg>
+            ),
+          },
+          {
+            href: "/tutor/paiements",
+            label: "Paiements",
+            icon: (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 7h18v10H3z"/><path d="M3 10h18"/><path d="M7 15h4"/></svg>
+            ),
+          },
+          {
+            href: "/tutor/statistics",
+            label: "Stats",
+            icon: (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19V5"/><path d="M8 17v-6M13 17V7M18 17v-3"/><path d="M4 19h17"/></svg>
+            ),
+          },
+          {
+            href: "/tutor/profile",
+            label: "Profil",
+            icon: (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+            ),
+          },
+          ...(isAdmin
+            ? [
+                {
+                  href: "/tutor/administration",
+                  label: "Admin",
+                  icon: (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3l7 4v5c0 4-3 7-7 9-4-2-7-5-7-9V7l7-4Z"/><path d="M9 12l2 2 4-4"/></svg>
+                  ),
+                },
+              ]
+            : []),
+        ]}
       />
+
+      {showCreateSession && (
+        <CreateTutorSessionModal
+          students={assignedStudents}
+          onClose={() => setShowCreateSession(false)}
+          onSuccess={() => setShowCreateSession(false)}
+        />
+      )}
     </div>
   );
 }

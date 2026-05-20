@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import StudentSidebar from "./StudentSidebar";
+import CreateSessionModal from "./CreateSessionModal";
 import LogoutButton from "../Auth/LogoutButton";
 import MobileFooterNav from "../Common/MobileFooterNav";
 import SessionNotificationsPopup from "../Common/SessionNotificationsPopup";
@@ -17,6 +18,8 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hideLogo, setHideLogo] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [showCreateSession, setShowCreateSession] = useState(false);
+  const [assignedTutors, setAssignedTutors] = useState<Array<{ id: string; name: string }>>([]);
   const { unreadCount } = useUnreadNotifications();
 
   useEffect(() => {
@@ -33,6 +36,20 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, [lastScrollY]);
+
+  useEffect(() => {
+    if (!showCreateSession || assignedTutors.length > 0) return;
+
+    const loadTutors = async () => {
+      const res = await fetch("/api/student/assigned-tutors", { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
+        setAssignedTutors((data.tutors || []).map((t: any) => ({ id: t.id, name: t.name })));
+      }
+    };
+
+    void loadTutors();
+  }, [assignedTutors.length, showCreateSession]);
 
   return (
     <div className="min-h-screen bg-[#f7f8fb] dark:bg-black">
@@ -166,7 +183,7 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
       {/* Main content */}
       <div className="lg:pl-64">
         <header className="sticky top-0 z-30 border-b border-stroke bg-white/95 px-4 py-3 backdrop-blur dark:border-strokedark dark:bg-black/85 lg:hidden">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-center">
             <Link href="/student" className="flex items-center gap-2">
               <Image
                 src="/images/logo/logo-light.svg"
@@ -185,28 +202,6 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
                 priority
               />
             </Link>
-            <div className="flex items-center gap-2">
-              <Link
-                href="/student/notifications"
-                aria-label="Notifications"
-                className="relative flex h-10 w-10 items-center justify-center rounded-full text-waterloo transition hover:bg-primary/10 hover:text-primary dark:text-manatee"
-              >
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5-6.71V3a2 2 0 1 0-4 0v1.29A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z" />
-                </svg>
-                {unreadCount > 0 && <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-black" />}
-              </Link>
-              <button
-                type="button"
-                aria-label="Ouvrir le menu"
-                className="flex h-10 w-10 items-center justify-center rounded-full text-primary transition hover:bg-primary/10"
-                onClick={() => setSidebarOpen(true)}
-              >
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M4 12h16M4 17h16" />
-                </svg>
-              </button>
-            </div>
           </div>
         </header>
 
@@ -257,15 +252,9 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
             href: "/student/calendar",
             label: "Réserver",
             primary: true,
+            onClick: () => setShowCreateSession(true),
             icon: (
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M12 5v14M5 12h14"/></svg>
-            ),
-          },
-          {
-            href: "/student/tutors",
-            label: "Tuteurs",
-            icon: (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 11a4 4 0 1 0-8 0"/><path d="M4 21a8 8 0 0 1 16 0"/><path d="M19 8v4M21 10h-4"/></svg>
             ),
           },
           {
@@ -277,7 +266,73 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
             ),
           },
         ]}
+        menuItems={[
+          {
+            href: "/student/dashboard",
+            label: "Dashboard",
+            icon: (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 5h16M4 12h7M4 19h16"/><path d="M15 9h5v6h-5z"/></svg>
+            ),
+          },
+          {
+            href: "/student/messages",
+            label: "Messages",
+            icon: (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 5h16v12H7l-3 3V5Z"/><path d="M8 9h8M8 13h5"/></svg>
+            ),
+          },
+          {
+            href: "/student/tutors",
+            label: "Tuteurs",
+            icon: (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 11a4 4 0 1 0-8 0"/><path d="M4 21a8 8 0 0 1 16 0"/><path d="M19 8v4M21 10h-4"/></svg>
+            ),
+          },
+          {
+            href: "/student/history",
+            label: "Historique",
+            icon: (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 8v5l3 2"/><path d="M4 12a8 8 0 1 0 2.35-5.65"/><path d="M4 4v5h5"/></svg>
+            ),
+          },
+          {
+            href: "/student/paiements",
+            label: "Paiements",
+            icon: (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 7h18v10H3z"/><path d="M3 10h18"/><path d="M7 15h4"/></svg>
+            ),
+          },
+          {
+            href: "/student/statistics",
+            label: "Stats",
+            icon: (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19V5"/><path d="M8 17v-6M13 17V7M18 17v-3"/><path d="M4 19h17"/></svg>
+            ),
+          },
+          {
+            href: "/student/messages/ai-tutor",
+            label: "Sika AI",
+            icon: (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><path d="M8 8h8v8H8z"/><path d="M10 11h.01M14 11h.01M10 15h4"/></svg>
+            ),
+          },
+          {
+            href: "/student/profile",
+            label: "Profil",
+            icon: (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+            ),
+          },
+        ]}
       />
+
+      {showCreateSession && (
+        <CreateSessionModal
+          tutors={assignedTutors}
+          onClose={() => setShowCreateSession(false)}
+          onSuccess={() => setShowCreateSession(false)}
+        />
+      )}
     </div>
   );
 }
