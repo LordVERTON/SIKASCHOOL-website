@@ -2,6 +2,7 @@
 
 const nextConfig = {
   reactStrictMode: true,
+  allowedDevOrigins: ["172.20.10.3"],
   poweredByHeader: false,
   compress: true,
   images: {

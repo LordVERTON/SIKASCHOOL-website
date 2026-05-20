@@ -15,8 +15,9 @@ type LiveClassProps = {
 export default function LiveClass({ serverUrl, token, className, onLeavePath }: LiveClassProps) {
   const router = useRouter();
   const [connectionError, setConnectionError] = useState<string | null>(null);
-  const [enableAudioOnJoin, setEnableAudioOnJoin] = useState(true);
-  const [enableVideoOnJoin, setEnableVideoOnJoin] = useState(true);
+  const [connectionHint, setConnectionHint] = useState<string | null>(null);
+  const [enableAudioOnJoin, setEnableAudioOnJoin] = useState(false);
+  const [enableVideoOnJoin, setEnableVideoOnJoin] = useState(false);
   
   const roomOptions = useMemo(
     () => ({
@@ -89,6 +90,13 @@ export default function LiveClass({ serverUrl, token, className, onLeavePath }: 
     let isMounted = true;
 
     const detectMediaDevices = async () => {
+      if (typeof window !== 'undefined' && !window.isSecureContext) {
+        setConnectionHint(
+          "La page est ouverte en HTTP sur une adresse réseau locale. Sur mobile, le navigateur bloque souvent la caméra, le micro ou WebRTC hors HTTPS. Pour tester depuis un téléphone, utilisez une URL HTTPS locale/tunnel, ou ouvrez la page depuis localhost sur l'ordinateur."
+        );
+        return;
+      }
+
       if (typeof navigator === 'undefined' || !navigator.mediaDevices?.enumerateDevices) {
         return;
       }
@@ -103,7 +111,8 @@ export default function LiveClass({ serverUrl, token, className, onLeavePath }: 
         setEnableAudioOnJoin(hasMic);
         setEnableVideoOnJoin(hasCamera);
       } catch {
-        // Keep defaults when device detection is unavailable.
+        setEnableAudioOnJoin(false);
+        setEnableVideoOnJoin(false);
       }
     };
 
@@ -166,6 +175,11 @@ export default function LiveClass({ serverUrl, token, className, onLeavePath }: 
             <p className="text-sm text-red-600 dark:text-red-400 mb-4">
               {connectionError}
             </p>
+            {connectionHint && (
+              <p className="mb-4 max-w-md text-sm text-waterloo dark:text-manatee">
+                {connectionHint}
+              </p>
+            )}
             <button
               onClick={() => {
                 setConnectionError(null);
@@ -192,7 +206,7 @@ export default function LiveClass({ serverUrl, token, className, onLeavePath }: 
             redirectToCalendar();
           }}
           onError={(error) => {
-            // LiveKit error
+            console.error('LiveKit connection error', error);
             if (error.message?.includes('timeout') || error.message?.includes('timed out')) {
               setConnectionError('Connexion au serveur de visio expirée. Vérifiez votre connexion internet.');
             } else if (
@@ -202,6 +216,13 @@ export default function LiveClass({ serverUrl, token, className, onLeavePath }: 
               setConnectionError(
                 'Aucun micro/caméra détecté sur cet appareil. Rejoignez la séance puis activez un appareil audio/vidéo disponible.'
               );
+            } else if (
+              error.message?.includes('insecure') ||
+              error.message?.includes('secure context') ||
+              error.message?.includes('getUserMedia') ||
+              error.message?.includes('mediaDevices')
+            ) {
+              setConnectionError("Connexion bloquée par le navigateur car la page n'est pas servie en HTTPS.");
             } else if (error.message?.includes('unauthorized') || error.message?.includes('permission')) {
               setConnectionError('Accès refusé. Vérifiez vos permissions.');
             } else {
