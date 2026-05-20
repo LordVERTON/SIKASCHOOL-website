@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+import { mercureThreadTopic, mercureUserTopic, publishMercureUpdate, publishUserMercureUpdate } from '@/lib/mercure';
 
 export async function GET(
   request: NextRequest,
@@ -57,6 +58,13 @@ export async function GET(
       .update({ is_read: true })
       .eq('thread_id', threadId)
       .neq('sender_id', tutorId);
+
+    await publishUserMercureUpdate([tutorId], {
+      type: 'message',
+      action: 'read',
+      userId: tutorId,
+      threadId,
+    });
 
     // Récupérer les informations des utilisateurs
     const userIds = [...new Set(messages.map((msg: any) => msg.sender_id))];
@@ -193,6 +201,20 @@ export async function POST(
           .from('notifications')
           .insert(notifications);
       }
+
+      await publishMercureUpdate(
+        [
+          mercureThreadTopic(threadId),
+          mercureUserTopic(tutorId),
+          ...participants.map((p: any) => mercureUserTopic(p.user_id)),
+        ],
+        {
+          type: 'message',
+          action: 'created',
+          userId: tutorId,
+          threadId,
+        }
+      );
     }
 
     return NextResponse.json({

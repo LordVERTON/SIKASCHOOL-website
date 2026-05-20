@@ -3,6 +3,7 @@ import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
 import { canAccessTutorFeatures } from '@/lib/admin-permissions';
 import { sendStudentSessionDecisionEmail } from '@/lib/registration-emails';
+import { publishUserMercureUpdate } from '@/lib/mercure';
 
 // GET tutor notifications
 export async function GET() {
@@ -65,6 +66,11 @@ export async function PATCH(request: NextRequest) {
         .update({ is_read: true } as any)
         .eq('id', notificationId)
         .eq('user_id', user.id);
+      await publishUserMercureUpdate([user.id], {
+        type: 'notification',
+        action: 'read',
+        userId: user.id,
+      });
       return NextResponse.json({ success: true });
     }
 
@@ -90,6 +96,11 @@ export async function PATCH(request: NextRequest) {
       .update({ is_read: true } as any)
       .eq('id', notificationId)
       .eq('user_id', user.id);
+    await publishUserMercureUpdate([user.id], {
+      type: 'notification',
+      action: 'read',
+      userId: user.id,
+    });
 
     // Get notification data
     const data = (notif as any).data || {};
@@ -150,6 +161,13 @@ export async function PATCH(request: NextRequest) {
         // Don't fail the request if notification fails
       }
 
+      await publishUserMercureUpdate([data.student_id, user.id], {
+        type: 'session',
+        action: 'declined',
+        userId: user.id,
+        sessionId: data.session_id,
+      });
+
       if (studentEmail) {
         void sendStudentSessionDecisionEmail({
           studentEmail,
@@ -194,6 +212,13 @@ export async function PATCH(request: NextRequest) {
       console.error('Error creating notification:', notificationError);
       // Don't fail the request if notification fails
     }
+
+    await publishUserMercureUpdate([data.student_id, user.id], {
+      type: 'session',
+      action: 'confirmed',
+      userId: user.id,
+      sessionId: data.session_id,
+    });
 
     if (studentEmail) {
       void sendStudentSessionDecisionEmail({

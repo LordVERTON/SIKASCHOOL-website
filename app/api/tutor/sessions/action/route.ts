@@ -3,6 +3,7 @@ import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
 import { canAccessTutorFeatures } from '@/lib/admin-permissions';
 import { sendStudentSessionDecisionEmail } from '@/lib/registration-emails';
+import { publishUserMercureUpdate } from '@/lib/mercure';
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -81,6 +82,13 @@ export async function PATCH(request: NextRequest) {
         // Don't fail the request if notification fails
       }
 
+      await publishUserMercureUpdate([user.id, (session as any).student_id], {
+        type: 'session',
+        action: 'rejected',
+        userId: user.id,
+        sessionId,
+      });
+
       if (studentEmail) {
         void sendStudentSessionDecisionEmail({
           studentEmail,
@@ -126,6 +134,13 @@ export async function PATCH(request: NextRequest) {
         console.error('Error creating notification:', notificationError);
         // Don't fail the request if notification fails
       }
+
+      await publishUserMercureUpdate([user.id, (session as any).student_id], {
+        type: 'session',
+        action: 'accepted',
+        userId: user.id,
+        sessionId,
+      });
 
       if (studentEmail) {
         void sendStudentSessionDecisionEmail({

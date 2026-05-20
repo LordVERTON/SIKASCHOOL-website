@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
+import { mercureThreadTopic, mercureUserTopic, publishMercureUpdate } from '@/lib/mercure';
 
 export async function GET() {
   try {
@@ -217,6 +218,16 @@ export async function POST(request: Request) {
           }))
         );
     }
+
+    await publishMercureUpdate(
+      [mercureThreadTopic(thread.id), ...participants.map((pid) => mercureUserTopic(pid))],
+      {
+        type: 'message',
+        action: 'thread-created',
+        userId: user.id,
+        threadId: thread.id,
+      }
+    );
 
     return NextResponse.json({ 
       success: true, 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { publishUserMercureUpdate } from '@/lib/mercure';
 
 export async function POST(_request: NextRequest) {
   try {
@@ -8,7 +9,7 @@ export async function POST(_request: NextRequest) {
     // Récupérer toutes les sessions qui devraient être en cours
     const { data: sessionsToUpdate, error: fetchError } = await (supabaseAdmin as any)
       .from('sessions')
-      .select('id, started_at, duration_minutes, status')
+      .select('id, student_id, tutor_id, started_at, duration_minutes, status')
       .in('status', ['SCHEDULED', 'PENDING'])
       .lte('started_at', now.toISOString());
 
@@ -50,7 +51,7 @@ export async function POST(_request: NextRequest) {
     // Marquer comme terminées les sessions qui sont dépassées
     const { data: allSessions, error: allSessionsError } = await (supabaseAdmin as any)
       .from('sessions')
-      .select('id, started_at, duration_minutes, status')
+      .select('id, student_id, tutor_id, started_at, duration_minutes, status')
       .in('status', ['IN_PROGRESS']);
 
     if (allSessionsError) {
@@ -78,7 +79,7 @@ export async function POST(_request: NextRequest) {
     // Nettoyer les sessions passées qui ne devraient pas être SCHEDULED ou IN_PROGRESS
     const { data: pastSessions, error: pastSessionsError } = await (supabaseAdmin as any)
       .from('sessions')
-      .select('id, started_at, duration_minutes, status')
+      .select('id, student_id, tutor_id, started_at, duration_minutes, status')
       .in('status', ['SCHEDULED', 'IN_PROGRESS', 'PENDING'])
       .lt('started_at', now.toISOString());
 
@@ -115,6 +116,23 @@ export async function POST(_request: NextRequest) {
           .in('id', toCancel);
         if (cancelErr) console.error('Error cancelling past sessions:', cancelErr);
       }
+    }
+
+    const realtimeUserIds = new Set<string>();
+    for (const session of [
+      ...sessionsInProgress,
+      ...((allSessions || []) as any[]),
+      ...((pastSessions || []) as any[]),
+    ]) {
+      if (session.student_id) realtimeUserIds.add(session.student_id);
+      if (session.tutor_id) realtimeUserIds.add(session.tutor_id);
+    }
+
+    if (realtimeUserIds.size > 0) {
+      await publishUserMercureUpdate(Array.from(realtimeUserIds), {
+        type: 'session',
+        action: 'status-updated',
+      });
     }
 
     return NextResponse.json({ 

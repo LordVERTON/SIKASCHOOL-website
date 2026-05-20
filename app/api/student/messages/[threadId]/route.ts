@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
+import { mercureThreadTopic, mercureUserTopic, publishMercureUpdate, publishUserMercureUpdate } from '@/lib/mercure';
 
 export async function GET(
   request: Request,
@@ -68,6 +69,13 @@ export async function GET(
       .update({ is_read: true })
       .eq('thread_id', threadId)
       .neq('sender_id', user.id); // Seulement les messages reçus
+
+    await publishUserMercureUpdate([user.id], {
+      type: 'message',
+      action: 'read',
+      userId: user.id,
+      threadId,
+    });
 
     // Récupérer les informations des utilisateurs qui ont envoyé des messages
     const userIds = [...new Set((messages || []).map((msg: any) => msg.sender_id))];
@@ -222,6 +230,20 @@ export async function POST(
           .from('notifications')
           .insert(notifications);
       }
+
+      await publishMercureUpdate(
+        [
+          mercureThreadTopic(threadId),
+          mercureUserTopic(user.id),
+          ...participants.map((p: any) => mercureUserTopic(p.user_id)),
+        ],
+        {
+          type: 'message',
+          action: 'created',
+          userId: user.id,
+          threadId,
+        }
+      );
     }
 
     return NextResponse.json({ 

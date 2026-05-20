@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { isSupabaseUnreachableError, supabaseAdmin } from '@/lib/supabase';
+import { publishUserMercureUpdate } from '@/lib/mercure';
 
 export async function GET() {
   try {
@@ -87,6 +88,12 @@ export async function PATCH(request: NextRequest) {
         throw error;
       }
 
+      await publishUserMercureUpdate([user.id], {
+        type: 'notification',
+        action: 'read-all',
+        userId: user.id,
+      });
+
       return NextResponse.json({ success: true });
     } else if (notificationId) {
       // Marquer une notification spécifique comme lue
@@ -107,6 +114,12 @@ export async function PATCH(request: NextRequest) {
         }
         throw error;
       }
+
+      await publishUserMercureUpdate([user.id], {
+        type: 'notification',
+        action: 'read',
+        userId: user.id,
+      });
 
       return NextResponse.json({ success: true });
     }

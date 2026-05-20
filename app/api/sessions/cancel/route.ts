@@ -5,6 +5,7 @@ import {
   sendStudentSessionCancelledEmail,
   sendTutorSessionCancelledEmail,
 } from '@/lib/registration-emails';
+import { publishUserMercureUpdate } from '@/lib/mercure';
 
 type SessionRow = {
   id: string;
@@ -199,6 +200,13 @@ export async function PATCH(request: NextRequest) {
         });
       }
     }
+
+    await publishUserMercureUpdate(Array.from(userIdsToNotify), {
+      type: 'session',
+      action: 'cancelled',
+      userId: user.id,
+      sessionId,
+    });
 
     return NextResponse.json({ 
       success: true, 

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
 import { sendTutorNewBookingRequestEmail } from '@/lib/registration-emails';
+import { publishUserMercureUpdate } from '@/lib/mercure';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -202,6 +203,13 @@ export async function POST(req: NextRequest) {
         console.error('Failed to add session participants:', partErr);
       }
     }
+
+    await publishUserMercureUpdate([student_id, tutor_id, ...extraStudentIds], {
+      type: 'session',
+      action: 'created',
+      userId: user.id,
+      sessionId: data.id,
+    });
 
     return NextResponse.json({ id: data.id, message: 'Session created successfully' });
   } catch (error) {
