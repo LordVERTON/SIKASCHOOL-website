@@ -1,18 +1,28 @@
 "use client";
 /* eslint-disable react-hooks/rules-of-hooks */
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import AlertModal from "@/components/AlertModal";
 import { useAuth } from "@/hooks/useAuth";
 import { useRealtimeSessions } from "@/hooks/useRealtimeSessions";
+
+type CalendarSession = {
+  id: string;
+  started_at: string;
+  subject: string;
+  type: string;
+  status: string;
+  tutor: string;
+};
 
 export default function StudentCalendar() {
   const { user, loading: authLoading } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
-  const [sessions, setSessions] = useState<Array<{ id: string; started_at: string; subject: string; type: string; status: string; tutor: string }>>([]);
+  const [sessions, setSessions] = useState<CalendarSession[]>([]);
+  const [upcomingSessions, setUpcomingSessions] = useState<CalendarSession[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createDate, setCreateDate] = useState<string | null>(null);
@@ -32,6 +42,15 @@ export default function StudentCalendar() {
 
   const dayNames = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
 
+  const mapApiSession = useCallback((s: any): CalendarSession => ({
+    id: s.id,
+    started_at: s.started_at,
+    subject: s.course,
+    type: s.type,
+    status: s.status,
+    tutor: s.tutor,
+  }), []);
+
   const loadSessions = useMemo(() => async () => {
     const start = new Date(currentYear, currentMonth, 1);
     const end = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999);
@@ -43,21 +62,41 @@ export default function StudentCalendar() {
     });
     if (res.ok) {
       const data = await res.json();
-      setSessions((data.sessions || []).map((s: any) => ({
-        id: s.id,
-        started_at: s.started_at,
-        subject: s.course,
-        type: s.type,
-        status: s.status,
-        tutor: s.tutor,
-      })));
+      setSessions((data.sessions || []).map(mapApiSession));
     }
-  }, [currentMonth, currentYear]);
+  }, [currentMonth, currentYear, mapApiSession]);
+
+  const loadUpcomingSessions = useMemo(() => async () => {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+
+    const res = await fetch(`/api/student/sessions?start=${encodeURIComponent(start.toISOString())}`, {
+      credentials: 'include',
+      cache: 'no-store',
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const now = new Date();
+      const nextSessions = (data.sessions || [])
+        .map(mapApiSession)
+        .filter((s: CalendarSession) => {
+          const sessionDate = new Date(s.started_at);
+          const hasUpcomingStatus = s.status === 'PENDING' || s.status === 'SCHEDULED' || s.status === 'IN_PROGRESS';
+          return hasUpcomingStatus && (s.status === 'IN_PROGRESS' || sessionDate >= now);
+        })
+        .sort((a: CalendarSession, b: CalendarSession) => new Date(a.started_at).getTime() - new Date(b.started_at).getTime())
+        .slice(0, 4);
+
+      setUpcomingSessions(nextSessions);
+    }
+  }, [mapApiSession]);
 
   // Fetch sessions for current month
   useEffect(() => {
     void loadSessions();
-  }, [loadSessions]);
+    void loadUpcomingSessions();
+  }, [loadSessions, loadUpcomingSessions]);
 
   useRealtimeSessions({
     userId: user?.id,
@@ -65,6 +104,7 @@ export default function StudentCalendar() {
     enabled: !!user && !authLoading,
     onChange: () => {
       void loadSessions();
+      void loadUpcomingSessions();
     },
   });
 
@@ -163,6 +203,7 @@ export default function StudentCalendar() {
 
       if (res.ok) {
         await loadSessions();
+        await loadUpcomingSessions();
         setAlertTitle('Succès');
         setAlertMessage('Séance annulée avec succès. Les participants ont été notifiés.');
         setAlertType('success');
@@ -260,7 +301,7 @@ export default function StudentCalendar() {
                           {getSessionsForDay(day)
                             .sort((a, b) => new Date(a.started_at).getTime() - new Date(b.started_at).getTime()) // Tri chronologique
                             .slice(0,2).map((s, idx) => (
-                            <div key={idx} className={`text-xs p-1 rounded text-white truncate ${s.status === 'PENDING' ? 'bg-red-300' : s.status === 'SCHEDULED' ? 'bg-blue-500' : s.status === 'IN_PROGRESS' ? 'bg-yellow-600' : 'bg-green-600'}`} title={`${s.subject} • ${s.tutor}`}>
+                            <div key={idx} className={`text-xs p-1 rounded text-white truncate ${s.status === 'PENDING' ? 'bg-red-300' : s.status === 'SCHEDULED' ? 'bg-blue-500' : s.status === 'IN_PROGRESS' ? 'bg-yellow-600' : 'bg-green-600'}`} title={`${s.subject} - ${s.tutor}`}>
                               {s.started_at.split('T')[1]?.split(':').slice(0,2).join(':')} {s.subject}
                             </div>
                           ))}
@@ -291,6 +332,41 @@ export default function StudentCalendar() {
                       Nouvelle séance
                     </button>
                   </div>
+                  <div className="rounded-lg border border-stroke p-3 dark:border-strokedark">
+                    <h3 className="mb-3 text-base font-semibold text-black dark:text-white">Prochaines séances</h3>
+                    <div className="space-y-2">
+                      {upcomingSessions.length > 0 ? (
+                        upcomingSessions.map((s) => (
+                          <div key={s.id} className="rounded-lg bg-[#f7f8fb] p-3 dark:bg-black">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-medium text-black dark:text-white" title={`${s.subject} - ${s.tutor}`}>
+                                  {s.subject} - {s.tutor}
+                                </p>
+                                <p className="mt-1 text-xs text-waterloo dark:text-manatee">
+                                  {new Date(s.started_at).toLocaleDateString('fr-FR')} - {new Date(s.started_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                              </div>
+                              <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full ${s.status === 'PENDING' ? 'bg-red-100 text-red-700' : s.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' : s.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
+                                {getStatusLabel(s.status)}
+                              </span>
+                            </div>
+                            {(s.status === 'SCHEDULED' || s.status === 'IN_PROGRESS') && (
+                              <a
+                                href={`/live/${s.id}`}
+                                className="mt-3 inline-flex w-full items-center justify-center rounded-md bg-primary px-3 py-2 text-xs font-medium text-white hover:opacity-90"
+                              >
+                                Rejoindre
+                              </a>
+                            )}
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-waterloo dark:text-manatee">Aucune séance programmée.</p>
+                      )}
+                    </div>
+                  </div>
+
                   {[...sessionsByDay.keys()].sort().map((key) => (
                     <div key={key} className="rounded-lg border border-stroke dark:border-strokedark p-3">
                       <div className="mb-2 text-sm font-semibold text-black dark:text-white">
@@ -303,8 +379,8 @@ export default function StudentCalendar() {
                           <div key={idx} className="w-full rounded-lg border border-stroke dark:border-strokedark p-3">
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0">
-                                <div className="text-sm font-medium text-black dark:text-white truncate" title={`${s.subject} • ${s.tutor}`}>
-                                  {s.subject} • {s.tutor}
+                                <div className="text-sm font-medium text-black dark:text-white truncate" title={`${s.subject} - ${s.tutor}`}>
+                                  {s.subject} - {s.tutor}
                                 </div>
                                 <div className="text-xs text-waterloo dark:text-manatee">
                                   {s.started_at.split('T')[1]?.split(':').slice(0,2).join(':')} • {s.type}
@@ -350,16 +426,12 @@ export default function StudentCalendar() {
               <div className="animate_top rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection">
                 <h3 className="text-lg font-semibold text-black dark:text-white mb-4">Prochaines séances</h3>
                 <div className="space-y-3">
-                  {sessions
-                    .filter(s => new Date(s.started_at) >= new Date())
-                    .sort((a,b) => new Date(a.started_at).getTime() - new Date(b.started_at).getTime())
-                    .slice(0,4)
-                    .map((s) => (
+                  {upcomingSessions.map((s) => (
                     <div key={s.id} className="flex items-start gap-3">
                       <div className={`w-3 h-3 rounded-full mt-1.5 ${s.status === 'PENDING' ? 'bg-red-300' : s.status === 'SCHEDULED' ? 'bg-blue-500' : s.status === 'IN_PROGRESS' ? 'bg-yellow-600' : 'bg-green-600'}`}></div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-black dark:text-white truncate">
-                          {s.subject} • {s.tutor}
+                          {s.subject} - {s.tutor}
                         </p>
                         <p className="text-xs text-waterloo dark:text-manatee">
                           {s.started_at.split('T')[0].split('-').reverse().join('/')} • {s.started_at.split('T')[1]?.split(':').slice(0,2).join(':')}
@@ -446,7 +518,7 @@ export default function StudentCalendar() {
                   .map((s, idx) => (
                 <div key={idx} className="rounded-lg border border-stroke dark:border-strokedark p-3">
                   <div className="flex items-center justify-between">
-                    <div className="text-sm text-black dark:text-white font-medium">{s.subject} • {s.tutor}</div>
+                    <div className="text-sm text-black dark:text-white font-medium">{s.subject} - {s.tutor}</div>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${s.status === 'PENDING' ? 'bg-red-100 text-red-700' : s.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' : s.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
                       {getStatusLabel(s.status)}
                     </span>
@@ -500,6 +572,7 @@ export default function StudentCalendar() {
             setCreateDate(null);
             setSelectedDate(null);
             void loadSessions();
+            void loadUpcomingSessions();
           }}
         />
       )}
