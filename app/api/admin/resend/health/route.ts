@@ -2,17 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { getUserSession } from '@/lib/auth-simple';
 import { canAccessAdminFeatures } from '@/lib/admin-permissions';
-import { getAppBaseUrl } from '@/lib/registration-emails';
+import {
+  getAdminNewStudentEmailRecipients,
+  getAppBaseUrl,
+  getMailFromAddress,
+} from '@/lib/registration-emails';
 
-function pickTestRecipient(request: NextRequest): string {
+function pickTestRecipients(request: NextRequest): string | string[] {
   const fromQuery = request.nextUrl.searchParams.get('to')?.trim();
   if (fromQuery) {
     return fromQuery;
   }
-  const fromEnv = process.env.ADMIN_NOTIFY_EMAILS?.split(',').map((v) => v.trim()).find(Boolean);
-  if (fromEnv) {
-    return fromEnv;
-  }
+  const adminEmails = getAdminNewStudentEmailRecipients();
+  if (adminEmails.length > 0) return adminEmails;
   return 'delivered@resend.dev';
 }
 
@@ -24,16 +26,13 @@ export async function GET(request: NextRequest) {
     }
 
     const apiKey = process.env.RESEND_API_KEY?.trim();
-    const from = process.env.RESEND_FROM_EMAIL?.trim();
+    const from = getMailFromAddress();
     const appUrl = getAppBaseUrl();
-    const to = pickTestRecipient(request);
+    const to = pickTestRecipients(request);
 
     const missing: string[] = [];
     if (!apiKey) {
       missing.push('RESEND_API_KEY');
-    }
-    if (!from) {
-      missing.push('RESEND_FROM_EMAIL');
     }
     if (!process.env.NEXT_PUBLIC_APP_URL && !process.env.VERCEL_URL) {
       missing.push('NEXT_PUBLIC_APP_URL (or VERCEL_URL)');

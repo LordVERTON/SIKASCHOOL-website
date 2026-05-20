@@ -9,6 +9,12 @@ import { getAdminTutorEmails } from '@/lib/admin-permissions';
 type ServiceSupabase = SupabaseClient<any>;
 
 const VERIFY_TTL_MS = 48 * 60 * 60 * 1000;
+const DEFAULT_FROM_ADDRESS = 'SikaSchool <noreply@sikaschool.app>';
+const DEFAULT_ADMIN_NEW_STUDENT_EMAILS = [
+  'sikaschoolservice@gmail.com',
+  'mbouza.ruudy@gmail.com',
+  'dan.verton@pm.me',
+];
 let smtpTransporter: Transporter | null = null;
 
 type EmailPayload = {
@@ -18,6 +24,28 @@ type EmailPayload = {
 };
 
 type MailProvider = 'resend' | 'smtp';
+
+function parseEmailList(value: string | undefined): string[] {
+  return (
+    value
+      ?.split(',')
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean) ?? []
+  );
+}
+
+export function getAdminNewStudentEmailRecipients(): string[] {
+  const configured = parseEmailList(process.env.ADMIN_NEW_STUDENT_NOTIFY_EMAILS);
+  return configured.length > 0 ? configured : DEFAULT_ADMIN_NEW_STUDENT_EMAILS;
+}
+
+export function getMailFromAddress(): string {
+  return (
+    process.env.MAIL_FROM_EMAIL?.trim() ||
+    process.env.RESEND_FROM_EMAIL?.trim() ||
+    DEFAULT_FROM_ADDRESS
+  );
+}
 
 export function getAppBaseUrl(): string {
   const explicit = process.env.NEXT_PUBLIC_APP_URL?.trim();
@@ -39,7 +67,7 @@ function getResend(): Resend | null {
 }
 
 function getFromAddress(): string | null {
-  const from = process.env.MAIL_FROM_EMAIL?.trim() || process.env.RESEND_FROM_EMAIL?.trim();
+  const from = getMailFromAddress();
   if (!from) {
     console.warn('[email] MAIL_FROM_EMAIL/RESEND_FROM_EMAIL manquant — configurez une adresse d’expéditeur.');
     return null;
@@ -55,7 +83,7 @@ function getMailProvider(): MailProvider {
   if (provider === 'resend') {
     return 'resend';
   }
-  if (process.env.RESEND_API_KEY?.trim()) {
+  if (process.env.NODE_ENV === 'production') {
     return 'resend';
   }
   return 'smtp';
@@ -66,7 +94,7 @@ function getSmtpTransporter(): Transporter | null {
     return smtpTransporter;
   }
 
-  const host = process.env.SMTP_HOST?.trim();
+  const host = process.env.SMTP_HOST?.trim() || (process.env.NODE_ENV === 'production' ? '' : '127.0.0.1');
   if (!host) {
     return null;
   }
@@ -608,8 +636,7 @@ export async function sendRegistrationResendEmails(
   }
 
   if (options.newUser.role === 'STUDENT') {
-    const admins = await resolveAdminNotifyUsers(supabase);
-    const adminEmails = admins.map((a) => a.email).filter(Boolean);
+    const adminEmails = getAdminNewStudentEmailRecipients();
     if (adminEmails.length === 0) {
       return;
     }
