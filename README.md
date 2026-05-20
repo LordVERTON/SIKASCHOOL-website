@@ -84,7 +84,28 @@ npm run mailpit
 # ou : npm run dev:mailpit:start
 ```
 
-Configurer `MAIL_PROVIDER=smtp`, `SMTP_HOST=127.0.0.1`, `SMTP_PORT=1025` (voir `.env.example`). Supabase local expose aussi une UI mail sur un port dédié (`supabase status`).
+Par defaut en developpement, l'app utilise SMTP/Mailpit (`127.0.0.1:1025`) meme si une cle Resend existe. Configurez au besoin :
+
+```bash
+MAIL_PROVIDER=smtp
+MAIL_FROM_EMAIL="SikaSchool <noreply@sikaschool.app>"
+SMTP_HOST=127.0.0.1
+SMTP_PORT=1025
+SMTP_SECURE=false
+ADMIN_NEW_STUDENT_NOTIFY_EMAILS=sikaschoolservice@gmail.com,mbouza.ruudy@gmail.com,dan.verton@pm.me
+```
+
+Supabase local expose aussi une UI mail sur un port dedie (`supabase status`).
+
+### Emails en prod (Resend)
+
+En production, l'app utilise Resend par defaut. Variables attendues :
+
+```bash
+MAIL_FROM_EMAIL="SikaSchool <noreply@sikaschool.app>"
+RESEND_API_KEY=...
+ADMIN_NEW_STUDENT_NOTIFY_EMAILS=sikaschoolservice@gmail.com,mbouza.ruudy@gmail.com,dan.verton@pm.me
+```
 
 ### Lancer l’app
 
@@ -105,7 +126,7 @@ Modèle complet : **`.env.example`**. En bref :
 | Session | `JWT_SECRET` (obligatoire) |
 | LiveKit | `NEXT_PUBLIC_LIVEKIT_SERVER_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` |
 | Sika AI | `OPENAI_API_KEY`, `SIKA_AI_MODEL` (optionnel) |
-| Email | `MAIL_PROVIDER`, `MAIL_FROM_EMAIL`, Resend ou SMTP |
+| Email | `MAIL_PROVIDER`, `MAIL_FROM_EMAIL`, `ADMIN_NEW_STUDENT_NOTIFY_EMAILS`, Resend ou SMTP/Mailpit |
 
 Sans `OPENAI_API_KEY`, l’UI Sika AI reste chargée mais l’API renvoie un message d’indisponibilité contrôlé.
 
