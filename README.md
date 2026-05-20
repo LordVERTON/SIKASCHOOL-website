@@ -13,7 +13,7 @@ Plateforme de cours particuliers (**Next.js 15**, **React 19**, **TypeScript**) 
 | **Admin** | Utilisateurs (statut, reset MDP), séances, assignations tuteur ↔ élève |
 | **Acquisition** | Leads homepage → création compte élève + MDP initial type `prenom.nom12345` |
 | **Auth** | Sessions cookie HttpOnly (HMAC), `bcrypt`, rôles `STUDENT` / `TUTOR` / `ADMIN` |
-| **Temps réel** | Supabase Realtime (notifications, messagerie), LiveKit pour les séances vidéo |
+| **Temps réel** | Mercure (notifications, messagerie, calendrier), LiveKit pour les séances vidéo |
 
 ---
 
@@ -81,7 +81,7 @@ Le projet **ne** lance **pas** Mailpit avec `npm run dev`. À part :
 
 ```bash
 npm run mailpit
-# ou : npm run dev:mailpit:start
+npm run mailpit:down
 ```
 
 Par defaut en developpement, l'app utilise SMTP/Mailpit (`127.0.0.1:1025`) meme si une cle Resend existe. Configurez au besoin :
@@ -94,6 +94,24 @@ SMTP_PORT=1025
 SMTP_SECURE=false
 ADMIN_NEW_STUDENT_NOTIFY_EMAILS=sikaschoolservice@gmail.com,mbouza.ruudy@gmail.com,dan.verton@pm.me
 ```
+
+### Temps reel en dev (Mercure)
+
+Le projet publie des evenements Mercure apres les changements de messages, notifications et seances. En local :
+
+```bash
+npm run mercure
+```
+
+Variables a ajouter dans `.env.local` :
+
+```bash
+NEXT_PUBLIC_MERCURE_URL=http://localhost:3001/.well-known/mercure
+MERCURE_URL=http://localhost:3001/.well-known/mercure
+MERCURE_JWT_SECRET=dev-mercure-secret
+```
+
+Le hub local est configure en abonnements anonymes et les payloads ne contiennent que des signaux de rafraichissement. En production, utilisez un secret fort et exposez `NEXT_PUBLIC_MERCURE_URL` vers votre hub HTTPS.
 
 Supabase local expose aussi une UI mail sur un port dedie (`supabase status`).
 
@@ -144,8 +162,9 @@ Tables centrales : `users`, `students`, `tutors`, `sessions`, `notifications`, `
 | Commande | Rôle |
 |----------|------|
 | `npm run dev` | Next.js en développement |
-| `npm run mailpit` | Mailpit (Docker) pour SMTP local |
-| `npm run dev:mailpit:stop` | Arrêt Mailpit (script projet) |
+| `npm run mailpit` | Démarre Mailpit (Docker Compose) pour SMTP local |
+| `npm run mailpit:down` | Arrête Mailpit (Docker Compose) |
+| `npm run mercure` / `npm run mercure:down` | Démarre / arrête le hub Mercure local |
 | `npm run lint` / `npm run type-check` | Qualité |
 | `npm run db:types` | Génère les types TS depuis Supabase local |
 | `npm run security:check` | Audit npm via script |
