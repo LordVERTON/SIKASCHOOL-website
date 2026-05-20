@@ -132,6 +132,48 @@ npm run dev          # http://localhost:3000
 npm run build && npm run start   # prod locale
 ```
 
+### Ouvrir le localhost sur un telephone mobile
+
+Le telephone ne peut pas ouvrir `localhost`, car `localhost` pointe vers le telephone lui-meme. Il faut utiliser l'adresse IP locale du PC.
+
+1. Connecter le PC et le telephone au meme reseau Wi-Fi.
+2. Lancer Next.js en mode accessible sur le reseau :
+
+```bash
+npm run dev -- -H 0.0.0.0
+```
+
+3. Recuperer l'adresse IP locale du PC :
+
+```powershell
+ipconfig
+```
+
+Chercher l'adresse IPv4 de la carte **Wi-Fi**. Sur ce poste, l'adresse a utiliser est :
+
+```text
+172.20.10.3
+```
+
+Ne pas utiliser :
+
+- `10.2.0.2` : adresse ProtonVPN ;
+- `172.31.144.1` : adresse WSL / Hyper-V.
+
+4. Sur le telephone, ouvrir dans le navigateur :
+
+```text
+http://172.20.10.3:3000
+```
+
+Si la page ne charge pas :
+
+- verifier que le PC et le telephone sont bien sur le meme Wi-Fi ;
+- accepter l'autorisation du pare-feu Windows pour Node.js / Next.js ;
+- couper temporairement le VPN si le telephone n'arrive pas a joindre le PC ;
+- verifier que l'adresse `Network` affichee par `npm run dev` correspond bien a la carte Wi-Fi, ici `http://172.20.10.3:3000` ;
+- eviter les reseaux invites ou partages de connexion qui bloquent parfois les appareils entre eux.
+
 ---
 
 ## Variables d’environnement
