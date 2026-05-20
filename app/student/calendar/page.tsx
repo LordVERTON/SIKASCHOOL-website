@@ -193,21 +193,21 @@ export default function StudentCalendar() {
   };
 
   return (
-    <main className="pb-20 pt-15 lg:pb-25 xl:pb-30">
-      <div className="mx-auto max-w-c-1315 px-4 md:px-8 xl:px-0">
+    <main className="pb-20 pt-2 lg:pb-25 lg:pt-15 xl:pb-30">
+      <div className="mx-auto max-w-c-1315 px-1 md:px-8 xl:px-0">
         <div className="animate_top">
-          <h1 className="text-3xl font-bold text-black dark:text-white xl:text-sectiontitle3">
+          <h1 className="px-1 text-3xl font-bold text-black dark:text-white xl:text-sectiontitle3">
             Calendrier
           </h1>
-          <p className="mt-4 text-para2 text-waterloo dark:text-manatee">
+          <p className="mt-4 hidden text-para2 text-waterloo dark:text-manatee lg:block">
             Consultez votre planning et vos séances.
           </p>
         </div>
 
-        <div className="mt-10 grid gap-7.5 grid-cols-1">
+        <div className="mt-5 grid grid-cols-1 gap-5 lg:mt-10 lg:gap-7.5">
           {/* Calendar */}
           <div className="col-span-1">
-            <div className="animate_top rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection">
+            <div className="animate_top rounded-[24px] bg-white p-4 shadow-[0_14px_34px_rgba(15,23,42,0.05)] dark:bg-blacksection lg:rounded-lg lg:border lg:border-stroke lg:p-7.5 lg:dark:border-strokedark">
               {/* Calendar Header */}
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-black dark:text-white">
@@ -344,7 +344,7 @@ export default function StudentCalendar() {
           </div>
 
           {/* Sidebar (now stacked below on all sizes) */}
-          <div className="col-span-1">
+          <div className="col-span-1 hidden lg:block">
             <div className="space-y-6">
               {/* Upcoming Sessions */}
               <div className="animate_top rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection">
