@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { supabaseBrowser } from "@/lib/supabase-browser";
+import { mercureUserTopic, useMercure } from "@/hooks/useMercure";
 
 /**
- * Hook pour récupérer le nombre de notifications non lues en temps réel
+ * Hook pour recuperer le nombre de notifications non lues en temps reel.
  */
 export function useUnreadNotifications() {
   const { user, loading: authLoading } = useAuth();
@@ -32,28 +32,24 @@ export function useUnreadNotifications() {
         signal: controller.signal,
       });
       if (!response.ok) {
-        // 401 est attendu pendant les transitions d'authentification → silencieux.
         if (response.status !== 401) {
           console.warn(
-            `[useUnreadNotifications] /api/student/notifications a retourné ${response.status}`
+            `[useUnreadNotifications] /api/student/notifications a retourne ${response.status}`
           );
         }
         setUnreadCount(0);
         return;
       }
       const notifications: Array<{ isRead: boolean }> = await response.json();
-      const count = notifications.filter((n) => !n.isRead).length;
-      setUnreadCount(count);
+      setUnreadCount(notifications.filter((n) => !n.isRead).length);
     } catch (err) {
-      // Les erreurs réseau/abort peuvent arriver pendant les transitions de page,
-      // hot-reload dev ou backend temporairement indisponible.
       if (err instanceof DOMException && err.name === "AbortError") {
         return;
       }
 
       if (err instanceof TypeError) {
         console.warn(
-          "[useUnreadNotifications] Réseau temporairement indisponible pour /api/student/notifications"
+          "[useUnreadNotifications] Reseau temporairement indisponible pour /api/student/notifications"
         );
         setUnreadCount(0);
         return;
@@ -67,8 +63,6 @@ export function useUnreadNotifications() {
     }
   }, [user, authLoading]);
 
-  // Garder une référence à la dernière version de fetchUnreadCount pour
-  // éviter de résouscrire au canal realtime à chaque rendu.
   const fetchRef = useRef(fetchUnreadCount);
   useEffect(() => {
     fetchRef.current = fetchUnreadCount;
@@ -81,46 +75,33 @@ export function useUnreadNotifications() {
       return;
     }
 
-    const userId = user.id;
-
     fetchRef.current();
-
-    // Nom de canal unique par montage pour éviter que Supabase retourne
-    // un canal déjà en cache (et déjà subscribed) en StrictMode/dev.
-    const channelName = `student-unread-notifications-${userId}-${
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : Math.random().toString(36).slice(2)
-    }`;
-
-    const channel = supabaseBrowser
-      .channel(channelName)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "notifications",
-          filter: `user_id=eq.${userId}`,
-        },
-        () => {
-          fetchRef.current();
-        }
-      )
-      .subscribe();
-
-    const interval = setInterval(() => fetchRef.current(), 30_000);
+    const interval = window.setInterval(() => fetchRef.current(), 30_000);
 
     return () => {
       activeRequestRef.current?.abort();
-      // removeChannel supprime le canal du cache interne de Supabase,
-      // évitant l'erreur "cannot add postgres_changes callbacks after subscribe()"
-      // lors du re-mount (StrictMode / re-render).
-      supabaseBrowser.removeChannel(channel);
-      clearInterval(interval);
+      window.clearInterval(interval);
     };
   }, [user, authLoading]);
 
+  useMercure({
+    enabled: !!user && !authLoading,
+    topics: [user?.id ? mercureUserTopic(user.id) : null],
+    onMessage: (event) => {
+      try {
+        const payload = JSON.parse(event.data) as { type?: string };
+        if (
+          payload.type === "notification" ||
+          payload.type === "message" ||
+          payload.type === "session"
+        ) {
+          fetchRef.current();
+        }
+      } catch {
+        fetchRef.current();
+      }
+    },
+  });
+
   return { unreadCount, loading };
 }
-

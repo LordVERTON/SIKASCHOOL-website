@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { supabaseBrowser } from "@/lib/supabase-browser";
+import { mercureThreadTopic, mercureUserTopic, useMercure } from "@/hooks/useMercure";
 
 /**
  * Rafraîchit la conversation lorsque la table messages change pour ce fil (Realtime + RLS).
@@ -22,31 +22,27 @@ export function useRealtimeThreadMessages(options: {
       return;
     }
 
-    const tid = options.threadId;
-    const channelName = `thread-messages-${tid}-${
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : Math.random().toString(36).slice(2)
-    }`;
+    onInvalidateRef.current();
+  }, [options.enabled, options.threadId, options.userId]);
 
-    const channel = supabaseBrowser
-      .channel(channelName)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "messages",
-          filter: `thread_id=eq.${tid}`,
-        },
-        () => {
+  useMercure({
+    enabled: options.enabled && !!options.threadId && !!options.userId,
+    topics: [
+      options.threadId ? mercureThreadTopic(options.threadId) : null,
+      options.userId ? mercureUserTopic(options.userId) : null,
+    ],
+    onMessage: (event) => {
+      try {
+        const payload = JSON.parse(event.data) as { type?: string; threadId?: string };
+        if (
+          payload.type === "message" &&
+          (!payload.threadId || payload.threadId === options.threadId)
+        ) {
           onInvalidateRef.current();
         }
-      )
-      .subscribe();
-
-    return () => {
-      supabaseBrowser.removeChannel(channel);
-    };
-  }, [options.enabled, options.threadId, options.userId]);
+      } catch {
+        onInvalidateRef.current();
+      }
+    },
+  });
 }

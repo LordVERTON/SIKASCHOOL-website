@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { supabaseBrowser } from "@/lib/supabase-browser";
+import { mercureUserTopic, useMercure } from "@/hooks/useMercure";
 
 type Role = "student" | "tutor";
 
@@ -26,25 +26,21 @@ export function useRealtimeSessions({
       return;
     }
 
-    const filter = role === "student" ? `student_id=eq.${userId}` : `tutor_id=eq.${userId}`;
-    const channelName = `realtime-sessions-${role}-${userId}-${
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : Math.random().toString(36).slice(2)
-    }`;
-
-    const channel = supabaseBrowser
-      .channel(channelName)
-      .on("postgres_changes", { event: "*", schema: "public", table: "sessions", filter }, onChange)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
-        onChange
-      )
-      .subscribe();
-
-    return () => {
-      supabaseBrowser.removeChannel(channel);
-    };
+    onChange();
   }, [enabled, onChange, role, userId]);
+
+  useMercure({
+    enabled: enabled && !!userId,
+    topics: [userId ? mercureUserTopic(userId) : null],
+    onMessage: (event) => {
+      try {
+        const payload = JSON.parse(event.data) as { type?: string };
+        if (payload.type === "session" || payload.type === "notification") {
+          onChange();
+        }
+      } catch {
+        onChange();
+      }
+    },
+  });
 }

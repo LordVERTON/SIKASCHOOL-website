@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { supabaseBrowser } from "@/lib/supabase-browser";
+import { mercureUserTopic, useMercure } from "@/hooks/useMercure";
 
 /**
  * Invalide la liste des conversations lorsqu’un message accessible à l’utilisateur change (RLS limite les événements).
@@ -21,30 +21,21 @@ export function useRealtimeMessageThreadsInbox(options: {
       return;
     }
 
-    const uid = options.userId;
-    const channelName = `messages-inbox-${uid}-${
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : Math.random().toString(36).slice(2)
-    }`;
+    onInvalidateRef.current();
+  }, [options.enabled, options.userId]);
 
-    const channel = supabaseBrowser
-      .channel(channelName)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "messages",
-        },
-        () => {
+  useMercure({
+    enabled: options.enabled && !!options.userId,
+    topics: [options.userId ? mercureUserTopic(options.userId) : null],
+    onMessage: (event) => {
+      try {
+        const payload = JSON.parse(event.data) as { type?: string };
+        if (payload.type === "message" || payload.type === "notification") {
           onInvalidateRef.current();
         }
-      )
-      .subscribe();
-
-    return () => {
-      supabaseBrowser.removeChannel(channel);
-    };
-  }, [options.enabled, options.userId]);
+      } catch {
+        onInvalidateRef.current();
+      }
+    },
+  });
 }
