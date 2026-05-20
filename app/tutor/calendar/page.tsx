@@ -7,6 +7,9 @@ import AlertModal from "@/components/AlertModal";
 import { useAuth } from "@/hooks/useAuth";
 import { useRealtimeSessions } from "@/hooks/useRealtimeSessions";
 
+const HOURS = Array.from({ length: 24 }, (_, index) => String(index).padStart(2, "0"));
+const QUARTER_HOURS = ["00", "15", "30", "45"];
+
 export default function TutorCalendar() {
   const { user, loading: authLoading } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -630,13 +633,39 @@ function CreateSessionModal({ date, students, onClose, onSuccess }: {
           </div>
           <div>
             <label className="block text-sm font-medium text-black dark:text-white mb-1">Heure</label>
-            <input
-              type="time"
-              value={formData.sessionTime}
-              onChange={(e) => setFormData({ ...formData, sessionTime: e.target.value })}
-              className="w-full rounded-md border border-stroke bg-transparent px-3 py-2 text-sm dark:border-strokedark"
-              required
-            />
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+              <select
+                value={formData.sessionTime.split(":")[0] || ""}
+                onChange={(e) => {
+                  const minutes = formData.sessionTime.split(":")[1] || "00";
+                  setFormData({ ...formData, sessionTime: `${e.target.value}:${minutes}` });
+                }}
+                className="w-full rounded-md border border-stroke bg-transparent px-3 py-2 text-sm dark:border-strokedark"
+                required
+                aria-label="Heure"
+              >
+                <option value="">HH</option>
+                {HOURS.map((hour) => (
+                  <option key={hour} value={hour}>{hour}</option>
+                ))}
+              </select>
+              <span className="text-base font-semibold text-black dark:text-white">:</span>
+              <select
+                value={formData.sessionTime.split(":")[1] || ""}
+                onChange={(e) => {
+                  const hour = formData.sessionTime.split(":")[0] || "08";
+                  setFormData({ ...formData, sessionTime: `${hour}:${e.target.value}` });
+                }}
+                className="w-full rounded-md border border-stroke bg-transparent px-3 py-2 text-sm dark:border-strokedark"
+                required
+                aria-label="Minutes"
+              >
+                <option value="">MM</option>
+                {QUARTER_HOURS.map((minutes) => (
+                  <option key={minutes} value={minutes}>{minutes}</option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="flex gap-3 pt-4">
             <button

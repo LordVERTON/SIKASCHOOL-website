@@ -161,8 +161,6 @@ export default function StudentDashboard() {
           
           // Statistiques de base
           const completedSessions = sessions.filter((s: any) => s.status === 'COMPLETED');
-          const scheduledSessions = sessions.filter((s: any) => s.status === 'SCHEDULED');
-          const pendingSessions = sessions.filter((s: any) => s.status === 'PENDING');
           const _inProgressSessions = sessions.filter((s: any) => s.status === 'IN_PROGRESS');
           
           // Heures totales (seulement les sessions terminées)
@@ -175,10 +173,9 @@ export default function StudentDashboard() {
             : 'N/A';
           
           // Séances à venir (prochaines 7 jours)
-          const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
           const upcomingSessions = sessions.filter((s: any) => {
             const sessionDate = new Date(s.started_at);
-            return sessionDate >= now && sessionDate <= nextWeek && 
+            return sessionDate >= now &&
                    (s.status === 'SCHEDULED' || s.status === 'PENDING' || s.status === 'IN_PROGRESS');
           }).sort((a: any, b: any) => new Date(a.started_at).getTime() - new Date(b.started_at).getTime());
           
@@ -204,7 +201,7 @@ export default function StudentDashboard() {
               },
               {
                 label: 'Séances à venir',
-                value: (scheduledSessions.length + pendingSessions.length).toString(),
+                value: upcomingSessions.length.toString(),
                 color: 'text-purple-600',
                 icon: '📅'
               },

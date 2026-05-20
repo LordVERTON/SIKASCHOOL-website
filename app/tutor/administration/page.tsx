@@ -37,7 +37,7 @@ interface Session {
   subject: string;
   level: string;
   type: 'NOTA' | 'AVA' | 'TODA';
-  status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  status: 'PENDING' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
   started_at: string | null;
   completed_at: string | null;
   duration_minutes: number;
@@ -716,10 +716,11 @@ function AdministrationPageContent() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            session.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
                             session.status === 'COMPLETED' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
                             session.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
                             session.status === 'CANCELLED' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
-                            'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                            'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200'
                           }`}>
                             {getSessionStatusLabel(session.status)}
                           </span>
@@ -1189,7 +1190,7 @@ function SessionModal({ session, users, onSave, onClose }: {
     subject: session?.subject || '',
     level: session?.level || '',
     type: session?.type || 'NOTA' as 'NOTA' | 'AVA' | 'TODA',
-    status: session?.status || 'SCHEDULED' as 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED',
+    status: session?.status || 'SCHEDULED' as 'PENDING' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED',
     duration_minutes: session?.duration_minutes || 60,
     student_rating: session?.student_rating || undefined
   });
@@ -1293,9 +1294,10 @@ function SessionModal({ session, users, onSave, onClose }: {
             </label>
             <select
               value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value as "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" })}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value as "PENDING" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" })}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
             >
+              <option value="PENDING">En attente</option>
               <option value="SCHEDULED">Programmée</option>
               <option value="IN_PROGRESS">En cours</option>
               <option value="COMPLETED">Terminée</option>

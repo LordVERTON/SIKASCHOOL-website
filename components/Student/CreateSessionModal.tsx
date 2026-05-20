@@ -15,6 +15,9 @@ interface CreateSessionModalProps {
   onSuccess: () => void;
 }
 
+const HOURS = Array.from({ length: 24 }, (_, index) => String(index).padStart(2, '0'));
+const QUARTER_HOURS = ['00', '15', '30', '45'];
+
 export default function CreateSessionModal({ 
   date, 
   tutors, 
@@ -157,13 +160,39 @@ export default function CreateSessionModal({
             <label className="block text-sm font-medium text-black dark:text-white mb-2">
               Heure
             </label>
-            <input
-              type="time"
-              value={sessionTime}
-              onChange={(e) => setSessionTime(e.target.value)}
-              className="w-full p-3 border border-stroke rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:border-strokedark dark:bg-blacksection"
-              required
-            />
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+              <select
+                value={sessionTime.split(':')[0] || ''}
+                onChange={(e) => {
+                  const minutes = sessionTime.split(':')[1] || '00';
+                  setSessionTime(`${e.target.value}:${minutes}`);
+                }}
+                className="w-full p-3 border border-stroke rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:border-strokedark dark:bg-blacksection"
+                required
+                aria-label="Heure"
+              >
+                <option value="">HH</option>
+                {HOURS.map((hour) => (
+                  <option key={hour} value={hour}>{hour}</option>
+                ))}
+              </select>
+              <span className="text-lg font-semibold text-black dark:text-white">:</span>
+              <select
+                value={sessionTime.split(':')[1] || ''}
+                onChange={(e) => {
+                  const hour = sessionTime.split(':')[0] || '08';
+                  setSessionTime(`${hour}:${e.target.value}`);
+                }}
+                className="w-full p-3 border border-stroke rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:border-strokedark dark:bg-blacksection"
+                required
+                aria-label="Minutes"
+              >
+                <option value="">MM</option>
+                {QUARTER_HOURS.map((minutes) => (
+                  <option key={minutes} value={minutes}>{minutes}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {error && (
