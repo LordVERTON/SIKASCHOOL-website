@@ -5,7 +5,7 @@
 | Fichier / dossier | Rôle |
 |-------------------|------|
 | `migrations/20260101120000_initial_schema.sql` | **Schéma complet** : enums, tables, index, FK, fonctions, triggers, RLS messagerie / FAQ / témoignages, publication Realtime (messages), tables Stripe (`payments`, `student_credits`, …), Sika AI (`ai_tutor_*`). |
-| `seed.sql` | **Données de test uniquement** (comptes démo, matières, FAQ, etc.). Aucun DDL. |
+| `seed.sql` | **Données de test uniquement** (comptes démo, profils, FAQ, etc.). Aucun DDL. |
 | `config.toml` | Configuration CLI locale (version Postgres, seed, …). |
 
 ## Nom du fichier de migration (`20260101120000` et pas `0001`)
