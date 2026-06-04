@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { canAccessTutorFeatures } from '@/lib/admin-permissions';
 import { sendStudentSessionDecisionEmail } from '@/lib/registration-emails';
 import { publishUserMercureUpdate } from '@/lib/mercure';
+import { getSessionParticipantsMap, mergeSessionStudentIds } from '@/lib/session-participants';
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -35,14 +36,13 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Session is not pending' }, { status: 400 });
     }
 
-    const { data: studentData } = await (supabaseAdmin as any)
+    const { participantsMap } = await getSessionParticipantsMap([sessionId]);
+    const participantStudentIds = mergeSessionStudentIds(session as any, participantsMap);
+    const { data: studentRows } = await (supabaseAdmin as any)
       .from('users')
-      .select('email, first_name')
-      .eq('id', (session as any).student_id)
-      .single();
-
-    const studentEmail: string | null = studentData?.email || null;
-    const studentFirstName: string = studentData?.first_name || '';
+      .select('id, email, first_name')
+      .in('id', participantStudentIds);
+    const students = studentRows || [];
     const { data: tutorData } = await (supabaseAdmin as any)
       .from('users')
       .select('first_name, last_name')
@@ -62,37 +62,40 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ error: 'Failed to update session' }, { status: 500 });
       }
 
-      // Create notification for student
-      const { error: notificationError } = await (supabaseAdmin as any)
-        .from('notifications')
-        .insert({
-          user_id: (session as any).student_id,
-          type: 'BOOKING',
-          title: 'Séance refusée',
-          message: `${tutorName} a refusé votre demande de séance de ${(session as any).subject} le ${new Date((session as any).started_at).toLocaleDateString('fr-FR')}. Réservez une nouvelle séance depuis votre espace étudiant.`,
-          data: {
-            session_id: sessionId,
-            action: 'REJECTED',
-            tutor_name: tutorName
-          }
-        });
+      // Create notification for all students
+      const notifications = students.map((student: any) => ({
+        user_id: student.id,
+        type: 'BOOKING',
+        title: 'Séance refusée',
+        message: `${tutorName} a refusé votre demande de séance de ${(session as any).subject} le ${new Date((session as any).started_at).toLocaleDateString('fr-FR')}. Réservez une nouvelle séance depuis votre espace étudiant.`,
+        data: {
+          session_id: sessionId,
+          action: 'REJECTED',
+          tutor_name: tutorName
+        }
+      }));
+
+      const { error: notificationError } = notifications.length > 0
+        ? await (supabaseAdmin as any).from('notifications').insert(notifications)
+        : { error: null };
 
       if (notificationError) {
         console.error('Error creating notification:', notificationError);
         // Don't fail the request if notification fails
       }
 
-      await publishUserMercureUpdate([user.id, (session as any).student_id], {
+      await publishUserMercureUpdate([user.id, ...participantStudentIds], {
         type: 'session',
         action: 'rejected',
         userId: user.id,
         sessionId,
       });
 
-      if (studentEmail) {
+      for (const student of students) {
+        if (!student.email) continue;
         void sendStudentSessionDecisionEmail({
-          studentEmail,
-          studentFirstName,
+          studentEmail: student.email,
+          studentFirstName: student.first_name || '',
           tutorName,
           action: 'REJECTED',
           subject: (session as any).subject || 'Séance',
@@ -115,37 +118,40 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ error: 'Failed to update session' }, { status: 500 });
       }
 
-      // Create notification for student
-      const { error: notificationError } = await (supabaseAdmin as any)
-        .from('notifications')
-        .insert({
-          user_id: (session as any).student_id,
-          type: 'BOOKING',
-          title: 'Séance confirmée',
-          message: `${tutorName} a confirmé votre demande de séance de ${(session as any).subject} le ${new Date((session as any).started_at).toLocaleDateString('fr-FR')} à ${new Date((session as any).started_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}.`,
-          data: {
-            session_id: sessionId,
-            action: 'ACCEPTED',
-            tutor_name: tutorName
-          }
-        });
+      // Create notification for all students
+      const notifications = students.map((student: any) => ({
+        user_id: student.id,
+        type: 'BOOKING',
+        title: 'Séance confirmée',
+        message: `${tutorName} a confirmé votre demande de séance de ${(session as any).subject} le ${new Date((session as any).started_at).toLocaleDateString('fr-FR')} à ${new Date((session as any).started_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}.`,
+        data: {
+          session_id: sessionId,
+          action: 'ACCEPTED',
+          tutor_name: tutorName
+        }
+      }));
+
+      const { error: notificationError } = notifications.length > 0
+        ? await (supabaseAdmin as any).from('notifications').insert(notifications)
+        : { error: null };
 
       if (notificationError) {
         console.error('Error creating notification:', notificationError);
         // Don't fail the request if notification fails
       }
 
-      await publishUserMercureUpdate([user.id, (session as any).student_id], {
+      await publishUserMercureUpdate([user.id, ...participantStudentIds], {
         type: 'session',
         action: 'accepted',
         userId: user.id,
         sessionId,
       });
 
-      if (studentEmail) {
+      for (const student of students) {
+        if (!student.email) continue;
         void sendStudentSessionDecisionEmail({
-          studentEmail,
-          studentFirstName,
+          studentEmail: student.email,
+          studentFirstName: student.first_name || '',
           tutorName,
           action: 'ACCEPTED',
           subject: (session as any).subject || 'Séance',

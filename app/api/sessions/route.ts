@@ -4,6 +4,7 @@ import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
 import { sendTutorNewBookingRequestEmail } from '@/lib/registration-emails';
 import { publishUserMercureUpdate } from '@/lib/mercure';
+import { syncSessionParticipants } from '@/lib/session-participants';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -36,6 +37,7 @@ export async function POST(req: NextRequest) {
 
     let student_id: string;
     let tutor_id: string;
+    let participantStudentIds: string[] = [];
 
     // Determine who is creating the session
     if (user.role === 'TUTOR' || user.role === 'ADMIN') {
@@ -45,19 +47,19 @@ export async function POST(req: NextRequest) {
       }
       student_id = studentId;
       tutor_id = user.id;
+      participantStudentIds = Array.from(new Set([studentId, ...(studentIds || [])].filter(Boolean)));
       
-      // Vérifier que l'étudiant est assigné à ce tuteur
-      const { data: assignment, error: assignmentError } = await supabaseAdmin
+      // Verifier que tous les etudiants de la seance sont assignes a ce tuteur
+      const { data: assignments, error: assignmentError } = await supabaseAdmin
         .from('tutor_student_assignments')
         .select('id')
         .eq('tutor_id', tutor_id)
-        .eq('student_id', student_id)
-        .eq('is_active', true)
-        .single();
+        .in('student_id', participantStudentIds)
+        .eq('is_active', true);
         
-      if (assignmentError || !assignment) {
+      if (assignmentError || (assignments || []).length !== participantStudentIds.length) {
         return NextResponse.json({ 
-          error: 'Cet étudiant n\'est pas assigné à ce tuteur' 
+          error: 'Un ou plusieurs étudiants ne sont pas assignés à ce tuteur' 
         }, { status: 403 });
       }
       
@@ -68,6 +70,7 @@ export async function POST(req: NextRequest) {
       }
       student_id = user.id;
       tutor_id = tutorId;
+      participantStudentIds = [student_id];
       
       // Vérifier que le tuteur est assigné à cet étudiant
       const { data: assignment, error: assignmentError } = await supabaseAdmin
@@ -137,6 +140,15 @@ export async function POST(req: NextRequest) {
       }, { status: 500 });
     }
 
+    const { error: participantSyncError } = await syncSessionParticipants(data.id, participantStudentIds);
+    if (participantSyncError) {
+      console.error('Failed to sync session participants:', participantSyncError);
+      return NextResponse.json({
+        error: 'Failed to attach session participants',
+        details: participantSyncError.message || 'Unknown participant sync error',
+      }, { status: 500 });
+    }
+
     // Get student name and tutor contact for notifications (in-app + email)
     const { data: studentData, error: studentError } = await supabaseAdmin
       .from('users')
@@ -192,19 +204,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Insert additional participants if provided
-    const extraStudentIds = (studentIds || []).filter((id) => id !== student_id);
-    if (extraStudentIds.length > 0) {
-      const rows = extraStudentIds.map((sid) => ({ session_id: data.id, student_id: sid }));
-      const { error: partErr } = await (supabaseAdmin as any)
-        .from('session_participants')
-        .insert(rows as any);
-      if (partErr) {
-        console.error('Failed to add session participants:', partErr);
-      }
-    }
-
-    await publishUserMercureUpdate([student_id, tutor_id, ...extraStudentIds], {
+    await publishUserMercureUpdate([tutor_id, ...participantStudentIds], {
       type: 'session',
       action: 'created',
       userId: user.id,

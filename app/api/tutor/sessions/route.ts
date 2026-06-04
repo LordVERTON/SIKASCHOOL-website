@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
 import { canAccessTutorFeatures } from '@/lib/admin-permissions';
+import { getSessionParticipantsMap, mergeSessionStudentIds } from '@/lib/session-participants';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -49,21 +50,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Erreur récupération sessions' }, { status: 500 });
     }
 
-    // Fetch participants
     const sessionIds = (sessions || []).map((s: any) => s.id);
-    const participantsBySession = new Map<string, string[]>();
     const allStudentIds = new Set<string>((sessions || []).map((s: any) => s.student_id).filter(Boolean));
-    if (sessionIds.length > 0) {
-      const { data: participants } = await (supabaseAdmin as any)
-        .from('session_participants')
-        .select('session_id, student_id')
-        .in('session_id', sessionIds);
-      (participants || []).forEach((p: any) => {
-        const list = participantsBySession.get(p.session_id) || [];
-        list.push(p.student_id);
-        participantsBySession.set(p.session_id, list);
-        allStudentIds.add(p.student_id);
-      });
+    const { participantsMap, error: participantsError } = await getSessionParticipantsMap(sessionIds);
+    if (participantsError) {
+      console.error('Erreur récupération participants tuteur:', participantsError);
+    }
+    for (const ids of participantsMap.values()) {
+      ids.forEach((studentId) => allStudentIds.add(studentId));
     }
 
     const studentIds = [...allStudentIds];
@@ -78,9 +72,11 @@ export async function GET(request: NextRequest) {
 
     const mapped = (sessions || []).map((s: any) => {
       const direct = studentsMap.get(s.student_id);
-      const partIds = participantsBySession.get(s.id) || [];
-      const participantUsers = partIds.map((sid) => studentsMap.get(sid)).filter(Boolean);
-      const names = [direct, ...participantUsers].filter(Boolean).map((u: any) => `${u.first_name || ''} ${u.last_name || ''}`.trim());
+      const participantIds = mergeSessionStudentIds(s, participantsMap);
+      const names = participantIds
+        .map((sid) => studentsMap.get(sid))
+        .filter(Boolean)
+        .map((u: any) => `${u.first_name || ''} ${u.last_name || ''}`.trim());
       return {
         id: s.id,
         started_at: s.started_at,

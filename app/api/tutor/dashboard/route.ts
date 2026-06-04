@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
 import { canAccessTutorFeatures } from '@/lib/admin-permissions';
+import { getSessionParticipantsMap, mergeSessionStudentIds } from '@/lib/session-participants';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -35,8 +36,13 @@ export async function GET() {
       .eq('tutor_id', tutorId)
       .order('started_at', { ascending: false });
 
+    const sessionIds = (sessions || []).map((s: any) => s.id);
+    const { participantsMap } = await getSessionParticipantsMap(sessionIds);
+
     // Récupérer les informations des étudiants
-    const studentIds = [...new Set((sessions || []).map((s: any) => s.student_id))];
+    const studentIds = [
+      ...new Set((sessions || []).flatMap((s: any) => mergeSessionStudentIds(s, participantsMap))),
+    ];
     const { data: students } = await (supabaseAdmin as any)
       .from('users')
       .select('id, first_name, last_name, email')
@@ -57,7 +63,9 @@ export async function GET() {
     // Calculer les statistiques
     const totalCompleted = (sessions || []).filter((s: any) => s.status === 'COMPLETED').length;
     const totalHours = ((sessions || []).filter((s: any) => s.status === 'COMPLETED').reduce((a: number, s: any) => a + (s.duration_minutes || 0), 0) / 60).toFixed(1);
-    const activeStudents = new Set((sessions || []).map((s: any) => s.student_id)).size;
+    const activeStudents = new Set(
+      (sessions || []).flatMap((s: any) => mergeSessionStudentIds(s, participantsMap))
+    ).size;
     const upcomingThisWeek = (sessions || []).filter((s: any) => {
       const sessionDate = new Date(s.started_at);
       const today = new Date();
@@ -107,15 +115,18 @@ export async function GET() {
       .sort((a: any, b: any) => new Date(a.started_at).getTime() - new Date(b.started_at).getTime()) // Tri chronologique
       .slice(0, 4)
       .map((s: any) => {
-        const student = studentsMap.get(s.student_id);
-        const studentName = student ? `${student.first_name} ${student.last_name}` : 'Élève';
+        const studentNames = mergeSessionStudentIds(s, participantsMap)
+          .map((studentId) => studentsMap.get(studentId))
+          .filter(Boolean)
+          .map((student: any) => `${student.first_name || ''} ${student.last_name || ''}`.trim())
+          .filter(Boolean);
         return {
           id: s.id,
           date: new Date(s.started_at).toLocaleDateString('fr-FR'),
           time: new Date(s.started_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
           duration: s.duration_minutes || 60,
           type: s.session_type || 'INDIVIDUAL',
-          participants: studentName,
+          participants: studentNames.length > 0 ? studentNames.join(', ') : 'Élève',
           subject: s.subject || 'Cours',
           status: s.status
         };
@@ -132,8 +143,11 @@ export async function GET() {
       .sort((a: any, b: any) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime()) // Tri chronologique inverse (plus récentes en premier)
       .slice(0, 4)
       .map((s: any) => {
-        const student = studentsMap.get(s.student_id);
-        const studentName = student ? `${student.first_name} ${student.last_name}` : 'Élève';
+        const studentNames = mergeSessionStudentIds(s, participantsMap)
+          .map((studentId) => studentsMap.get(studentId))
+          .filter(Boolean)
+          .map((student: any) => `${student.first_name || ''} ${student.last_name || ''}`.trim())
+          .filter(Boolean);
         return {
           id: s.id,
           course: s.subject || 'Cours',
@@ -142,7 +156,7 @@ export async function GET() {
           time: new Date(s.started_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
           duration: s.duration_minutes || 60,
           status: s.status,
-          participants: [studentName],
+          participants: studentNames.length > 0 ? studentNames : ['Élève'],
           rating: s.student_rating || null,
           topics: s.topics_covered || null,
           homework: s.homework_assigned || null

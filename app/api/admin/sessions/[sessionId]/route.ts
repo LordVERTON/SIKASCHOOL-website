@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
 import { canAccessAdminFeatures } from '@/lib/admin-permissions';
+import { syncSessionParticipants } from '@/lib/session-participants';
 
 export async function PUT(
   request: NextRequest,
@@ -81,6 +82,12 @@ export async function PUT(
     if (updateError) {
       console.error('Erreur lors de la mise à jour de la session:', updateError);
       return NextResponse.json({ error: 'Failed to update session' }, { status: 500 });
+    }
+
+    const { error: participantSyncError } = await syncSessionParticipants(sessionId, [student_id]);
+    if (participantSyncError) {
+      console.error('Erreur lors de la synchronisation des participants:', participantSyncError);
+      return NextResponse.json({ error: 'Failed to attach session participants' }, { status: 500 });
     }
 
     // Créer une notification pour l'étudiant si la session a été modifiée

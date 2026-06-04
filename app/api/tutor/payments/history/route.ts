@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
 import { canAccessTutorFeatures } from '@/lib/admin-permissions';
+import { getSessionParticipantsMap, mergeSessionStudentIds } from '@/lib/session-participants';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -42,7 +43,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to load' }, { status: 500 });
     }
 
-    const studentIds = [...new Set((sessions || []).map((s: any) => s.student_id).filter(Boolean))];
+    const { participantsMap } = await getSessionParticipantsMap((sessions || []).map((s: any) => s.id));
+    const studentIds = [
+      ...new Set((sessions || []).flatMap((s: any) => mergeSessionStudentIds(s, participantsMap))),
+    ];
     let studentsMap = new Map<string, any>();
     if (studentIds.length > 0) {
       const { data: students } = await (supabaseAdmin as any)
@@ -53,11 +57,15 @@ export async function GET(req: NextRequest) {
     }
 
     const items = (sessions || []).map((s: any) => {
-      const st = studentsMap.get(s.student_id);
+      const studentNames = mergeSessionStudentIds(s, participantsMap)
+        .map((studentId) => studentsMap.get(studentId))
+        .filter(Boolean)
+        .map((student: any) => `${student.first_name || ''} ${student.last_name || ''}`.trim())
+        .filter(Boolean);
       return {
         id: s.id,
         declaredAt: s.started_at,
-        student: st ? `${st.first_name || ''} ${st.last_name || ''}`.trim() : 'Élève',
+        student: studentNames.length > 0 ? studentNames.join(', ') : 'Élève',
         subject: s.subject,
         level: s.level,
         durationMinutes: s.duration_minutes,

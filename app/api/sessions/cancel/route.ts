@@ -6,6 +6,7 @@ import {
   sendTutorSessionCancelledEmail,
 } from '@/lib/registration-emails';
 import { publishUserMercureUpdate } from '@/lib/mercure';
+import { getSessionParticipantsMap, mergeSessionStudentIds } from '@/lib/session-participants';
 
 type SessionRow = {
   id: string;
@@ -51,8 +52,11 @@ export async function PATCH(request: NextRequest) {
     }
     const currentSession = session as SessionRow;
 
-    // Vérifier que l'utilisateur est soit l'étudiant, soit le tuteur de cette session
-    if (user.id !== currentSession.student_id && user.id !== currentSession.tutor_id) {
+    const { participantsMap } = await getSessionParticipantsMap([sessionId]);
+    const participantStudentIds = mergeSessionStudentIds(currentSession, participantsMap);
+
+    // Vérifier que l'utilisateur est soit un étudiant participant, soit le tuteur de cette session
+    if (!participantStudentIds.includes(user.id) && user.id !== currentSession.tutor_id) {
       return NextResponse.json({ error: 'Vous ne pouvez annuler que vos propres séances' }, { status: 403 });
     }
 
@@ -92,29 +96,14 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Échec de l’annulation de la séance' }, { status: 500 });
     }
 
-    // Récupérer les participants de la session
-    const { data: participants, error: participantsError } = await (supabaseAdmin as any)
-      .from('session_participants')
-      .select('student_id')
-      .eq('session_id', sessionId);
-
-    if (participantsError) {
-      console.error('Erreur lors de la récupération des participants :', participantsError);
-    }
-
     // Créer la liste des utilisateurs à notifier
     const userIdsToNotify = new Set<string>();
-    
-    // Ajouter l'étudiant principal
-    userIdsToNotify.add(currentSession.student_id);
     
     // Ajouter le tuteur
     userIdsToNotify.add(currentSession.tutor_id);
     
-    // Ajouter les participants supplémentaires
-    if (participants) {
-      participants.forEach((p: any) => userIdsToNotify.add(p.student_id));
-    }
+    // Ajouter tous les étudiants participants
+    participantStudentIds.forEach((studentId) => userIdsToNotify.add(studentId));
 
     // Récupérer les noms des utilisateurs pour les notifications
     const { data: users, error: usersError } = await (supabaseAdmin as any)

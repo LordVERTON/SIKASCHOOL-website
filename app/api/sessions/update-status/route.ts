@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { publishUserMercureUpdate } from '@/lib/mercure';
+import { getSessionParticipantsMap, mergeSessionStudentIds } from '@/lib/session-participants';
 
 export async function POST(_request: NextRequest) {
   try {
@@ -118,13 +119,18 @@ export async function POST(_request: NextRequest) {
       }
     }
 
-    const realtimeUserIds = new Set<string>();
-    for (const session of [
+    const affectedSessions = [
       ...sessionsInProgress,
       ...((allSessions || []) as any[]),
       ...((pastSessions || []) as any[]),
-    ]) {
-      if (session.student_id) realtimeUserIds.add(session.student_id);
+    ];
+    const { participantsMap } = await getSessionParticipantsMap(
+      affectedSessions.map((session: any) => session.id)
+    );
+
+    const realtimeUserIds = new Set<string>();
+    for (const session of affectedSessions) {
+      mergeSessionStudentIds(session, participantsMap).forEach((studentId) => realtimeUserIds.add(studentId));
       if (session.tutor_id) realtimeUserIds.add(session.tutor_id);
     }
 

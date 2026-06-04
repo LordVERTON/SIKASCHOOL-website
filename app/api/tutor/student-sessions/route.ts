@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
+import { getSessionParticipantsMap, mergeSessionStudentIds } from '@/lib/session-participants';
 
 export async function GET(req: Request) {
   try {
@@ -36,6 +37,7 @@ export async function GET(req: Request) {
       .from('sessions')
       .select(`
         id,
+        student_id,
         subject,
         level,
         session_type,
@@ -49,13 +51,24 @@ export async function GET(req: Request) {
         created_at
       `)
       .eq('tutor_id', tutorId)
-      .eq('student_id', studentId)
       .order('started_at', { ascending: false });
 
     if (sessionsError) {
       console.error('Erreur lors de la récupération des sessions:', sessionsError);
       return NextResponse.json({ error: 'Erreur lors de la récupération des sessions' }, { status: 500 });
     }
+
+    const { participantsMap, error: participantsError } = await getSessionParticipantsMap(
+      (sessions || []).map((session: any) => session.id)
+    );
+    if (participantsError) {
+      console.error('Erreur lors de la récupération des participants:', participantsError);
+      return NextResponse.json({ error: 'Erreur lors de la récupération des participants' }, { status: 500 });
+    }
+
+    const studentSessions = (sessions || []).filter((session: any) =>
+      mergeSessionStudentIds(session, participantsMap).includes(studentId)
+    );
 
     // Récupérer les informations de l'étudiant
     const { data: studentInfo, error: studentError } = await (supabaseAdmin as any)
@@ -80,18 +93,18 @@ export async function GET(req: Request) {
     }
 
     // Calculer les statistiques
-    const totalSessions = sessions?.length || 0;
-    const completedSessions = sessions?.filter((s: any) => s.status === 'COMPLETED').length || 0;
-    const totalHours = sessions?.filter((s: any) => s.status === 'COMPLETED').reduce((sum: number, s: any) => sum + (s.duration_minutes || 0), 0) / 60 || 0;
-    const averageRating = sessions?.filter((s: any) => s.status === 'COMPLETED' && s.student_rating).length > 0 
-      ? sessions.filter((s: any) => s.status === 'COMPLETED' && s.student_rating).reduce((sum: number, s: any) => sum + (s.student_rating || 0), 0) / sessions.filter((s: any) => s.status === 'COMPLETED' && s.student_rating).length
+    const totalSessions = studentSessions.length;
+    const completedSessions = studentSessions.filter((s: any) => s.status === 'COMPLETED').length;
+    const totalHours = studentSessions.filter((s: any) => s.status === 'COMPLETED').reduce((sum: number, s: any) => sum + (s.duration_minutes || 0), 0) / 60 || 0;
+    const averageRating = studentSessions.filter((s: any) => s.status === 'COMPLETED' && s.student_rating).length > 0 
+      ? studentSessions.filter((s: any) => s.status === 'COMPLETED' && s.student_rating).reduce((sum: number, s: any) => sum + (s.student_rating || 0), 0) / studentSessions.filter((s: any) => s.status === 'COMPLETED' && s.student_rating).length
       : 0;
 
     // Dernière session
-    const lastSession = sessions?.[0] || null;
+    const lastSession = studentSessions[0] || null;
 
     // Sessions par mois pour l'affichage
-    const sessionsByMonth = sessions?.reduce((acc: any, session: any) => {
+    const sessionsByMonth = studentSessions.reduce((acc: any, session: any) => {
       const month = new Date(session.started_at).toISOString().substring(0, 7); // YYYY-MM
       if (!acc[month]) {
         acc[month] = [];
@@ -109,7 +122,7 @@ export async function GET(req: Request) {
         level: studentInfo.students?.[0]?.grade_level || 'Débutant',
         academic_goals: studentInfo.students?.[0]?.academic_goals || ''
       },
-      sessions: sessions || [],
+      sessions: studentSessions,
       sessionsByMonth,
       statistics: {
         totalSessions,

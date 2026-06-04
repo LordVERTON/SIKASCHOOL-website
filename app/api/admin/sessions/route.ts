@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
 import { canAccessAdminFeatures } from '@/lib/admin-permissions';
+import { syncSessionParticipants } from '@/lib/session-participants';
 
 export async function GET() {
   try {
@@ -157,6 +158,12 @@ export async function POST(request: NextRequest) {
     if (sessionError) {
       console.error('Erreur lors de la creation de la session:', sessionError);
       return NextResponse.json({ error: 'Failed to create session' }, { status: 500 });
+    }
+
+    const { error: participantSyncError } = await syncSessionParticipants(newSession.id, [student_id]);
+    if (participantSyncError) {
+      console.error('Erreur lors de la synchronisation des participants:', participantSyncError);
+      return NextResponse.json({ error: 'Failed to attach session participants' }, { status: 500 });
     }
 
     return NextResponse.json({
