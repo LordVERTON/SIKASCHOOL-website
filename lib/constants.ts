@@ -92,22 +92,6 @@ export const API_ENDPOINTS = {
     LOGIN: '/api/auth/login',
     LOGOUT: '/api/auth/logout',
     ME: '/api/auth/me'
-  },
-  STUDENT: {
-    DASHBOARD: '/api/student/dashboard',
-    COURSES: '/api/student/courses',
-    ASSIGNMENTS: '/api/student/assignments',
-    NOTIFICATIONS: '/api/student/notifications',
-    SESSIONS: '/api/student/sessions',
-    TUTORS: '/api/student/tutors'
-  },
-  TUTOR: {
-    SESSIONS: '/api/tutor/sessions',
-    PAYMENTS: '/api/tutor/payments'
-  },
-  ADMIN: {
-    PRICING: '/api/admin/pricing',
-    USER_CREDENTIALS: '/api/admin/users/credentials'
   }
 } as const;
 
@@ -119,24 +103,4 @@ export const APP_CONFIG = {
   SUPPORT_EMAIL: 'support@sikaschool.com'
 } as const;
 
-// Types de sessions
-export const SESSION_TYPES = {
-  TRIAL: 'TRIAL',
-  REGULAR: 'REGULAR'
-} as const;
 
-// Statuts de réservation
-export const BOOKING_STATUS = {
-  PENDING: 'PENDING',
-  CONFIRMED: 'CONFIRMED',
-  COMPLETED: 'COMPLETED',
-  CANCELLED: 'CANCELLED'
-} as const;
-
-// Niveaux académiques
-export const ACADEMIC_LEVELS = {
-  ELEMENTARY: 'ELEMENTARY',
-  MIDDLE_SCHOOL: 'MIDDLE_SCHOOL',
-  HIGH_SCHOOL: 'HIGH_SCHOOL',
-  UNIVERSITY: 'UNIVERSITY'
-} as const;
