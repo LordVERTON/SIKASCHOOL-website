@@ -273,10 +273,10 @@ export default function TutorsPage() {
           </div>
         )}
 
-        {/* Retour au dashboard */}
+        {/* Retour au tableau de bord */}
         <div className="mt-10 text-center">
           <Link
-            href="/student/dashboard"
+            href="/student"
             className="inline-flex items-center px-6 py-3 border border-stroke text-black dark:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition"
           >
             ← Retour au tableau de bord

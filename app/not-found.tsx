@@ -23,7 +23,7 @@ export default function NotFound() {
           </Link>
           
           <Link 
-            href="/student/dashboard"
+            href="/student"
             className="inline-block w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white px-6 py-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
           >
             Tableau de bord étudiant

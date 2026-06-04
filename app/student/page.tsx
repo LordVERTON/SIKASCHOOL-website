@@ -30,7 +30,7 @@ type StudentSessionsResponse = {
 };
 
 const shortcuts = [
-  { href: "/student/dashboard", label: "Réserver", detail: "Planifier une séance" },
+  { href: "/student/calendar", label: "Réserver", detail: "Planifier une séance" },
   { href: "/student/calendar", label: "Calendrier", detail: "Voir le planning" },
   { href: "/student/messages", label: "Messages", detail: "Écrire au tuteur" },
 ];

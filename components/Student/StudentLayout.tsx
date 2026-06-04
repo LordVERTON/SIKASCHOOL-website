@@ -90,7 +90,7 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
           </div>
           <nav className="flex-1 px-2 py-4 space-y-1">
             <Link
-              href="/student/dashboard"
+              href="/student"
               className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-waterloo hover:bg-gray-50 hover:text-black dark:text-manatee dark:hover:bg-gray-800 dark:hover:text-white"
               onClick={() => setSidebarOpen(false)}
             >
@@ -247,7 +247,7 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
         ]}
         menuItems={[
           {
-            href: "/student/dashboard",
+            href: "/student",
             label: "Dashboard",
             icon: (
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 5h16M4 12h7M4 19h16"/><path d="M15 9h5v6h-5z"/></svg>
