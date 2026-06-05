@@ -155,7 +155,7 @@ export default function StudentHome() {
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
             {shortcuts.map((item) => (
               <Link
-                key={item.href}
+                key={`${item.label}-${item.href}`}
                 href={item.href}
                 className="rounded-2xl border border-stroke bg-[#f7f8fb] p-4 transition hover:border-primary/40 hover:bg-primary/5 dark:border-strokedark dark:bg-black lg:rounded-lg"
               >
