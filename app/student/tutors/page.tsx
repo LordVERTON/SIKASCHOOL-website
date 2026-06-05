@@ -24,8 +24,6 @@ interface Tutor {
 export default function TutorsPage() {
   const [tutors, setTutors] = useState<Tutor[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSubject, setSelectedSubject] = useState('');
   const [bookingTutorId, setBookingTutorId] = useState<string | null>(null);
   const [showAlert, setShowAlert] = useState(false);
   const [alertTitle, setAlertTitle] = useState('');
@@ -73,15 +71,6 @@ export default function TutorsPage() {
     fetchTutors();
   }, []);
 
-  const allSubjects = Array.from(new Set(tutors.flatMap(tutor => tutor.subjects || [])));
-
-  const filteredTutors = tutors.filter(tutor => {
-    const matchesSearch = tutor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (tutor.subjects || []).some(subject => subject.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesSubject = !selectedSubject || (tutor.subjects || []).includes(selectedSubject);
-    return matchesSearch && matchesSubject;
-  });
-
   if (loading) {
     return (
       <main className="pb-20 pt-15 lg:pb-25 xl:pb-30">
@@ -112,42 +101,9 @@ export default function TutorsPage() {
           </p>
         </div>
 
-        {/* Filtres et recherche */}
-        <div className="mt-10 animate_top rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="block text-sm font-medium text-black dark:text-white mb-2">
-                Rechercher
-              </label>
-              <input
-                type="text"
-                placeholder="Nom du tuteur ou matière..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full p-3 border border-stroke rounded-lg dark:border-strokedark dark:bg-blacksection"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-black dark:text-white mb-2">
-                Matière
-              </label>
-              <select
-                value={selectedSubject}
-                onChange={(e) => setSelectedSubject(e.target.value)}
-                className="w-full p-3 border border-stroke rounded-lg dark:border-strokedark dark:bg-blacksection"
-              >
-                <option value="">Toutes les matières</option>
-                {allSubjects.map((subject) => (
-                  <option key={subject} value={subject}>{subject}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-
         {/* Liste des tuteurs */}
         <div className="mt-10 grid gap-7.5 md:grid-cols-2 lg:grid-cols-3">
-          {filteredTutors.map((tutor) => (
+          {tutors.map((tutor) => (
             <div
               key={tutor.id}
               className="animate_top rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection"
@@ -245,30 +201,16 @@ export default function TutorsPage() {
           ))}
         </div>
 
-        {filteredTutors.length === 0 && (
+        {tutors.length === 0 && (
           <div className="mt-10 animate_top rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection text-center">
             <div className="py-12">
               <div className="text-6xl mb-4">👨‍🏫</div>
               <h3 className="text-xl font-semibold text-black dark:text-white mb-2">
-                {tutors.length === 0 ? 'Aucun tuteur attribué' : 'Aucun tuteur trouvé'}
+                Aucun tuteur attribué
               </h3>
               <p className="text-waterloo dark:text-manatee mb-6">
-                {tutors.length === 0 
-                  ? 'Aucun tuteur ne vous a encore été attribué. Contactez l\'administration pour obtenir des tuteurs.'
-                  : 'Essayez de modifier vos critères de recherche.'
-                }
+                Aucun tuteur ne vous a encore été attribué. Contactez l&apos;administration pour obtenir des tuteurs.
               </p>
-              {tutors.length > 0 && (
-                <button
-                  onClick={() => {
-                    setSearchTerm('');
-                    setSelectedSubject('');
-                  }}
-                  className="px-6 py-3 bg-primary text-white rounded-lg hover:opacity-90 transition"
-                >
-                  Réinitialiser les filtres
-                </button>
-              )}
             </div>
           </div>
         )}
