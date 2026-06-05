@@ -16,10 +16,11 @@ export async function GET() {
     // Using session_payments as payouts source
     const { data, error } = await (supabaseAdmin as any)
       .from('session_payments')
-      .select('paid_at, amount_cents')
+      .select('processed_at, created_at, amount_cents, tutor_commission_cents')
       .eq('tutor_id', user.id)
-      .eq('status', 'PAID')
-      .order('paid_at', { ascending: false });
+      .eq('payment_status', 'PAID')
+      .order('processed_at', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('payouts error', error);
@@ -27,8 +28,8 @@ export async function GET() {
     }
 
     const payouts = (data || []).map((p: any) => ({
-      date: p.paid_at,
-      amountCents: p.amount_cents,
+      date: p.processed_at || p.created_at,
+      amountCents: p.tutor_commission_cents || p.amount_cents,
       accountMasked: 'FR******************88122**',
     }));
 

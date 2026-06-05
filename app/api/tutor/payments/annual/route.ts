@@ -25,13 +25,14 @@ export async function GET() {
     if (!rows) {
       const { data: payments } = await (supabaseAdmin as any)
         .from('session_payments')
-        .select('amount_cents, paid_at, status')
+        .select('amount_cents, tutor_commission_cents, processed_at, created_at, payment_status')
         .eq('tutor_id', user.id)
-        .eq('status', 'PAID');
+        .eq('payment_status', 'PAID');
       const map: Record<string, number> = {};
       for (const p of payments || []) {
-        const year = (p.paid_at ? new Date(p.paid_at) : new Date()).getFullYear();
-        map[year] = (map[year] || 0) + (p.amount_cents || 0);
+        const paidAt = p.processed_at || p.created_at;
+        const year = (paidAt ? new Date(paidAt) : new Date()).getFullYear();
+        map[year] = (map[year] || 0) + (p.tutor_commission_cents || p.amount_cents || 0);
       }
       rows = Object.entries(map).map(([year, cents]) => ({ year: Number(year), netCents: cents, pasCents: 0 }));
     }
