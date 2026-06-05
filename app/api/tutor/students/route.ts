@@ -28,7 +28,7 @@ export async function GET() {
           avatar_url,
           phone,
           postal_code,
-          students(
+          students!students_user_id_fkey(
             user_id,
             grade_level,
             academic_goals,

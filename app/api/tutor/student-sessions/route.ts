@@ -79,7 +79,7 @@ export async function GET(req: Request) {
         last_name,
         email,
         avatar_url,
-        students(
+        students!students_user_id_fkey(
           grade_level,
           academic_goals
         )
