@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { mercureUserTopic, useMercure } from "@/hooks/useMercure";
 
 type Role = "student" | "tutor";
@@ -17,17 +17,34 @@ type UseRealtimeSessionsParams = {
  */
 export function useRealtimeSessions({
   userId,
-  role,
   enabled = true,
   onChange,
 }: UseRealtimeSessionsParams) {
+  const onChangeRef = useRef(onChange);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
-    if (!enabled || !userId) {
-      return;
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
+
+  const scheduleChange = useCallback(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
     }
 
-    onChange();
-  }, [enabled, onChange, role, userId]);
+    debounceRef.current = setTimeout(() => {
+      debounceRef.current = null;
+      onChangeRef.current();
+    }, 750);
+  }, []);
 
   useMercure({
     enabled: enabled && !!userId,
@@ -36,10 +53,10 @@ export function useRealtimeSessions({
       try {
         const payload = JSON.parse(event.data) as { type?: string };
         if (payload.type === "session" || payload.type === "notification") {
-          onChange();
+          scheduleChange();
         }
       } catch {
-        onChange();
+        scheduleChange();
       }
     },
   });
