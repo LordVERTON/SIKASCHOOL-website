@@ -57,6 +57,21 @@ interface Payment {
   created_at: string;
 }
 
+interface Review {
+  id: string;
+  studentId: string | null;
+  tutorId: string | null;
+  studentName: string;
+  studentEmail: string | null;
+  studentRole: string | null;
+  tutorName: string;
+  content: string;
+  rating: number;
+  avatarUrl: string | null;
+  isApproved: boolean;
+  createdAt: string;
+}
+
 const getSessionStatusLabel = (status: string) => {
   switch (status) {
     case 'PENDING':
@@ -77,10 +92,11 @@ const getSessionStatusLabel = (status: string) => {
 function AdministrationPageContent() {
   const { user, loading } = useAuth(['TUTOR', 'ADMIN']);
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState<'users' | 'sessions' | 'payments' | 'assignments' | 'sync'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'sessions' | 'payments' | 'reviews' | 'assignments' | 'sync'>('users');
   const [users, setUsers] = useState<User[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [loadingData, setLoadingData] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [showUserModal, setShowUserModal] = useState(false);
@@ -189,6 +205,12 @@ function AdministrationPageContent() {
         const paymentsData = await paymentsResponse.json();
         setPayments(paymentsData);
       }
+
+      const reviewsResponse = await fetch('/api/admin/reviews');
+      if (reviewsResponse.ok) {
+        const reviewsData = await reviewsResponse.json();
+        setReviews(reviewsData.reviews || []);
+      }
       
       setDataLoaded(true);
     } catch (_error) {
@@ -211,6 +233,42 @@ function AdministrationPageContent() {
       } catch (_error) {
         console.warn('Erreur:', _error);
       }
+    }
+  };
+
+  const handleModerateReview = async (reviewId: string, isApproved: boolean) => {
+    try {
+      const response = await fetch(`/api/admin/reviews/${reviewId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ isApproved }),
+      });
+
+      if (response.ok) {
+        fetchData();
+      }
+    } catch (_error) {
+      console.warn('Erreur modération commentaire:', _error);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!askForConfirmation('Supprimer définitivement ce commentaire ?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/reviews/${reviewId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        fetchData();
+      }
+    } catch (_error) {
+      console.warn('Erreur suppression commentaire:', _error);
     }
   };
 
@@ -504,6 +562,7 @@ function AdministrationPageContent() {
               { id: 'users', label: 'Utilisateurs', count: users.length },
               { id: 'sessions', label: 'Sessions', count: sessions.length },
               { id: 'payments', label: 'Paiements', count: payments.length },
+              { id: 'reviews', label: 'Commentaires', count: reviews.filter((review) => !review.isApproved).length },
               { id: 'assignments', label: 'Assignations', count: 0 },
               { id: 'sync', label: 'Synchronisation', count: 0 }
             ].map((tab) => (
@@ -823,6 +882,108 @@ function AdministrationPageContent() {
                         </td>
                       </tr>
                     ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Onglet Commentaires */}
+          {activeTab === 'reviews' && (
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h2 className="text-lg font-medium text-gray-900 dark:text-white">
+                  Modération des commentaires
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Publiez les commentaires validés ou retirez ceux qui ne doivent plus apparaître.
+                </p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Auteur
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Tuteur
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Commentaire
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Statut
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Date
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    {reviews.map((review) => (
+                      <tr key={review.id}>
+                        <td className="px-6 py-4 align-top">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                            {review.studentName}
+                          </div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                            {review.studentEmail || review.studentRole || '-'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 align-top text-sm text-gray-500 dark:text-gray-400">
+                          {review.tutorName}
+                        </td>
+                        <td className="px-6 py-4 align-top">
+                          <div className="max-w-xl text-sm text-gray-700 dark:text-gray-300">
+                            <div className="mb-1 font-medium text-gray-900 dark:text-white">
+                              {review.rating}/5
+                            </div>
+                            {review.content}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 align-top">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            review.isApproved
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                              : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                          }`}>
+                            {review.isApproved ? 'Publié' : 'En attente'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 align-top text-sm text-gray-500 dark:text-gray-400">
+                          {new Date(review.createdAt).toLocaleDateString('fr-FR')}
+                        </td>
+                        <td className="px-6 py-4 align-top text-sm font-medium space-x-2">
+                          <button
+                            onClick={() => handleModerateReview(review.id, !review.isApproved)}
+                            className={`${
+                              review.isApproved
+                                ? 'text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 dark:hover:text-yellow-300'
+                                : 'text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300'
+                            }`}
+                          >
+                            {review.isApproved ? 'Masquer' : 'Publier'}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteReview(review.id)}
+                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                          >
+                            Supprimer
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {reviews.length === 0 && (
+                      <tr>
+                        <td colSpan={6} className="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                          Aucun commentaire à modérer.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
