@@ -20,14 +20,45 @@ interface Tutor {
   totalSessions: number;
 }
 
+interface Review {
+  id: string;
+  tutorId: string | null;
+  tutorName: string;
+  content: string;
+  rating: number;
+  isApproved: boolean;
+  createdAt: string;
+}
+
 export default function TutorsPage() {
   const [tutors, setTutors] = useState<Tutor[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [bookingTutorId, setBookingTutorId] = useState<string | null>(null);
   const [showAlert, setShowAlert] = useState(false);
   const [alertTitle, setAlertTitle] = useState('');
   const [alertMessage, setAlertMessage] = useState('');
   const [alertType, setAlertType] = useState<'success' | 'error' | 'warning' | 'info'>('success');
+  const [reviewTutor, setReviewTutor] = useState<Tutor | null>(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewContent, setReviewContent] = useState('');
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+
+  const fetchReviews = async () => {
+    try {
+      const response = await fetch('/api/student/reviews', {
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setReviews(data.reviews || []);
+      }
+    } catch (error) {
+      console.warn('Erreur réseau lors de la récupération des commentaires:', error);
+    }
+  };
 
   useEffect(() => {
     const fetchTutors = async () => {
@@ -68,7 +99,85 @@ export default function TutorsPage() {
     };
 
     fetchTutors();
+    fetchReviews();
   }, []);
+
+  const handleReviewSubmit = async () => {
+    if (!reviewTutor) return;
+    setReviewError(null);
+
+    if (reviewContent.trim().length < 10) {
+      setReviewError('Le commentaire doit contenir au moins 10 caractères.');
+      return;
+    }
+
+    setReviewLoading(true);
+    try {
+      const response = await fetch('/api/student/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          tutorId: reviewTutor.id,
+          rating: reviewRating,
+          content: reviewContent,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setReviewError(data?.error || 'Impossible d’envoyer le commentaire.');
+        return;
+      }
+
+      setReviewTutor(null);
+      setReviewContent('');
+      setReviewRating(5);
+      await fetchReviews();
+      setAlertTitle('Commentaire envoyé');
+      setAlertMessage(data?.message || 'Votre commentaire sera publié après validation.');
+      setAlertType('success');
+      setShowAlert(true);
+    } catch {
+      setReviewError('Erreur réseau lors de l’envoi du commentaire.');
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    // eslint-disable-next-line no-alert
+    if (!window.confirm('Supprimer ce commentaire ?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/student/reviews?reviewId=${encodeURIComponent(reviewId)}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setAlertTitle('Suppression impossible');
+        setAlertMessage(data?.error || 'Impossible de supprimer ce commentaire.');
+        setAlertType('error');
+        setShowAlert(true);
+        return;
+      }
+
+      await fetchReviews();
+      setAlertTitle('Commentaire supprimé');
+      setAlertMessage('Votre commentaire a bien été supprimé.');
+      setAlertType('success');
+      setShowAlert(true);
+    } catch {
+      setAlertTitle('Erreur réseau');
+      setAlertMessage('Impossible de supprimer le commentaire pour le moment.');
+      setAlertType('error');
+      setShowAlert(true);
+    }
+  };
 
   if (loading) {
     return (
@@ -149,7 +258,7 @@ export default function TutorsPage() {
                 </div>
               </div>
 
-              <div>
+              <div className="space-y-3">
                 <button
                   type="button"
                   disabled={!tutor.isAvailable}
@@ -161,6 +270,18 @@ export default function TutorsPage() {
                   }`}
                 >
                   {tutor.isAvailable ? 'Réserver' : 'Indisponible'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setReviewTutor(tutor);
+                    setReviewError(null);
+                    setReviewContent('');
+                    setReviewRating(5);
+                  }}
+                  className="w-full rounded-lg border border-stroke px-4 py-2 text-center text-sm font-medium text-primary transition hover:bg-primary/5 dark:border-strokedark"
+                >
+                  Laisser un commentaire
                 </button>
               </div>
             </div>
@@ -181,6 +302,52 @@ export default function TutorsPage() {
           </div>
         )}
 
+        {reviews.length > 0 && (
+          <section className="mt-12 animate_top">
+            <h2 className="text-2xl font-semibold text-black dark:text-white">
+              Mes commentaires
+            </h2>
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              {reviews.map((review) => (
+                <article
+                  key={review.id}
+                  className="rounded-lg border border-stroke bg-white p-5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection"
+                >
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="font-medium text-black dark:text-white">
+                        {review.tutorName}
+                      </p>
+                      <p className="text-sm text-waterloo dark:text-manatee">
+                        {new Date(review.createdAt).toLocaleDateString('fr-FR')} · {review.rating}/5
+                      </p>
+                    </div>
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-medium ${
+                        review.isApproved
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-200'
+                          : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-200'
+                      }`}
+                    >
+                      {review.isApproved ? 'Publié' : 'En attente'}
+                    </span>
+                  </div>
+                  <p className="text-sm text-waterloo dark:text-manatee">
+                    {review.content}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteReview(review.id)}
+                    className="mt-4 text-sm font-medium text-red-600 transition hover:text-red-800 dark:text-red-400"
+                  >
+                    Supprimer
+                  </button>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
       </div>
 
       {bookingTutorId && (
@@ -196,6 +363,75 @@ export default function TutorsPage() {
             setShowAlert(true);
           }}
         />
+      )}
+
+      {reviewTutor && (
+        <div className="fixed inset-0 z-999 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-solid-10 dark:bg-blacksection">
+            <div className="mb-5">
+              <h2 className="text-xl font-semibold text-black dark:text-white">
+                Laisser un commentaire
+              </h2>
+              <p className="mt-1 text-sm text-waterloo dark:text-manatee">
+                Votre avis sur l'accompagnement avec {reviewTutor.name}.
+              </p>
+            </div>
+
+            <label className="mb-2 block text-sm font-medium text-black dark:text-white">
+              Note
+            </label>
+            <div className="mb-5 flex gap-2">
+              {[1, 2, 3, 4, 5].map((rating) => (
+                <button
+                  key={rating}
+                  type="button"
+                  onClick={() => setReviewRating(rating)}
+                  className={`flex h-10 w-10 items-center justify-center rounded-full border text-sm font-semibold transition ${
+                    reviewRating === rating
+                      ? 'border-primary bg-primary text-white'
+                      : 'border-stroke text-waterloo hover:border-primary hover:text-primary dark:border-strokedark'
+                  }`}
+                >
+                  {rating}
+                </button>
+              ))}
+            </div>
+
+            <label className="mb-2 block text-sm font-medium text-black dark:text-white">
+              Commentaire
+            </label>
+            <textarea
+              value={reviewContent}
+              onChange={(event) => setReviewContent(event.target.value)}
+              rows={5}
+              placeholder="Partagez votre expérience avec SikaSchool..."
+              className="w-full resize-none rounded-lg border border-stroke p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-strokedark dark:bg-blacksection"
+            />
+
+            {reviewError && (
+              <p className="mt-3 text-sm text-red-600 dark:text-red-400">{reviewError}</p>
+            )}
+
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setReviewTutor(null)}
+                disabled={reviewLoading}
+                className="rounded-lg border border-stroke px-5 py-2 text-sm font-medium text-waterloo transition hover:bg-gray-50 disabled:opacity-60 dark:border-strokedark dark:hover:bg-black/30"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={handleReviewSubmit}
+                disabled={reviewLoading}
+                className="rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-60"
+              >
+                {reviewLoading ? 'Envoi...' : 'Envoyer'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <AlertModal
