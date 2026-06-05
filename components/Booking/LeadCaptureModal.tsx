@@ -8,6 +8,7 @@ import {
   findPhoneCountry,
   normalizeForSearch,
 } from "@/lib/phone-countries";
+import { TUTOR_SUBJECTS } from "@/lib/tutor-subjects";
 
 type LeadCaptureModalProps = {
   isOpen: boolean;
@@ -18,12 +19,6 @@ type LeadCaptureModalProps = {
 
 const LEVELS = [
   "6ème","5ème","4ème","3ème","Seconde","Première","Terminale","Supérieur"
-] as const;
-
-const SUBJECTS = [
-  "Mathématiques","Physiques","Sciences de l'ingénieur","Français","Histoire",
-  "Géographie","Méthodologie","Chimie","Informatique","Biologie","Économie",
-  "Gestion","Comptabilité","Préparation à un concours"
 ] as const;
 
 const GOALS = [
@@ -258,7 +253,7 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
             <h3 className="mt-6 mb-2 text-xl font-semibold text-black dark:text-white">Matière</h3>
             <select value={subject} onChange={(e) => setSubject(e.target.value)} className="w-full rounded-md border border-stroke px-3 py-2 dark:border-strokedark dark:bg-black">
               <option value="">Sélectionner une matière</option>
-              {SUBJECTS.map((s) => (
+              {TUTOR_SUBJECTS.map((s) => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>

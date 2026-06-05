@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
 import { canAccessTutorFeatures } from '@/lib/admin-permissions';
+import { TUTOR_SUBJECTS } from '@/lib/tutor-subjects';
 
 const PREFS_CREDENTIAL_TYPE = 'TUTOR_PREFERENCES';
 const NOTIF_CREDENTIAL_TYPE = 'TUTOR_NOTIFICATION_PREFS';
@@ -103,6 +104,7 @@ export async function GET() {
       lastName: u.last_name || '',
       fullName: `${u.first_name || ''} ${u.last_name || ''}`.trim(),
       email: u.email,
+      avatar: u.avatar_url || '/images/user/user-01.png',
       phone: u.phone || '',
       address: u.address || '',
       city: u.city || '',
@@ -179,7 +181,12 @@ export async function PATCH(request: Request) {
 
     if (typeof body.bio === 'string') tutorPayload.bio = body.bio.trim();
     if (typeof body.experienceYears === 'number') tutorPayload.experience_years = body.experienceYears;
-    if (Array.isArray(body.subjects)) tutorPayload.subjects = body.subjects.map((s: any) => String(s).trim()).filter(Boolean);
+    if (Array.isArray(body.subjects)) {
+      const allowedSubjects = new Set<string>(TUTOR_SUBJECTS);
+      tutorPayload.subjects = body.subjects
+        .map((s: any) => String(s).trim())
+        .filter((subject: string) => allowedSubjects.has(subject));
+    }
     if (typeof body.isAvailable === 'boolean') tutorPayload.is_available = body.isAvailable;
     if (typeof body.hourlyRateCents === 'number') tutorPayload.hourly_rate_cents = Math.max(0, body.hourlyRateCents);
 

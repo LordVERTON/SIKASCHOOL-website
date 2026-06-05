@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
+import { TUTOR_SUBJECTS } from "@/lib/tutor-subjects";
 
 interface TutorProfileData {
   id: string;
@@ -8,6 +10,7 @@ interface TutorProfileData {
   lastName: string;
   fullName: string;
   email: string;
+  avatar: string;
   phone?: string;
   address?: string;
   city?: string;
@@ -18,6 +21,7 @@ interface TutorProfileData {
   timezone: string;
   language: string;
   bio: string;
+  subjects: string[];
   experienceYears: number;
   preferences?: { theme?: "light" | "dark" | "system" };
   notifications?: { email: boolean; push: boolean; sms: boolean };
@@ -76,6 +80,9 @@ export default function TutorProfile() {
   const [twoFactorError, setTwoFactorError] = useState<string | null>(null);
   const [dangerConfirm, setDangerConfirm] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -130,6 +137,7 @@ export default function TutorProfile() {
         timezone: profile.timezone,
         language: profile.language,
         bio: profile.bio,
+        subjects: profile.subjects,
         experienceYears: profile.experienceYears,
         preferences: profile.preferences,
         notifications: profile.notifications,
@@ -149,6 +157,45 @@ export default function TutorProfile() {
       setError(e.message || "Erreur lors de la sauvegarde");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !profile) return;
+
+    setAvatarError(null);
+    setSaveMessage(null);
+
+    if (!file.type.startsWith("image/")) {
+      setAvatarError("Choisissez une image valide.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarError("Image trop lourde. Taille maximale: 5 Mo.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("avatar", file);
+    setAvatarUploading(true);
+    try {
+      const res = await fetch("/api/tutor/profile/avatar", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error || "Impossible de changer la photo.");
+      }
+      setProfile({ ...profile, avatar: data.avatar });
+      setSaveMessage("Photo de profil mise à jour.");
+    } catch (e: any) {
+      setAvatarError(e.message || "Erreur lors de l’envoi de la photo.");
+    } finally {
+      setAvatarUploading(false);
     }
   };
 
@@ -398,11 +445,62 @@ export default function TutorProfile() {
           <div className="lg:col-span-1">
             <div className="animate_top rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection">
               <div className="text-center">
-                <div className="mx-auto w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center mb-4">
-                  <span className="text-3xl font-bold text-primary">
-                    {profile.fullName.split(" ").map((n) => n[0]).join("") || "T"}
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="sr-only"
+                  onChange={handleAvatarChange}
+                />
+                <button
+                  type="button"
+                  onClick={() => avatarInputRef.current?.click()}
+                  disabled={avatarUploading}
+                  className="group relative mx-auto mb-4 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-primary/20 ring-2 ring-transparent transition hover:ring-primary/40 focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-wait disabled:opacity-70"
+                  aria-label="Changer la photo de profil"
+                  title="Changer la photo de profil"
+                >
+                  {profile.avatar ? (
+                    <Image
+                      src={profile.avatar}
+                      alt={profile.fullName || "Photo de profil"}
+                      width={96}
+                      height={96}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-3xl font-bold text-primary">
+                      {profile.fullName.split(" ").map((n) => n[0]).join("") || "T"}
+                    </span>
+                  )}
+                  <span className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 transition group-hover:opacity-100 group-focus:opacity-100">
+                    {avatarUploading ? (
+                      <span className="text-xs font-medium">Envoi...</span>
+                    ) : (
+                      <svg
+                        aria-hidden="true"
+                        className="h-6 w-6"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M4 8.75A2.75 2.75 0 0 1 6.75 6h1.7l1.08-1.62A2 2 0 0 1 11.2 3.5h1.6a2 2 0 0 1 1.66.88L15.55 6h1.7A2.75 2.75 0 0 1 20 8.75v8.5A2.75 2.75 0 0 1 17.25 20H6.75A2.75 2.75 0 0 1 4 17.25v-8.5Z"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M12 16.25a3.25 3.25 0 1 0 0-6.5 3.25 3.25 0 0 0 0 6.5Z"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                        />
+                      </svg>
+                    )}
                   </span>
-                </div>
+                </button>
+                {avatarError && <p className="mb-4 text-sm text-red-600 dark:text-red-400">{avatarError}</p>}
 
                 <h2 className="text-xl font-semibold text-black dark:text-white mb-2">{profile.fullName}</h2>
                 <p className="text-waterloo dark:text-manatee mb-4">{profile.email}</p>
@@ -486,6 +584,39 @@ export default function TutorProfile() {
                       onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
                       className="w-full p-3 border border-stroke rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:border-strokedark dark:bg-blacksection"
                     />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-black dark:text-white mb-3">
+                      Matières enseignées
+                    </label>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {TUTOR_SUBJECTS.map((subject) => {
+                        const checked = profile.subjects.includes(subject);
+                        return (
+                          <label
+                            key={subject}
+                            className={`flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2 text-sm transition ${
+                              checked
+                                ? "border-primary bg-primary/10 text-primary"
+                                : "border-stroke text-waterloo hover:border-primary/50 dark:border-strokedark dark:text-manatee"
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(e) => {
+                                const nextSubjects = e.target.checked
+                                  ? [...profile.subjects, subject]
+                                  : profile.subjects.filter((item) => item !== subject);
+                                setProfile({ ...profile, subjects: nextSubjects });
+                              }}
+                              className="h-4 w-4 rounded border-stroke text-primary focus:ring-primary"
+                            />
+                            <span>{subject}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
 

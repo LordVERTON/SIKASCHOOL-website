@@ -1,0 +1,16 @@
+export const TUTOR_SUBJECTS = [
+  "Mathématiques",
+  "Physiques",
+  "Sciences de l'ingénieur",
+  "Français",
+  "Histoire",
+  "Géographie",
+  "Méthodologie",
+  "Chimie",
+  "Informatique",
+  "Biologie",
+  "Économie",
+  "Gestion",
+  "Comptabilité",
+  "Préparation à un concours",
+] as const;
