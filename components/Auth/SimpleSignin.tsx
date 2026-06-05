@@ -325,6 +325,8 @@ export default function SimpleSignin() {
                   type="email"
                   placeholder="Votre e-mail"
                   name="email"
+                  autoComplete="email"
+                  data-protonpass-ignore="true"
                   value={data.email}
                   onChange={(e) => setData({ ...data, email: e.target.value })}
                   required
@@ -336,6 +338,8 @@ export default function SimpleSignin() {
                     type={showPassword ? "text" : "password"}
                     placeholder="Votre mot de passe"
                     name="password"
+                    autoComplete={isSignup ? "new-password" : "current-password"}
+                    data-protonpass-ignore="true"
                     value={data.password}
                     onChange={(e) =>
                       setData({ ...data, password: e.target.value })
