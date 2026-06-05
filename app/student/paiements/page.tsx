@@ -3,14 +3,11 @@
 export const dynamic = "force-dynamic";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import {
   CLIENT_PLANS,
   LEVEL_COLORS,
   formatEuros,
-  type ClientPlan,
-  type PlanKind,
   type PlanLevel,
 } from "@/lib/payments-catalog";
 
@@ -52,20 +49,10 @@ interface OverviewData {
   subscription: SubscriptionRow | null;
 }
 
-type TabKey = "packs" | "sessions" | "subscriptions";
-
-const TABS: Array<{ key: TabKey; label: string; kind: PlanKind; hint: string }> = [
-  { key: "packs", label: "Packs", kind: "PACK", hint: "Économique · 4 ou 8 séances payées d'un coup" },
-  { key: "sessions", label: "Séance à l'unité", kind: "SESSION", hint: "Flexibilité · paye ce dont tu as besoin" },
-  { key: "subscriptions", label: "Abonnement mensuel", kind: "SUBSCRIPTION", hint: "Régularité · 4 séances / mois, résiliable à tout moment" },
-];
-
 export default function StudentPaiementsPage() {
   const [data, setData] = useState<OverviewData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [pendingPlan, setPendingPlan] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
-  const [tab, setTab] = useState<TabKey>("packs");
 
   const fetchOverview = useCallback(async () => {
     try {
@@ -84,27 +71,6 @@ export default function StudentPaiementsPage() {
     fetchOverview();
   }, [fetchOverview]);
 
-  const onBuy = async (plan: ClientPlan) => {
-    setPendingPlan(plan.id);
-    try {
-      const res = await fetch("/api/student/payments/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ planId: plan.id }),
-      });
-      const body = await res.json();
-      if (!res.ok || !body?.url) {
-        throw new Error(body?.error || "Erreur paiement");
-      }
-      window.location.href = body.url;
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Erreur paiement";
-      toast.error(msg);
-      setPendingPlan(null);
-    }
-  };
-
   const onPortal = async () => {
     setPortalLoading(true);
     try {
@@ -121,8 +87,6 @@ export default function StudentPaiementsPage() {
       setPortalLoading(false);
     }
   };
-
-  const plans = useMemo(() => CLIENT_PLANS.filter((p) => p.kind === TABS.find((t) => t.key === tab)!.kind), [tab]);
 
   const totalSessions = useMemo(
     () => (data?.credits || []).reduce((sum, c) => sum + (c.remaining_sessions || 0), 0),
@@ -259,71 +223,6 @@ export default function StudentPaiementsPage() {
           </section>
         )}
 
-        {/* ============== CATALOGUE ============== */}
-        <section className="mt-14">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <h2 className="text-2xl font-bold text-black dark:text-white">Acheter des séances</h2>
-              <p className="mt-1 text-sm text-waterloo dark:text-manatee">
-                Paiement 100% sécurisé par Stripe · CB, Apple Pay, Google Pay acceptés
-              </p>
-            </div>
-            <button
-              onClick={onPortal}
-              disabled={portalLoading}
-              className="inline-flex items-center gap-2 rounded-lg border border-stroke bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-gray-50 disabled:opacity-60 dark:border-strokedark dark:bg-blacksection dark:text-white dark:hover:bg-black/50"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
-              </svg>
-              Mes factures
-            </button>
-          </div>
-
-          {/* Tabs */}
-          <div className="mt-6 inline-flex rounded-lg border border-stroke bg-white p-1 dark:border-strokedark dark:bg-blacksection">
-            {TABS.map((t) => (
-              <button
-                key={t.key}
-                onClick={() => setTab(t.key)}
-                className={`relative rounded-md px-4 py-2 text-sm font-medium transition ${
-                  tab === t.key
-                    ? "bg-primary text-white shadow-sm"
-                    : "text-waterloo hover:text-black dark:text-manatee dark:hover:text-white"
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-          <p className="mt-2 text-xs text-waterloo dark:text-manatee">
-            {TABS.find((t) => t.key === tab)?.hint}
-          </p>
-
-          {/* Grid of plans */}
-          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            <AnimatePresence mode="popLayout">
-              {plans.map((plan) => (
-                <motion.div
-                  key={plan.id}
-                  layout
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <PlanCard
-                    plan={plan}
-                    isPending={pendingPlan === plan.id}
-                    onBuy={() => onBuy(plan)}
-                  />
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
-        </section>
-
         {/* ============== HISTORIQUE ============== */}
         <section className="mt-14">
           <h2 className="text-2xl font-bold text-black dark:text-white">Historique des paiements</h2>
@@ -369,7 +268,7 @@ export default function StudentPaiementsPage() {
                             ? "Renouvellement mensuel"
                             : p.kind === "PACK"
                               ? `Pack de ${p.sessions_count} séances`
-                              : "Séance à l'unité"}
+                              : "Achat de séance"}
                         </div>
                       </td>
                       <td className="px-5 py-3 font-semibold text-black dark:text-white">
@@ -458,99 +357,6 @@ function StatCard({
         {icon && <span className={`flex h-10 w-10 items-center justify-center rounded-lg ${accentClass}`}>{icon}</span>}
       </div>
     </div>
-  );
-}
-
-function PlanCard({
-  plan,
-  onBuy,
-  isPending,
-}: {
-  plan: ClientPlan;
-  onBuy: () => void;
-  isPending: boolean;
-}) {
-  const colors = LEVEL_COLORS[plan.level];
-  const perSession =
-    plan.sessions && plan.sessions > 1 ? plan.priceCents / plan.sessions : null;
-
-  return (
-    <div className="group relative flex h-full flex-col rounded-xl border border-stroke bg-white p-6 transition hover:-translate-y-0.5 hover:shadow-solid-10 dark:border-strokedark dark:bg-blacksection">
-      <div className="mb-4 flex items-center gap-2">
-        <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${colors.bg} ${colors.text}`}>
-          {plan.levelLabel}
-        </span>
-        {plan.badge && (
-          <span className="inline-flex items-center rounded-full bg-black px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white dark:bg-white dark:text-black">
-            {plan.badge}
-          </span>
-        )}
-      </div>
-
-      <h3 className="text-lg font-bold text-black dark:text-white">{plan.name}</h3>
-      <p className="mt-1 min-h-[40px] text-sm text-waterloo dark:text-manatee">{plan.description}</p>
-
-      <div className="mt-5">
-        <div className="flex items-baseline gap-1">
-          <span className="text-4xl font-bold text-black dark:text-white">
-            {formatEuros(plan.priceCents)}
-          </span>
-          {plan.kind === "SUBSCRIPTION" && (
-            <span className="text-sm text-waterloo dark:text-manatee">/ mois</span>
-          )}
-        </div>
-        {perSession !== null && (
-          <p className="mt-1 text-xs text-waterloo dark:text-manatee">
-            Soit {formatEuros(perSession)} / séance
-          </p>
-        )}
-      </div>
-
-      <ul className="mt-5 space-y-2 text-sm text-waterloo dark:text-manatee">
-        <li className="flex items-start gap-2">
-          <Check /> {plan.sessions} séance{plan.sessions && plan.sessions > 1 ? "s" : ""}{plan.kind === "SUBSCRIPTION" ? " / mois" : ""}
-        </li>
-        <li className="flex items-start gap-2">
-          <Check /> {plan.kind === "SUBSCRIPTION" ? "Résiliable à tout moment" : "Sans engagement"}
-        </li>
-        <li className="flex items-start gap-2">
-          <Check /> Facture PDF automatique
-        </li>
-      </ul>
-
-      <button
-        onClick={onBuy}
-        disabled={isPending}
-        className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-white transition hover:bg-primaryho disabled:opacity-60"
-      >
-        {isPending ? (
-          <>
-            <Spinner /> Redirection vers Stripe...
-          </>
-        ) : plan.kind === "SUBSCRIPTION" ? (
-          "Souscrire"
-        ) : (
-          "Acheter maintenant"
-        )}
-      </button>
-    </div>
-  );
-}
-
-function Check() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="mt-0.5 flex-shrink-0 text-primary">
-      <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function Spinner() {
-  return (
-    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.25" strokeWidth="4" />
-      <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-    </svg>
   );
 }
 
