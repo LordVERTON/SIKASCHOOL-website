@@ -36,8 +36,28 @@ export async function GET() {
       return NextResponse.json({ error: 'Erreur lors de la récupération des tuteurs' }, { status: 500 });
     }
 
+    const tutorIds = (assignments || [])
+      .map((assignment: any) => assignment.tutor_id)
+      .filter(Boolean);
+
+    let tutorProfilesByUserId = new Map<string, any>();
+    if (tutorIds.length > 0) {
+      const { data: tutorProfiles, error: tutorProfilesError } = await (supabaseAdmin as any)
+        .from('tutors')
+        .select('user_id, bio, subjects, experience_years, hourly_rate_cents, is_available, rating, total_reviews')
+        .in('user_id', tutorIds);
+
+      if (tutorProfilesError) {
+        console.error('Erreur lors de la récupération des profils tuteurs:', tutorProfilesError);
+        return NextResponse.json({ error: 'Erreur lors de la récupération des profils tuteurs' }, { status: 500 });
+      }
+
+      tutorProfilesByUserId = new Map((tutorProfiles || []).map((profile: any) => [profile.user_id, profile]));
+    }
+
     const tutors = (assignments || []).map((assignment: any) => {
       const tutor = assignment.tutors;
+      const tutorProfile = tutorProfilesByUserId.get(tutor.id) || {};
       return {
         id: tutor.id,
         name: `${tutor.first_name} ${tutor.last_name}`,
@@ -45,6 +65,15 @@ export async function GET() {
         lastName: tutor.last_name,
         email: tutor.email,
         avatar: tutor.avatar_url || '/images/user/user-01.png',
+        bio: tutorProfile.bio || '',
+        subjects: Array.isArray(tutorProfile.subjects) ? tutorProfile.subjects : [],
+        experienceYears: Number(tutorProfile.experience_years) || 0,
+        pricePerHour: Math.round((Number(tutorProfile.hourly_rate_cents) || 0) / 100),
+        rating: Number(tutorProfile.rating) || 0,
+        totalReviews: Number(tutorProfile.total_reviews) || 0,
+        isAvailable: tutorProfile.is_available ?? true,
+        availability: ['Disponible sur demande'],
+        totalSessions: 0,
         assignedAt: assignment.assigned_at,
         isActive: assignment.is_active
       };

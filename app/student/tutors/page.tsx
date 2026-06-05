@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
 import CreateSessionModal from '@/components/Student/CreateSessionModal';
 import AlertModal from '@/components/AlertModal';
@@ -116,9 +115,22 @@ export default function TutorsPage() {
                   height={80}
                   className="w-20 h-20 rounded-full object-cover mx-auto mb-4"
                 />
-                <h3 className="text-xl font-semibold text-black dark:text-white mb-2">
+                <h3 className="mb-2 flex items-center justify-center gap-2 text-xl font-semibold text-black dark:text-white">
                   {tutor.name}
+                  {tutor.isAvailable && (
+                    <span
+                      aria-label="Disponible"
+                      title="Disponible"
+                      className="h-2.5 w-2.5 rounded-full bg-green-500"
+                    />
+                  )}
                 </h3>
+              </div>
+
+              <div className="mb-6">
+                <p className="text-sm text-waterloo dark:text-manatee line-clamp-3">
+                  {tutor.bio}
+                </p>
               </div>
 
               <div className="mb-6">
@@ -137,64 +149,18 @@ export default function TutorsPage() {
                 </div>
               </div>
 
-              <div className="mb-6">
-                <p className="text-sm text-waterloo dark:text-manatee line-clamp-3">
-                  {tutor.bio}
-                </p>
-              </div>
-
-              <div className="mb-6 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-waterloo dark:text-manatee">Expérience:</span>
-                  <span className="text-black dark:text-white">{tutor.experience} ans</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-waterloo dark:text-manatee">Séances données:</span>
-                  <span className="text-black dark:text-white">{tutor.totalSessions}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-waterloo dark:text-manatee">Statut:</span>
-                  <span className={`font-medium ${
-                    tutor.isAvailable ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {tutor.isAvailable ? 'Disponible' : 'Indisponible'}
-                  </span>
-                </div>
-              </div>
-
-              <div className="mb-6">
-                <h4 className="text-sm font-medium text-black dark:text-white mb-2">
-                  Disponibilités:
-                </h4>
-                <div className="space-y-1">
-                  {tutor.availability.slice(0, 3).map((slot, idx) => (
-                    <div key={idx} className="text-xs text-waterloo dark:text-manatee">
-                      {slot}
-                    </div>
-                  ))}
-                  {tutor.availability.length > 3 && (
-                    <div className="text-xs text-primary">
-                      +{tutor.availability.length - 3} autres créneaux
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex space-x-2">
+              <div>
                 <button
                   type="button"
                   disabled={!tutor.isAvailable}
                   onClick={() => setBookingTutorId(tutor.id)}
-                  className={`flex-1 py-2 px-4 rounded-lg text-center transition ${
+                  className={`w-full py-2 px-4 rounded-lg text-center transition ${
                     tutor.isAvailable
                       ? 'bg-primary text-white hover:opacity-90'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                 >
                   {tutor.isAvailable ? 'Réserver' : 'Indisponible'}
-                </button>
-                <button className="py-2 px-4 border border-stroke dark:border-strokedark text-black dark:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition">
-                  Profil
                 </button>
               </div>
             </div>
@@ -215,15 +181,6 @@ export default function TutorsPage() {
           </div>
         )}
 
-        {/* Retour au tableau de bord */}
-        <div className="mt-10 text-center">
-          <Link
-            href="/student"
-            className="inline-flex items-center px-6 py-3 border border-stroke text-black dark:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-          >
-            ← Retour au tableau de bord
-          </Link>
-        </div>
       </div>
 
       {bookingTutorId && (
