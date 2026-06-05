@@ -237,27 +237,20 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
             ),
           },
           {
-            href: "/student/notifications",
-            label: "Alertes",
-            badge: unreadCount,
+            href: "/student/messages",
+            label: "Messages",
             icon: (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 5h16v12H7l-3 3V5Z"/><path d="M8 9h8M8 13h5"/></svg>
             ),
           },
         ]}
         menuItems={[
           {
-            href: "/student",
-            label: "Dashboard",
+            href: "/student/notifications",
+            label: "Notifications",
+            badge: unreadCount,
             icon: (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 5h16M4 12h7M4 19h16"/><path d="M15 9h5v6h-5z"/></svg>
-            ),
-          },
-          {
-            href: "/student/messages",
-            label: "Messages",
-            icon: (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 5h16v12H7l-3 3V5Z"/><path d="M8 9h8M8 13h5"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
             ),
           },
           {

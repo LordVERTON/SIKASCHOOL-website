@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 type NavItem = {
   href: string;
@@ -27,8 +27,20 @@ export default function MobileFooterNav({
   menuItems?: NavItem[];
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuActive = menuItems.some((item) => isActivePath(pathname, item.href));
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      setMenuOpen(false);
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      console.error("Erreur de déconnexion:", error);
+    }
+  };
 
   return (
     <>
@@ -78,6 +90,18 @@ export default function MobileFooterNav({
               </Link>
             );
           })}
+          <button
+            type="button"
+            className="flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-red-200 px-2 py-3 text-center text-xs font-medium text-red-600 transition hover:border-red-300 hover:bg-red-50 dark:border-red-900/60 dark:text-red-400 dark:hover:bg-red-900/20"
+            onClick={handleLogout}
+          >
+            <span className="flex h-6 w-6 items-center justify-center">
+              <svg className="h-full w-full" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0-4-4m4 4H7m6 4v1a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h4a3 3 0 0 1 3 3v1" />
+              </svg>
+            </span>
+            <span>Déconnexion</span>
+          </button>
         </div>
       </div>
       <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-stroke bg-white/95 shadow-[0_-10px_30px_rgba(15,23,42,0.06)] backdrop-blur supports-[backdrop-filter]:bg-white/85 dark:border-strokedark dark:bg-black/85 lg:hidden">
