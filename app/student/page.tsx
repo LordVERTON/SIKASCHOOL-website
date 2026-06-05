@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import CreateSessionModal from "@/components/Student/CreateSessionModal";
 
 type UpcomingSession = {
   id: string;
@@ -69,6 +70,8 @@ export default function StudentHome() {
   const [upcomingSessions, setUpcomingSessions] = useState<UpcomingSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showCreateSession, setShowCreateSession] = useState(false);
+  const [assignedTutors, setAssignedTutors] = useState<Array<{ id: string; name: string }>>([]);
 
   useEffect(() => {
     let ignore = false;
@@ -140,6 +143,23 @@ export default function StudentHome() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!showCreateSession || assignedTutors.length > 0) return;
+
+    const loadTutors = async () => {
+      const response = await fetch("/api/student/assigned-tutors", {
+        credentials: "include",
+        cache: "no-store",
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setAssignedTutors((data.tutors || []).map((tutor: any) => ({ id: tutor.id, name: tutor.name })));
+      }
+    };
+
+    void loadTutors();
+  }, [assignedTutors.length, showCreateSession]);
+
   return (
     <main className="pb-20 lg:pb-25 xl:pb-30">
       <div className="mx-auto max-w-c-1315 px-1 md:px-8 xl:px-0">
@@ -152,16 +172,28 @@ export default function StudentHome() {
             Retrouvez vos séances, vos tuteurs et les actions utiles sans surcharge.
           </p>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          <div className="mt-6 hidden gap-3 sm:grid sm:grid-cols-3">
             {shortcuts.map((item) => (
-              <Link
-                key={`${item.label}-${item.href}`}
-                href={item.href}
-                className="rounded-2xl border border-stroke bg-[#f7f8fb] p-4 transition hover:border-primary/40 hover:bg-primary/5 dark:border-strokedark dark:bg-black lg:rounded-lg"
-              >
-                <span className="text-base font-semibold text-black dark:text-white">{item.label}</span>
-                <span className="mt-1 block text-sm text-waterloo dark:text-manatee">{item.detail}</span>
-              </Link>
+              item.label === "Réserver" ? (
+                <button
+                  key={`${item.label}-${item.href}`}
+                  type="button"
+                  onClick={() => setShowCreateSession(true)}
+                  className="rounded-2xl border border-stroke bg-[#f7f8fb] p-4 text-left transition hover:border-primary/40 hover:bg-primary/5 dark:border-strokedark dark:bg-black lg:rounded-lg"
+                >
+                  <span className="text-base font-semibold text-black dark:text-white">{item.label}</span>
+                  <span className="mt-1 block text-sm text-waterloo dark:text-manatee">{item.detail}</span>
+                </button>
+              ) : (
+                <Link
+                  key={`${item.label}-${item.href}`}
+                  href={item.href}
+                  className="rounded-2xl border border-stroke bg-[#f7f8fb] p-4 transition hover:border-primary/40 hover:bg-primary/5 dark:border-strokedark dark:bg-black lg:rounded-lg"
+                >
+                  <span className="text-base font-semibold text-black dark:text-white">{item.label}</span>
+                  <span className="mt-1 block text-sm text-waterloo dark:text-manatee">{item.detail}</span>
+                </Link>
+              )
             ))}
           </div>
         </section>
@@ -256,6 +288,14 @@ export default function StudentHome() {
           </div>
         </section>
       </div>
+
+      {showCreateSession && (
+        <CreateSessionModal
+          tutors={assignedTutors}
+          onClose={() => setShowCreateSession(false)}
+          onSuccess={() => setShowCreateSession(false)}
+        />
+      )}
     </main>
   );
 }
