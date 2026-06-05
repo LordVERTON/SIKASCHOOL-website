@@ -6,7 +6,8 @@
 export const USER_ROLES = {
   ADMIN: 'ADMIN',
   TUTOR: 'TUTOR',
-  STUDENT: 'STUDENT'
+  STUDENT: 'STUDENT',
+  PARENT: 'PARENT'
 } as const;
 
 export type UserRole = typeof USER_ROLES[keyof typeof USER_ROLES];
@@ -39,12 +40,14 @@ export const PUBLIC_ROUTES = [
 export const ROLE_REDIRECTS = {
   [USER_ROLES.ADMIN]: '/tutor', // Les admins accèdent à l'espace tuteur avec administration
   [USER_ROLES.TUTOR]: '/tutor',
-  [USER_ROLES.STUDENT]: '/student'
+  [USER_ROLES.STUDENT]: '/student',
+  [USER_ROLES.PARENT]: '/family'
 } as const;
 
 // Routes protégées par rôle
 export const PROTECTED_ROUTES = {
   '/student': USER_ROLES.STUDENT,
+  '/family': USER_ROLES.PARENT,
   '/tutor': [USER_ROLES.TUTOR, USER_ROLES.ADMIN], // Les admins peuvent aussi accéder à l'espace tuteur
   '/admin': USER_ROLES.ADMIN
 } as const;

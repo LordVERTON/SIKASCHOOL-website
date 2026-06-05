@@ -4,7 +4,8 @@ import { getUserSession } from "./auth-simple";
 export enum Role {
   ADMIN = "ADMIN",
   TUTOR = "TUTOR", 
-  STUDENT = "STUDENT"
+  STUDENT = "STUDENT",
+  PARENT = "PARENT"
 }
 
 export async function requireAuth(_request: NextRequest) {
@@ -37,6 +38,12 @@ export async function requireStudent(request: NextRequest) {
   return requireRole(request, Role.STUDENT);
 }
 
+export async function requireStudentOrParent(request: NextRequest) {
+  const session = await requireAuth(request);
+  const role = (session as any)?.role;
+  return role === Role.STUDENT || role === Role.PARENT ? session : null;
+}
+
 export async function requireTutor(request: NextRequest) {
   return requireRole(request, Role.TUTOR);
 }
@@ -51,6 +58,10 @@ export function hasRole(session: any, role: Role): boolean {
 
 export function isStudent(session: any): boolean {
   return hasRole(session, Role.STUDENT);
+}
+
+export function isStudentOrParent(session: any): boolean {
+  return hasRole(session, Role.STUDENT) || hasRole(session, Role.PARENT);
 }
 
 export function isTutor(session: any): boolean {

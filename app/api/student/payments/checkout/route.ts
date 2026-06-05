@@ -14,12 +14,18 @@ import type Stripe from 'stripe';
 import { getUserSession } from '@/lib/auth-simple';
 import { stripe, assertStripeConfigured, getPlan } from '@/lib/stripe';
 import { getOrCreateStripeCustomer } from '@/lib/stripe-customer';
+import { canAccessStudentFeatures, getEffectiveStudentAccess } from '@/lib/student-access';
 
 export async function POST(req: Request) {
   try {
     const user = await getUserSession();
-    if (!user || user.role !== 'STUDENT') {
+    if (!canAccessStudentFeatures(user)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const access = await getEffectiveStudentAccess(user);
+    if (!access) {
+      return NextResponse.json({ error: 'Aucun élève lié à ce compte parent' }, { status: 404 });
     }
 
     assertStripeConfigured();
@@ -43,6 +49,7 @@ export async function POST(req: Request) {
 
     const commonMetadata: Record<string, string> = {
       sikaschool_user_id: user.id,
+      sikaschool_student_id: access.effectiveStudentId,
       plan_id: plan.id,
       plan_kind: plan.kind,
       plan_level: plan.level,

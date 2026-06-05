@@ -5,6 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { sendTutorNewBookingRequestEmail } from '@/lib/registration-emails';
 import { publishUserMercureUpdate } from '@/lib/mercure';
 import { syncSessionParticipants } from '@/lib/session-participants';
+import { getEffectiveStudentAccess } from '@/lib/student-access';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -63,12 +64,16 @@ export async function POST(req: NextRequest) {
         }, { status: 403 });
       }
       
-    } else if (user.role === 'STUDENT') {
+    } else if (user.role === 'STUDENT' || user.role === 'PARENT') {
       // Student requesting session with a tutor
       if (!tutorId) {
         return NextResponse.json({ error: 'Tutor ID is required for students' }, { status: 400 });
       }
-      student_id = user.id;
+      const access = await getEffectiveStudentAccess(user);
+      if (!access) {
+        return NextResponse.json({ error: 'Aucun élève lié à ce compte parent' }, { status: 404 });
+      }
+      student_id = access.effectiveStudentId;
       tutor_id = tutorId;
       participantStudentIds = [student_id];
       
@@ -88,7 +93,7 @@ export async function POST(req: NextRequest) {
       }
       
     } else {
-      return NextResponse.json({ error: 'Only tutors and students can create sessions' }, { status: 403 });
+      return NextResponse.json({ error: 'Only tutors, students and parents can create sessions' }, { status: 403 });
     }
 
     // Create session in database with PENDING status

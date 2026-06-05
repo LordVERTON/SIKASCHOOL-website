@@ -2,15 +2,20 @@ import { NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
 import { mercureThreadTopic, mercureUserTopic, publishMercureUpdate } from '@/lib/mercure';
+import { canAccessStudentFeatures, getEffectiveStudentAccess } from '@/lib/student-access';
 
 export async function GET() {
   try {
     const user = await getUserSession();
-    if (!user || user.role !== 'STUDENT') {
+    if (!canAccessStudentFeatures(user)) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    const studentId = user.id;
+    const access = await getEffectiveStudentAccess(user);
+    if (!access) {
+      return NextResponse.json({ error: 'Aucun élève lié à ce compte parent' }, { status: 404 });
+    }
+    const studentId = access.effectiveStudentId;
 
     // Récupérer les threads où l'étudiant est participant via la table des participants
     let participantRows: any[] | null = null;
@@ -153,9 +158,15 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const user = await getUserSession();
-    if (!user || user.role !== 'STUDENT') {
+    if (!canAccessStudentFeatures(user)) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
+
+    const access = await getEffectiveStudentAccess(user);
+    if (!access) {
+      return NextResponse.json({ error: 'Aucun élève lié à ce compte parent' }, { status: 404 });
+    }
+    const studentId = access.effectiveStudentId;
 
     const body = await request.json();
     const { tutorId, subject, content, participantIds } = body;
@@ -166,7 +177,7 @@ export async function POST(request: Request) {
 
     // Construire la liste des participants: toujours inclure l'étudiant courant
     const participants: string[] = Array.from(new Set([
-      user.id,
+      studentId,
       ...(Array.isArray(participantIds) ? participantIds : (tutorId ? [tutorId] : []))
     ]));
 
@@ -194,7 +205,7 @@ export async function POST(request: Request) {
     // Créer le premier message
     const { data: message, error: messageError } = await (supabaseAdmin as any)
       .from('messages')
-      .insert({ thread_id: thread.id, sender_id: user.id, content, is_read: false })
+      .insert({ thread_id: thread.id, sender_id: studentId, content, is_read: false })
       .select('id')
       .single();
 
@@ -204,7 +215,7 @@ export async function POST(request: Request) {
     }
 
     // Créer des notifications pour les autres participants
-    const notifyUserIds = participants.filter((pid) => pid !== user.id);
+    const notifyUserIds = participants.filter((pid) => pid !== studentId);
     if (notifyUserIds.length > 0) {
       await (supabaseAdmin as any)
         .from('notifications')
@@ -214,7 +225,7 @@ export async function POST(request: Request) {
             type: 'MESSAGE',
             title: 'Nouveau message',
             message: `Nouveau fil: ${subject}`,
-            data: { thread_id: thread.id, sender_id: user.id }
+            data: { thread_id: thread.id, sender_id: studentId }
           }))
         );
     }
@@ -224,7 +235,7 @@ export async function POST(request: Request) {
       {
         type: 'message',
         action: 'thread-created',
-        userId: user.id,
+        userId: studentId,
         threadId: thread.id,
       }
     );

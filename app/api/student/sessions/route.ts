@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
+import { canAccessStudentFeatures, getEffectiveStudentAccess } from '@/lib/student-access';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -8,9 +9,15 @@ export const revalidate = 0;
 export async function GET(request: NextRequest) {
   try {
     const user = await getUserSession();
-    if (!user || user.role !== 'STUDENT') {
+    if (!canAccessStudentFeatures(user)) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
+
+    const access = await getEffectiveStudentAccess(user);
+    if (!access) {
+      return NextResponse.json({ error: 'Aucun élève lié à ce compte parent' }, { status: 404 });
+    }
+    const studentId = access.effectiveStudentId;
 
     const url = new URL(request.url);
     const status = url.searchParams.get('status'); // 'COMPLETED' | 'IN_PROGRESS' | 'SCHEDULED' | 'CANCELLED' | null
@@ -36,7 +43,7 @@ export async function GET(request: NextRequest) {
         student_rating,
         created_at
       `)
-      .eq('student_id', user.id);
+      .eq('student_id', studentId);
 
     if (status && ['COMPLETED','IN_PROGRESS','SCHEDULED','CANCELLED','PENDING'].includes(status)) {
       baseQuery = baseQuery.eq('status', status);
@@ -54,7 +61,7 @@ export async function GET(request: NextRequest) {
     const { data: participantLinks, error: partErr } = await (supabaseAdmin as any)
       .from('session_participants')
       .select('session_id')
-      .eq('student_id', user.id);
+      .eq('student_id', studentId);
     if (partErr) {
       console.error('Erreur participants:', partErr);
       return NextResponse.json({ error: 'Erreur récupération participants' }, { status: 500 });

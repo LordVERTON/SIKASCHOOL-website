@@ -33,6 +33,7 @@ const GOALS = [
 
 export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, initialEmail }: LeadCaptureModalProps) {
   const router = useRouter();
+  const [accountType, setAccountType] = useState<"PARENT" | "STUDENT">("PARENT");
   const [level, setLevel] = useState<string>("");
   const [subject, setSubject] = useState<string>("");
   const [civility, setCivility] = useState<string>("");
@@ -145,6 +146,7 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
           phoneDialCode,
           phoneDialCountry,
           zip,
+          accountType,
           goal,
           goalOther: goal === "Autre" ? goalOther : "",
           contest: subject === "Préparation à un concours" ? contest : ""
@@ -163,6 +165,7 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
           phoneDialCode,
           phoneDialCountry,
           zip,
+          accountType,
           level,
           subject,
           goal,
@@ -240,6 +243,32 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
           {/* Étape 1 */}
           <div className="rounded-lg bg-primary/10 p-6">
             <div className="mb-4 inline-block rounded bg-primary px-3 py-1 text-white text-sm font-semibold">ÉTAPE 1</div>
+            <h3 className="mb-3 text-xl font-semibold text-black dark:text-white">Vous inscrivez</h3>
+            <div className="mb-6 grid gap-3 sm:grid-cols-2">
+              {[
+                { value: "PARENT", label: "Un parent" },
+                { value: "STUDENT", label: "Un élève" },
+              ].map((option) => (
+                <label
+                  key={option.value}
+                  className={`flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-sm transition ${
+                    accountType === option.value
+                      ? "border-primary bg-white text-primary shadow-sm dark:bg-black"
+                      : "border-stroke bg-white/60 text-waterloo hover:border-primary/40 dark:border-strokedark dark:bg-black/30 dark:text-manatee"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="accountType"
+                    value={option.value}
+                    checked={accountType === option.value}
+                    onChange={(e) => setAccountType(e.target.value as "PARENT" | "STUDENT")}
+                    className="h-4 w-4 text-primary focus:ring-primary"
+                  />
+                  <span>{option.label}</span>
+                </label>
+              ))}
+            </div>
             <h3 className="mb-4 text-xl font-semibold text-black dark:text-white">Sélectionnez la classe de l'élève</h3>
             <div className="grid grid-cols-2 gap-y-3">
               {LEVELS.map((lv) => (
@@ -286,7 +315,9 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
           {/* Étape 2 */}
           <div className="rounded-lg bg-primary/10 p-6">
             <div className="mb-4 inline-block rounded bg-primary px-3 py-1 text-white text-sm font-semibold">ÉTAPE 2</div>
-            <h3 className="mb-4 text-xl font-semibold text-black dark:text-white">Vos coordonnées</h3>
+            <h3 className="mb-4 text-xl font-semibold text-black dark:text-white">
+              {accountType === "PARENT" ? "Coordonnées du parent" : "Coordonnées de l'élève"}
+            </h3>
 
             <div className="space-y-3">
               <select value={civility} onChange={(e) => setCivility(e.target.value)} className="w-full rounded-full bg-white px-4 py-2 text-black">
@@ -294,8 +325,18 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
                 <option value="Mme">Mme</option>
                 <option value="M.">M.</option>
               </select>
-              <input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Nom" className="w-full rounded-full bg-white px-4 py-2 text-black" />
-              <input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Prénom" className="w-full rounded-full bg-white px-4 py-2 text-black" />
+              <input
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder={accountType === "PARENT" ? "Nom du parent" : "Nom de l'élève"}
+                className="w-full rounded-full bg-white px-4 py-2 text-black"
+              />
+              <input
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder={accountType === "PARENT" ? "Prénom du parent" : "Prénom de l'élève"}
+                className="w-full rounded-full bg-white px-4 py-2 text-black"
+              />
               <input
                 value={email}
                 onChange={(e) => {

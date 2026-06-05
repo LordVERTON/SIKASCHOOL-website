@@ -3,6 +3,7 @@
 --   admin@sikaschool.com    -> admin123
 --   tutor@sikaschool.com    -> tutor123
 --   student@sikaschool.com  -> student123
+--   parent@sikaschool.com   -> parent123
 
 INSERT INTO users (id, email, password_hash, first_name, last_name, role, is_active, email_verified) VALUES
   ('00000000-0000-4000-8000-000000000001'::uuid, 'admin@sikaschool.com',
@@ -13,7 +14,10 @@ INSERT INTO users (id, email, password_hash, first_name, last_name, role, is_act
    'Tuteur', 'Demo', 'TUTOR', true, true),
   ('00000000-0000-4000-8000-000000000003'::uuid, 'student@sikaschool.com',
    '$2a$12$IzZCKLi.nuGuji4eq06GYe9Vt6EF3ZAfjz3QESBDmmfgYnZDN24Cq',
-   'Eleve', 'Demo', 'STUDENT', true, true);
+   'Eleve', 'Demo', 'STUDENT', true, true),
+  ('00000000-0000-4000-8000-000000000004'::uuid, 'parent@sikaschool.com',
+   '$2a$12$GsPcpux8FXyUTIexTqT9UutuaH.5JEszc33CA.us3Uk9zCjeXLQim',
+   'Parent', 'Demo', 'PARENT', true, true);
 
 INSERT INTO user_credentials (user_id, credential_type, credential_value, is_active) VALUES
   ('00000000-0000-4000-8000-000000000001'::uuid, 'password',
@@ -21,7 +25,9 @@ INSERT INTO user_credentials (user_id, credential_type, credential_value, is_act
   ('00000000-0000-4000-8000-000000000002'::uuid, 'password',
    '$2a$12$1OJfX0n7o9XklWkGW.TnDuRKZRoaCZY/D1D3ozVuZfm/9OylVvse2', true),
   ('00000000-0000-4000-8000-000000000003'::uuid, 'password',
-   '$2a$12$IzZCKLi.nuGuji4eq06GYe9Vt6EF3ZAfjz3QESBDmmfgYnZDN24Cq', true);
+   '$2a$12$IzZCKLi.nuGuji4eq06GYe9Vt6EF3ZAfjz3QESBDmmfgYnZDN24Cq', true),
+  ('00000000-0000-4000-8000-000000000004'::uuid, 'password',
+   '$2a$12$GsPcpux8FXyUTIexTqT9UutuaH.5JEszc33CA.us3Uk9zCjeXLQim', true);
 
 INSERT INTO tutors (user_id, bio, subjects, experience_years, hourly_rate_cents, is_available, rating, total_reviews)
 VALUES (
@@ -35,13 +41,14 @@ VALUES (
   3
 );
 
-INSERT INTO students (user_id, grade_level, school_name, academic_goals, parent_email)
+INSERT INTO students (user_id, grade_level, school_name, academic_goals, parent_email, parents_linked)
 VALUES (
   '00000000-0000-4000-8000-000000000003'::uuid,
   'Terminale',
   'Lycee de demonstration',
   'Reussir le baccalaureat',
-  'parent.demo@email.com'
+  'parent@sikaschool.com',
+  '00000000-0000-4000-8000-000000000004'::uuid
 );
 
 INSERT INTO tutor_student_assignments (tutor_id, student_id, is_active, notes)

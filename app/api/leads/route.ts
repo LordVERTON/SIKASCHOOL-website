@@ -43,8 +43,10 @@ export async function POST(request: NextRequest) {
       subject,
       goal,
       goalOther,
-      contest
+      contest,
+      accountType
     } = body || {};
+    const resolvedRole = accountType === 'PARENT' ? 'PARENT' : 'STUDENT';
 
     if (!firstName || !lastName || !email) {
       return NextResponse.json({ error: 'Champs requis manquants' }, { status: 400 });
@@ -76,6 +78,7 @@ export async function POST(request: NextRequest) {
       goalOther: goalOther || '',
       goalSummary: resolvedGoal,
       contest: normalizedContest,
+      accountType: resolvedRole === 'PARENT' ? 'parent' : 'student',
       capturedAt: new Date().toISOString()
     };
 
@@ -87,6 +90,7 @@ export async function POST(request: NextRequest) {
           last_name: lastName,
           phone: phone || null,
           postal_code: zip || null,
+          role: resolvedRole,
           password_hash: hashedPassword,
           is_active: true,
           updated_at: new Date().toISOString()
@@ -146,7 +150,7 @@ export async function POST(request: NextRequest) {
           email,
           first_name: firstName,
           last_name: lastName,
-          role: 'STUDENT',
+          role: resolvedRole,
         },
         verifyToken,
         plainPassword: initialPassword,
@@ -177,13 +181,14 @@ export async function POST(request: NextRequest) {
         last_name: lastName,
         phone: phone || null,
         postal_code: zip || null,
-        role: 'STUDENT',
+        role: resolvedRole,
         is_active: true
       })
       .select('id')
       .single();
 
     if (userErr || !newUser) {
+      console.error('Lead new user insert error:', userErr);
       return NextResponse.json({ error: 'Erreur création utilisateur' }, { status: 500 });
     }
 
@@ -230,7 +235,7 @@ export async function POST(request: NextRequest) {
       email,
       first_name: firstName,
       last_name: lastName,
-      role: 'STUDENT',
+      role: resolvedRole,
     });
     await insertStudentPasswordChangeNotification(supabase, newUser.id, 'lead_form');
 
@@ -241,7 +246,7 @@ export async function POST(request: NextRequest) {
         email,
         first_name: firstName,
         last_name: lastName,
-        role: 'STUDENT',
+        role: resolvedRole,
       },
       verifyToken,
       plainPassword: initialPassword,

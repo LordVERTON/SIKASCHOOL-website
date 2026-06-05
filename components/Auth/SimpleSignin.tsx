@@ -49,6 +49,7 @@ export default function SimpleSignin() {
     firstName: "",
     lastName: "",
     phone: "",
+    accountType: "STUDENT" as "STUDENT" | "PARENT",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -125,7 +126,7 @@ export default function SimpleSignin() {
             firstName: data.firstName.trim(),
             lastName: data.lastName.trim(),
             phone: data.phone.trim(),
-            role: 'STUDENT' // Rôle par défaut
+            role: data.accountType
           }),
         });
       } else {
@@ -196,6 +197,9 @@ export default function SimpleSignin() {
             break;
           case 'STUDENT':
             router.push('/student');
+            break;
+          case 'PARENT':
+            router.push('/family');
             break;
           case 'ADMIN':
             router.push('/tutor'); // Les admins accèdent à l'espace tuteur avec administration
@@ -307,7 +311,39 @@ export default function SimpleSignin() {
               )}
 
               {isSignup && (
-                <div className="mb-7.5">
+                <div className="mb-7.5 space-y-7.5">
+                  <div>
+                    <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                      Vous êtes
+                    </label>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {[
+                        { value: "STUDENT", label: "Élève" },
+                        { value: "PARENT", label: "Parent" },
+                      ].map((option) => (
+                        <label
+                          key={option.value}
+                          className={`flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-sm transition ${
+                            data.accountType === option.value
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-stroke text-waterloo hover:border-primary/40 dark:border-strokedark dark:text-manatee"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="accountType"
+                            value={option.value}
+                            checked={data.accountType === option.value}
+                            onChange={(e) =>
+                              setData({ ...data, accountType: e.target.value as "STUDENT" | "PARENT" })
+                            }
+                            className="h-4 w-4 text-primary focus:ring-primary"
+                          />
+                          <span>{option.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                   <input
                     type="tel"
                     placeholder="Votre numéro de téléphone"

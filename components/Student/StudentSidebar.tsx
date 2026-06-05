@@ -81,27 +81,37 @@ const navigation = [
   },
 ];
 
-export default function StudentSidebar() {
+export default function StudentSidebar({
+  basePath = "/student",
+  title = "Espace Étudiant",
+  showPayments = false,
+}: {
+  basePath?: "/student" | "/family";
+  title?: string;
+  showPayments?: boolean;
+}) {
   const pathname = usePathname();
   const { unreadCount } = useUnreadNotifications();
+  const visibleNavigation = navigation.filter((item) => showPayments || item.href !== "/student/paiements");
 
   return (
     <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0">
       <div className="flex flex-col flex-grow bg-white dark:bg-blacksection border-r border-stroke dark:border-strokedark pt-5 pb-4 overflow-y-auto">
         <div className="flex items-center flex-shrink-0 px-4">
           <h1 className="text-xl font-bold text-black dark:text-white">
-            Espace Étudiant
+            {title}
           </h1>
         </div>
         <div className="mt-5 flex-grow flex flex-col">
           <nav className="flex-1 px-2 space-y-1">
-            {navigation.map((item) => {
-              const isActive = pathname === item.href;
+            {visibleNavigation.map((item) => {
+              const href = item.href.replace("/student", basePath);
+              const isActive = pathname === href;
               const showBadge = item.href === "/student/notifications" && unreadCount > 0;
               return (
                 <Link
                   key={item.name}
-                  href={item.href}
+                  href={href}
                   className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors ${
                     isActive
                       ? "bg-primary text-white"

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
 import { mercureThreadTopic, mercureUserTopic, publishMercureUpdate, publishUserMercureUpdate } from '@/lib/mercure';
+import { canAccessStudentFeatures, getEffectiveStudentAccess } from '@/lib/student-access';
 
 export async function GET(
   request: Request,
@@ -9,9 +10,14 @@ export async function GET(
 ) {
   try {
     const user = await getUserSession();
-    if (!user || user.role !== 'STUDENT') {
+    if (!canAccessStudentFeatures(user)) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
+    const access = await getEffectiveStudentAccess(user);
+    if (!access) {
+      return NextResponse.json({ error: 'Aucun élève lié à ce compte parent' }, { status: 404 });
+    }
+    const studentId = access.effectiveStudentId;
 
     const { threadId } = await params;
 
@@ -38,7 +44,7 @@ export async function GET(
       .from('message_thread_participants')
       .select('thread_id')
       .eq('thread_id', threadId)
-      .eq('user_id', user.id)
+      .eq('user_id', studentId)
       .single();
 
     if (participantError || !participant) {
@@ -68,12 +74,12 @@ export async function GET(
       .from('messages')
       .update({ is_read: true })
       .eq('thread_id', threadId)
-      .neq('sender_id', user.id); // Seulement les messages reçus
+      .neq('sender_id', studentId); // Seulement les messages reçus
 
-    await publishUserMercureUpdate([user.id], {
+    await publishUserMercureUpdate([studentId, user.id], {
       type: 'message',
       action: 'read',
-      userId: user.id,
+      userId: studentId,
       threadId,
     });
 
@@ -132,9 +138,14 @@ export async function POST(
 ) {
   try {
     const user = await getUserSession();
-    if (!user || user.role !== 'STUDENT') {
+    if (!canAccessStudentFeatures(user)) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
+    const access = await getEffectiveStudentAccess(user);
+    if (!access) {
+      return NextResponse.json({ error: 'Aucun élève lié à ce compte parent' }, { status: 404 });
+    }
+    const studentId = access.effectiveStudentId;
 
     const { threadId } = await params;
     const { content } = await request.json();
@@ -160,7 +171,7 @@ export async function POST(
       .from('message_thread_participants')
       .select('thread_id')
       .eq('thread_id', threadId)
-      .eq('user_id', user.id)
+      .eq('user_id', studentId)
       .single();
 
     if (participantError || !participant) {
@@ -172,7 +183,7 @@ export async function POST(
       .from('messages')
       .insert({
         thread_id: threadId,
-        sender_id: user.id,
+        sender_id: studentId,
         content,
         is_read: false
       })
@@ -189,14 +200,14 @@ export async function POST(
       .from('message_thread_participants')
       .select('user_id')
       .eq('thread_id', threadId)
-      .neq('user_id', user.id);
+      .neq('user_id', studentId);
 
     if (participants && participants.length > 0) {
       // Récupérer les informations de l'expéditeur
       const { data: sender, error: senderError } = await supabaseAdmin
         .from('users')
         .select('first_name, last_name')
-        .eq('id', user.id)
+        .eq('id', studentId)
         .single();
 
       const senderName = sender && !senderError 
@@ -220,7 +231,7 @@ export async function POST(
         message: `${senderName} vous a envoyé un message${threadSubject ? ` : ${threadSubject}` : ''}`,
         data: {
           thread_id: threadId,
-          sender_id: user.id,
+          sender_id: studentId,
           sender_name: senderName
         }
       }));
@@ -234,13 +245,14 @@ export async function POST(
       await publishMercureUpdate(
         [
           mercureThreadTopic(threadId),
+          mercureUserTopic(studentId),
           mercureUserTopic(user.id),
           ...participants.map((p: any) => mercureUserTopic(p.user_id)),
         ],
         {
           type: 'message',
           action: 'created',
-          userId: user.id,
+          userId: studentId,
           threadId,
         }
       );
@@ -251,7 +263,7 @@ export async function POST(
       message: {
         id: message.id,
         content,
-        senderId: user.id,
+        senderId: studentId,
         createdAt: message.created_at,
         isRead: false
       }
@@ -269,9 +281,14 @@ export async function PATCH(
 ) {
   try {
     const user = await getUserSession();
-    if (!user || user.role !== 'STUDENT') {
+    if (!canAccessStudentFeatures(user)) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
+    const access = await getEffectiveStudentAccess(user);
+    if (!access) {
+      return NextResponse.json({ error: 'Aucun élève lié à ce compte parent' }, { status: 404 });
+    }
+    const studentId = access.effectiveStudentId;
 
     const { threadId } = await params;
     const body = await request.json();
@@ -286,7 +303,7 @@ export async function PATCH(
       .from('message_thread_participants')
       .select('thread_id')
       .eq('thread_id', threadId)
-      .eq('user_id', user.id)
+      .eq('user_id', studentId)
       .single();
 
     if (participantError || !participant) {
@@ -317,9 +334,14 @@ export async function DELETE(
 ) {
   try {
     const user = await getUserSession();
-    if (!user || user.role !== 'STUDENT') {
+    if (!canAccessStudentFeatures(user)) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
+    const access = await getEffectiveStudentAccess(user);
+    if (!access) {
+      return NextResponse.json({ error: 'Aucun élève lié à ce compte parent' }, { status: 404 });
+    }
+    const studentId = access.effectiveStudentId;
 
     const { threadId } = await params;
 
@@ -328,7 +350,7 @@ export async function DELETE(
       .from('message_thread_participants')
       .select('thread_id')
       .eq('thread_id', threadId)
-      .eq('user_id', user.id)
+      .eq('user_id', studentId)
       .single();
 
     if (participantError || !participant) {

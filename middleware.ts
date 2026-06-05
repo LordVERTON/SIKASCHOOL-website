@@ -43,7 +43,7 @@ function parseUserSession(sessionCookie: string): User | null {
     }
 
     // Vérifier que le rôle est valide
-    if (!['ADMIN', 'TUTOR', 'STUDENT'].includes(user.role)) {
+    if (!['ADMIN', 'TUTOR', 'STUDENT', 'PARENT'].includes(user.role)) {
       return null;
     }
 

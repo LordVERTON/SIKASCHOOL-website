@@ -26,6 +26,10 @@ export const dynamic = 'force-dynamic';
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
+function getStudentIdFromMetadata(meta: Stripe.Metadata | null | undefined) {
+  return meta?.sikaschool_student_id || meta?.sikaschool_user_id || null;
+}
+
 export async function POST(req: Request) {
   if (!stripe) {
     return NextResponse.json({ error: 'Stripe non configuré' }, { status: 500 });
@@ -107,7 +111,7 @@ export async function POST(req: Request) {
  */
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const meta = session.metadata ?? {};
-  const studentId = meta.sikaschool_user_id;
+  const studentId = getStudentIdFromMetadata(meta);
   const planId = meta.plan_id;
   const kind = (meta.plan_kind ?? '').toUpperCase();
   const level = meta.plan_level ?? null;
@@ -203,7 +207,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
 
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
   const meta = subscription.metadata ?? {};
-  const studentId = meta.sikaschool_user_id;
+  const studentId = getStudentIdFromMetadata(meta);
   const planId = meta.plan_id;
   const level = meta.plan_level ?? null;
   const sessionsCount = Number(meta.sessions_count ?? 0);
@@ -255,7 +259,7 @@ async function handleInvoiceFailed(invoice: Stripe.Invoice) {
 
 async function handleSubscriptionChange(sub: Stripe.Subscription) {
   const meta = sub.metadata ?? {};
-  const studentId = meta.sikaschool_user_id;
+  const studentId = getStudentIdFromMetadata(meta);
   const planId = meta.plan_id;
   const level = meta.plan_level ?? null;
 

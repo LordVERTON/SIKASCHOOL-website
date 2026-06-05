@@ -8,7 +8,7 @@
           password_hash: string;
           first_name: string;
           last_name: string;
-          role: 'STUDENT' | 'TUTOR' | 'ADMIN';
+          role: 'STUDENT' | 'TUTOR' | 'ADMIN' | 'PARENT';
           avatar_url: string | null;
           phone: string | null;
           date_of_birth: string | null;
@@ -29,7 +29,7 @@
           password_hash: string;
           first_name: string;
           last_name: string;
-          role: 'STUDENT' | 'TUTOR' | 'ADMIN';
+          role: 'STUDENT' | 'TUTOR' | 'ADMIN' | 'PARENT';
           avatar_url?: string | null;
           phone?: string | null;
           date_of_birth?: string | null;
@@ -50,7 +50,7 @@
           password_hash?: string;
           first_name?: string;
           last_name?: string;
-          role?: 'STUDENT' | 'TUTOR' | 'ADMIN';
+          role?: 'STUDENT' | 'TUTOR' | 'ADMIN' | 'PARENT';
           avatar_url?: string | null;
           phone?: string | null;
           date_of_birth?: string | null;
@@ -113,6 +113,7 @@
           user_id: string;
           grade_level: string;
           academic_goals: string;
+          parents_linked: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -121,6 +122,7 @@
           user_id: string;
           grade_level: string;
           academic_goals: string;
+          parents_linked?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -129,6 +131,7 @@
           user_id?: string;
           grade_level?: string;
           academic_goals?: string;
+          parents_linked?: string | null;
           created_at?: string;
           updated_at?: string;
         };

@@ -24,7 +24,7 @@ const Packs = () => {
         return;
       }
       const me = await meRes.json();
-      if (me?.role !== "STUDENT") {
+      if (me?.role !== "STUDENT" && me?.role !== "PARENT") {
         toast.error("Seuls les comptes Élève peuvent acheter un pack.");
         setPendingPlan(null);
         return;

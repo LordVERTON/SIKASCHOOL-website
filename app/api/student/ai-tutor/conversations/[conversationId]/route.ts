@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
 import { runSikaAgent, type StoredMessage, type StoredAttachment } from '@/lib/ai-tutor/agent';
+import { canAccessStudentFeatures, getEffectiveStudentAccess } from '@/lib/student-access';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -15,8 +16,12 @@ export async function GET(
 ) {
   try {
     const user = await getUserSession();
-    if (!user || user.role !== 'STUDENT') {
+    if (!canAccessStudentFeatures(user)) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+    const access = await getEffectiveStudentAccess(user);
+    if (!access) {
+      return NextResponse.json({ error: 'Aucun élève lié à ce compte parent' }, { status: 404 });
     }
 
     const { conversationId } = await params;
@@ -25,7 +30,7 @@ export async function GET(
       .from('ai_tutor_conversations')
       .select('id, user_id, title, subject, level, is_active, created_at, updated_at')
       .eq('id', conversationId)
-      .eq('user_id', user.id)
+      .eq('user_id', access.effectiveStudentId)
       .single();
 
     if (convoError || !convo) {
@@ -85,8 +90,12 @@ export async function POST(
 ) {
   try {
     const user = await getUserSession();
-    if (!user || user.role !== 'STUDENT') {
+    if (!canAccessStudentFeatures(user)) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+    const access = await getEffectiveStudentAccess(user);
+    if (!access) {
+      return NextResponse.json({ error: 'Aucun élève lié à ce compte parent' }, { status: 404 });
     }
 
     const { conversationId } = await params;
@@ -118,7 +127,7 @@ export async function POST(
       .from('ai_tutor_conversations')
       .select('id, user_id, title, subject, level')
       .eq('id', conversationId)
-      .eq('user_id', user.id)
+      .eq('user_id', access.effectiveStudentId)
       .single();
 
     if (convoError || !convo) {
@@ -281,8 +290,12 @@ export async function PATCH(
 ) {
   try {
     const user = await getUserSession();
-    if (!user || user.role !== 'STUDENT') {
+    if (!canAccessStudentFeatures(user)) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+    const access = await getEffectiveStudentAccess(user);
+    if (!access) {
+      return NextResponse.json({ error: 'Aucun élève lié à ce compte parent' }, { status: 404 });
     }
     const { conversationId } = await params;
     const body = await request.json().catch(() => ({}));
@@ -302,7 +315,7 @@ export async function PATCH(
       .from('ai_tutor_conversations')
       .update(updates)
       .eq('id', conversationId)
-      .eq('user_id', user.id)
+      .eq('user_id', access.effectiveStudentId)
       .select('id, title, subject, level, updated_at')
       .single();
 
@@ -323,8 +336,12 @@ export async function DELETE(
 ) {
   try {
     const user = await getUserSession();
-    if (!user || user.role !== 'STUDENT') {
+    if (!canAccessStudentFeatures(user)) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+    const access = await getEffectiveStudentAccess(user);
+    if (!access) {
+      return NextResponse.json({ error: 'Aucun élève lié à ce compte parent' }, { status: 404 });
     }
     const { conversationId } = await params;
 
@@ -332,7 +349,7 @@ export async function DELETE(
       .from('ai_tutor_conversations')
       .delete()
       .eq('id', conversationId)
-      .eq('user_id', user.id);
+      .eq('user_id', access.effectiveStudentId);
 
     if (error) {
       return NextResponse.json({ error: 'Suppression impossible' }, { status: 500 });

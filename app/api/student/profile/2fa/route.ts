@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
+import { canAccessStudentFeatures } from '@/lib/student-access';
 import {
   clearSetupCode,
   createSetupCode,
@@ -16,7 +17,7 @@ import {
 
 export async function GET() {
   const user = await getUserSession();
-  if (!user || user.role !== 'STUDENT') {
+  if (!canAccessStudentFeatures(user)) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
   }
 
@@ -32,7 +33,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const user = await getUserSession();
-    if (!user || user.role !== 'STUDENT') {
+    if (!canAccessStudentFeatures(user)) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 

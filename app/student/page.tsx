@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import CreateSessionModal from "@/components/Student/CreateSessionModal";
 
 type UpcomingSession = {
@@ -67,11 +68,14 @@ const getSessionStatusClassName = (status: string) => {
 };
 
 export default function StudentHome() {
+  const pathname = usePathname();
   const [upcomingSessions, setUpcomingSessions] = useState<UpcomingSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateSession, setShowCreateSession] = useState(false);
   const [assignedTutors, setAssignedTutors] = useState<Array<{ id: string; name: string }>>([]);
+  const isFamily = pathname?.startsWith("/family");
+  const basePath = isFamily ? "/family" : "/student";
 
   useEffect(() => {
     let ignore = false;
@@ -164,7 +168,7 @@ export default function StudentHome() {
     <main className="pb-20 lg:pb-25 xl:pb-30">
       <div className="mx-auto max-w-c-1315 px-1 md:px-8 xl:px-0">
         <section className="rounded-[28px] bg-white px-5 py-6 shadow-[0_16px_40px_rgba(15,23,42,0.06)] dark:bg-blacksection sm:px-7 lg:rounded-lg lg:border lg:border-stroke lg:p-8 lg:dark:border-strokedark">
-          <p className="text-sm font-medium text-primary">Espace étudiant</p>
+          <p className="text-sm font-medium text-primary">{isFamily ? "Espace famille" : "Espace étudiant"}</p>
           <h1 className="mt-3 text-3xl font-bold leading-tight text-black dark:text-white lg:text-4xl">
             Votre semaine, simplement.
           </h1>
@@ -187,7 +191,7 @@ export default function StudentHome() {
               ) : (
                 <Link
                   key={`${item.label}-${item.href}`}
-                  href={item.href}
+                  href={item.href.replace("/student", basePath)}
                   className="rounded-2xl border border-stroke bg-[#f7f8fb] p-4 transition hover:border-primary/40 hover:bg-primary/5 dark:border-strokedark dark:bg-black lg:rounded-lg"
                 >
                   <span className="text-base font-semibold text-black dark:text-white">{item.label}</span>
@@ -202,7 +206,7 @@ export default function StudentHome() {
           <div className="rounded-[24px] bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.05)] dark:bg-blacksection lg:rounded-lg lg:border lg:border-stroke lg:p-7 lg:dark:border-strokedark">
             <div className="flex items-center justify-between gap-4">
               <h2 className="text-xl font-semibold text-black dark:text-white">Prochaines séances</h2>
-              <Link href="/student/calendar" className="shrink-0 text-sm font-medium text-primary">
+              <Link href={`${basePath}/calendar`} className="shrink-0 text-sm font-medium text-primary">
                 Voir tout
               </Link>
             </div>
@@ -275,13 +279,15 @@ export default function StudentHome() {
           <div className="rounded-[24px] bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.05)] dark:bg-blacksection lg:rounded-lg lg:border lg:border-stroke lg:p-7 lg:dark:border-strokedark">
             <h2 className="text-xl font-semibold text-black dark:text-white">Accès rapide</h2>
             <div className="mt-5 space-y-3">
-              <Link href="/student/tutors" className="block rounded-2xl bg-primary/10 px-4 py-3 text-sm font-semibold text-primary">
+              <Link href={`${basePath}/tutors`} className="block rounded-2xl bg-primary/10 px-4 py-3 text-sm font-semibold text-primary">
                 Mes tuteurs
               </Link>
-              <Link href="/student/paiements" className="block rounded-2xl bg-gray-100 px-4 py-3 text-sm font-semibold text-black dark:bg-gray-800 dark:text-white">
-                Paiements
-              </Link>
-              <Link href="/student/profile" className="block rounded-2xl bg-gray-100 px-4 py-3 text-sm font-semibold text-black dark:bg-gray-800 dark:text-white">
+              {isFamily && (
+                <Link href={`${basePath}/paiements`} className="block rounded-2xl bg-gray-100 px-4 py-3 text-sm font-semibold text-black dark:bg-gray-800 dark:text-white">
+                  Paiements
+                </Link>
+              )}
+              <Link href={`${basePath}/profile`} className="block rounded-2xl bg-gray-100 px-4 py-3 text-sm font-semibold text-black dark:bg-gray-800 dark:text-white">
                 Profil
               </Link>
             </div>

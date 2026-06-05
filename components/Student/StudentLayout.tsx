@@ -12,15 +12,19 @@ import { useUnreadNotifications } from "@/hooks/useUnreadNotifications";
 
 interface StudentLayoutProps {
   children: React.ReactNode;
+  variant?: "student" | "family";
 }
 
-export default function StudentLayout({ children }: StudentLayoutProps) {
+export default function StudentLayout({ children, variant = "student" }: StudentLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hideLogo, setHideLogo] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [showCreateSession, setShowCreateSession] = useState(false);
   const [assignedTutors, setAssignedTutors] = useState<Array<{ id: string; name: string }>>([]);
   const { unreadCount } = useUnreadNotifications();
+  const isFamily = variant === "family";
+  const basePath = isFamily ? "/family" : "/student";
+  const spaceTitle = isFamily ? "Espace Famille" : "Espace Étudiant";
 
   useEffect(() => {
     const onScroll = () => {
@@ -77,7 +81,7 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
         <div className="relative flex w-64 flex-col bg-white dark:bg-blacksection">
           <div className="flex h-16 items-center justify-between px-4">
             <h1 className="text-xl font-bold text-black dark:text-white">
-              Espace Étudiant
+              {spaceTitle}
             </h1>
             <button
               onClick={() => setSidebarOpen(false)}
@@ -90,7 +94,7 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
           </div>
           <nav className="flex-1 px-2 py-4 space-y-1">
             <Link
-              href="/student"
+              href={basePath}
               className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-waterloo hover:bg-gray-50 hover:text-black dark:text-manatee dark:hover:bg-gray-800 dark:hover:text-white"
               onClick={() => setSidebarOpen(false)}
             >
@@ -100,7 +104,7 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
               Tableau de bord
             </Link>
             <Link
-              href="/student/messages"
+              href={`${basePath}/messages`}
               className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-waterloo hover:bg-gray-50 hover:text-black dark:text-manatee dark:hover:bg-gray-800 dark:hover:text-white"
               onClick={() => setSidebarOpen(false)}
             >
@@ -111,7 +115,7 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
               Messages
             </Link>
             <Link
-              href="/student/calendar"
+              href={`${basePath}/calendar`}
               className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-waterloo hover:bg-gray-50 hover:text-black dark:text-manatee dark:hover:bg-gray-800 dark:hover:text-white"
               onClick={() => setSidebarOpen(false)}
             >
@@ -121,7 +125,7 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
               Calendrier
             </Link>
             <Link
-              href="/student/notifications"
+              href={`${basePath}/notifications`}
               className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-waterloo hover:bg-gray-50 hover:text-black dark:text-manatee dark:hover:bg-gray-800 dark:hover:text-white"
               onClick={() => setSidebarOpen(false)}
             >
@@ -138,7 +142,7 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
               Notifications
             </Link>
             <Link
-              href="/student/profile"
+              href={`${basePath}/profile`}
               className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-waterloo hover:bg-gray-50 hover:text-black dark:text-manatee dark:hover:bg-gray-800 dark:hover:text-white"
               onClick={() => setSidebarOpen(false)}
             >
@@ -157,13 +161,13 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
       </div>
 
       {/* Desktop sidebar */}
-      <StudentSidebar />
+      <StudentSidebar basePath={basePath} title={spaceTitle} showPayments={isFamily} />
 
       {/* Main content */}
       <div className="lg:pl-64">
         <header className="sticky top-0 z-30 border-b border-stroke bg-white/95 px-4 py-3 backdrop-blur dark:border-strokedark dark:bg-black/85 lg:hidden">
           <div className="flex items-center justify-center">
-            <Link href="/student" className="flex items-center gap-2">
+            <Link href={basePath} className="flex items-center gap-2">
               <Image
                 src="/images/logo/logo-light.svg"
                 alt="SikaSchool"
@@ -207,28 +211,28 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
       </div>
       <SessionNotificationsPopup
         apiEndpoint="/api/student/notifications"
-        viewAllHref="/student/notifications"
+        viewAllHref={`${basePath}/notifications`}
       />
 
       {/* Mobile footer navigation */}
       <MobileFooterNav
         items={[
           {
-            href: "/student",
+            href: basePath,
             label: "Accueil",
             icon: (
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10.5V20h14v-9.5"/><path d="M9 20v-6h6v6"/></svg>
             ),
           },
           {
-            href: "/student/calendar",
+            href: `${basePath}/calendar`,
             label: "Calendrier",
             icon: (
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 3v3M17 3v3M4 8h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/></svg>
             ),
           },
           {
-            href: "/student/calendar",
+            href: `${basePath}/calendar`,
             label: "Réserver",
             primary: true,
             onClick: () => setShowCreateSession(true),
@@ -237,7 +241,7 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
             ),
           },
           {
-            href: "/student/messages",
+            href: `${basePath}/messages`,
             label: "Messages",
             icon: (
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 5h16v12H7l-3 3V5Z"/><path d="M8 9h8M8 13h5"/></svg>
@@ -246,7 +250,7 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
         ]}
         menuItems={[
           {
-            href: "/student/notifications",
+            href: `${basePath}/notifications`,
             label: "Notifications",
             badge: unreadCount,
             icon: (
@@ -254,42 +258,46 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
             ),
           },
           {
-            href: "/student/tutors",
+            href: `${basePath}/tutors`,
             label: "Tuteurs",
             icon: (
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 11a4 4 0 1 0-8 0"/><path d="M4 21a8 8 0 0 1 16 0"/><path d="M19 8v4M21 10h-4"/></svg>
             ),
           },
           {
-            href: "/student/history",
+            href: `${basePath}/history`,
             label: "Historique",
             icon: (
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 8v5l3 2"/><path d="M4 12a8 8 0 1 0 2.35-5.65"/><path d="M4 4v5h5"/></svg>
             ),
           },
+          ...(isFamily
+            ? [
+                {
+                  href: `${basePath}/paiements`,
+                  label: "Paiements",
+                  icon: (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 7h18v10H3z"/><path d="M3 10h18"/><path d="M7 15h4"/></svg>
+                  ),
+                },
+              ]
+            : []),
           {
-            href: "/student/paiements",
-            label: "Paiements",
-            icon: (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 7h18v10H3z"/><path d="M3 10h18"/><path d="M7 15h4"/></svg>
-            ),
-          },
-          {
-            href: "/student/statistics",
+            href: `${basePath}/statistics`,
             label: "Stats",
             icon: (
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19V5"/><path d="M8 17v-6M13 17V7M18 17v-3"/><path d="M4 19h17"/></svg>
             ),
           },
           {
-            href: "/student/messages/ai-tutor",
+            href: `${basePath}/messages/ai-tutor`,
             label: "Sika AI",
             icon: (
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><path d="M8 8h8v8H8z"/><path d="M10 11h.01M14 11h.01M10 15h4"/></svg>
             ),
           },
           {
-            href: "/student/profile",
+            href: `${basePath}/profile`,
             label: "Profil",
             icon: (
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>

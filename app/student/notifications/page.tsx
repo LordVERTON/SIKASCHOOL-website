@@ -119,7 +119,7 @@ function getActionUrl(notification: NotificationRecord) {
 
 export default function StudentNotifications() {
   const router = useRouter();
-  const { user } = useAuth("STUDENT");
+  const { user } = useAuth(["STUDENT", "PARENT"]);
 
   const [notifications, setNotifications] = useState<NotificationRecord[]>([]);
   const [isInitialLoading, setIsInitialLoading] = useState(true);

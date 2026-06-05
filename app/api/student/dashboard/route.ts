@@ -3,6 +3,7 @@ import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
 import { formatHours } from '@/lib/time-utils';
 import { logger } from '@/lib/logger';
+import { canAccessStudentFeatures, getEffectiveStudentAccess } from '@/lib/student-access';
 import type {
   DashboardSession,
   SessionParticipantLink,
@@ -16,11 +17,16 @@ export async function GET() {
   try {
     // Vérifier l'authentification
     const user = await getUserSession();
-    if (!user || user.role !== 'STUDENT') {
+    if (!canAccessStudentFeatures(user)) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    const studentId = user.id;
+    const access = await getEffectiveStudentAccess(user);
+    if (!access) {
+      return NextResponse.json({ error: 'Aucun élève lié à ce compte parent' }, { status: 404 });
+    }
+
+    const studentId = access.effectiveStudentId;
 
     // Récupérer les données réelles de Supabase
 
@@ -132,7 +138,7 @@ export async function GET() {
         last_name,
         email,
         avatar_url,
-        students(grade_level, academic_goals, created_at)
+        students!students_user_id_fkey(grade_level, academic_goals, created_at)
       `)
       .eq('id', studentId)
       .single();

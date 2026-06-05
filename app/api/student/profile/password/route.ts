@@ -3,11 +3,12 @@ import bcrypt from 'bcryptjs';
 import { getUserSession } from '@/lib/auth-simple';
 import { supabaseAdmin } from '@/lib/supabase';
 import { syncSupabaseAuthIdentity } from '@/lib/supabase-auth-sync';
+import { canAccessStudentFeatures } from '@/lib/student-access';
 
 export async function PATCH(request: Request) {
   try {
     const user = await getUserSession();
-    if (!user || user.role !== 'STUDENT') {
+    if (!canAccessStudentFeatures(user)) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 

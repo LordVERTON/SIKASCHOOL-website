@@ -17,6 +17,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 export async function POST(request: NextRequest) {
   try {
     const { email, password, firstName, lastName, phone, role = 'STUDENT' } = await request.json();
+    const resolvedRole = role === 'PARENT' ? 'PARENT' : role === 'TUTOR' ? 'TUTOR' : 'STUDENT';
     const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
     const rawPassword = typeof password === 'string' ? password : '';
     const normalizedFirstName = typeof firstName === 'string' ? firstName.trim() : '';
@@ -65,7 +66,7 @@ export async function POST(request: NextRequest) {
         first_name: normalizedFirstName,
         last_name: normalizedLastName,
         phone: normalizedPhone,
-        role,
+        role: resolvedRole,
         is_active: true,
         email_verified: false,
       })
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Créer le profil selon le rôle
-    if (role === 'STUDENT') {
+    if (resolvedRole === 'STUDENT' || resolvedRole === 'PARENT') {
       const { error: profileError } = await supabase
         .from('students')
         .insert({
@@ -96,7 +97,7 @@ export async function POST(request: NextRequest) {
         console.error('Erreur lors de la création du profil étudiant:', profileError);
         // Ne pas faire échouer l'inscription pour cela
       }
-    } else if (role === 'TUTOR') {
+    } else if (resolvedRole === 'TUTOR') {
       const { error: profileError } = await supabase
         .from('tutors')
         .insert({
@@ -124,7 +125,7 @@ export async function POST(request: NextRequest) {
 
     const verifyToken = await upsertEmailVerificationToken(supabase, newUser.id);
 
-    if (role === 'STUDENT') {
+    if (resolvedRole === 'STUDENT' || resolvedRole === 'PARENT') {
       await insertStudentPasswordChangeNotification(supabase, newUser.id, 'register_form');
       await insertAdminNewStudentNotifications(supabase, newUserRow);
     }

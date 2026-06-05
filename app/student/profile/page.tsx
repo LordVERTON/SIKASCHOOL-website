@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 interface StudentIntakeDetails {
   civility?: string;
@@ -39,6 +40,14 @@ interface StudentProfileData {
   academicGoals?: string;
   passwordUpdatedAt?: string | null;
   intake?: StudentIntakeDetails | null;
+}
+
+interface LinkedStudentData {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl?: string | null;
 }
 
 function getPasswordLastUpdateLabel(value?: string | null): string {
@@ -81,6 +90,8 @@ function getPasswordLastUpdateTooltip(value?: string | null): string {
 }
 
 export default function StudentProfile() {
+  const pathname = usePathname();
+  const isFamily = pathname?.startsWith("/family");
   const [profile, setProfile] = useState<StudentProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -103,6 +114,11 @@ export default function StudentProfile() {
   const [twoFactorLoading, setTwoFactorLoading] = useState(false);
   const [twoFactorMessage, setTwoFactorMessage] = useState<string | null>(null);
   const [twoFactorError, setTwoFactorError] = useState<string | null>(null);
+  const [linkedStudent, setLinkedStudent] = useState<LinkedStudentData | null>(null);
+  const [studentEmailToLink, setStudentEmailToLink] = useState("");
+  const [linkLoading, setLinkLoading] = useState(false);
+  const [linkMessage, setLinkMessage] = useState<string | null>(null);
+  const [linkError, setLinkError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -138,6 +154,56 @@ export default function StudentProfile() {
     };
     loadTwoFactor();
   }, []);
+
+  useEffect(() => {
+    if (!isFamily) return;
+
+    const loadLinkedStudent = async () => {
+      try {
+        const res = await fetch('/api/family/linked-student', { credentials: 'include' });
+        if (!res.ok) return;
+        const data = await res.json();
+        setLinkedStudent(data.linkedStudent ?? null);
+      } catch {
+        // ignore
+      }
+    };
+
+    loadLinkedStudent();
+  }, [isFamily]);
+
+  const handleLinkStudent = async () => {
+    setLinkError(null);
+    setLinkMessage(null);
+
+    if (!studentEmailToLink.trim()) {
+      setLinkError("Entrez l'e-mail du compte élève à lier.");
+      return;
+    }
+
+    setLinkLoading(true);
+    try {
+      const res = await fetch('/api/family/linked-student', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ studentEmail: studentEmailToLink }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setLinkError(data?.error || "Impossible de lier cet élève.");
+        return;
+      }
+
+      setLinkedStudent(data.linkedStudent ?? null);
+      setStudentEmailToLink("");
+      setLinkMessage("Élève lié avec succès. Les données famille sont maintenant synchronisées.");
+    } catch {
+      setLinkError("Erreur réseau lors de la liaison.");
+    } finally {
+      setLinkLoading(false);
+    }
+  };
 
   const handleTwoFactorSendCode = async () => {
     setTwoFactorError(null);
@@ -335,7 +401,9 @@ export default function StudentProfile() {
       <main className="pb-20 pt-15 lg:pb-25 xl:pb-30">
         <div className="mx-auto max-w-c-1315 px-4 md:px-8 xl:px-0">
           <div className="animate_top mx-auto text-center">
-            <h1 className="text-3xl font-bold text-black dark:text-white xl:text-sectiontitle3">Mon profil</h1>
+            <h1 className="text-3xl font-bold text-black dark:text-white xl:text-sectiontitle3">
+              {isFamily ? "Profil parent" : "Mon profil"}
+            </h1>
             <p className="mt-4 text-para2 text-waterloo dark:text-manatee">{error || "Profil indisponible"}</p>
           </div>
         </div>
@@ -348,12 +416,46 @@ export default function StudentProfile() {
       <div className="mx-auto max-w-c-1315 px-4 md:px-8 xl:px-0">
         <div className="animate_top">
           <h1 className="text-3xl font-bold text-black dark:text-white xl:text-sectiontitle3">
-            Mon profil
+            {isFamily ? "Profil parent" : "Mon profil"}
           </h1>
           <p className="mt-4 text-para2 text-waterloo dark:text-manatee">
             Gérez vos préférences et informations personnelles.
           </p>
         </div>
+
+        {isFamily && (
+          <div className="animate_top mt-8 rounded-lg border border-stroke bg-white p-6 shadow-solid-10 dark:border-strokedark dark:bg-blacksection">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-black dark:text-white">Élève lié</h2>
+                <p className="mt-2 text-sm text-waterloo dark:text-manatee">
+                  {linkedStudent
+                    ? `${linkedStudent.firstName} ${linkedStudent.lastName} - ${linkedStudent.email}`
+                    : "Aucun élève n'est encore lié à ce compte parent."}
+                </p>
+              </div>
+              <div className="flex w-full flex-col gap-3 sm:flex-row lg:max-w-xl">
+                <input
+                  type="email"
+                  value={studentEmailToLink}
+                  onChange={(e) => setStudentEmailToLink(e.target.value)}
+                  placeholder="email.eleve@sikaschool.com"
+                  className="min-w-0 flex-1 rounded-lg border border-stroke p-3 focus:outline-none focus:ring-2 focus:ring-primary dark:border-strokedark dark:bg-blacksection"
+                />
+                <button
+                  type="button"
+                  onClick={handleLinkStudent}
+                  disabled={linkLoading}
+                  className="rounded-md bg-primary px-5 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-60"
+                >
+                  {linkLoading ? "Liaison..." : "Lier"}
+                </button>
+              </div>
+            </div>
+            {linkError && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{linkError}</p>}
+            {linkMessage && <p className="mt-3 text-sm text-green-600 dark:text-green-400">{linkMessage}</p>}
+          </div>
+        )}
 
         <div className="mt-10 grid gap-7.5 lg:grid-cols-3">
           {/* Profile Info */}
@@ -462,7 +564,7 @@ export default function StudentProfile() {
                 <div className="grid gap-6 md:grid-cols-2">
                   <div>
                     <label className="block text-sm font-medium text-black dark:text-white mb-2">
-                      Nom complet
+                      {isFamily ? "Nom du parent" : "Nom complet"}
                     </label>
                     <input
                       type="text"

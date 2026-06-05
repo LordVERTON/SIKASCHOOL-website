@@ -2,19 +2,25 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { isSupabaseUnreachableError, supabaseAdmin } from '@/lib/supabase';
 import { publishUserMercureUpdate } from '@/lib/mercure';
+import { canAccessStudentFeatures, getEffectiveStudentAccess } from '@/lib/student-access';
 
 export async function GET() {
   try {
     // Vérifier l'authentification
     const user = await getUserSession();
-    if (!user || user.role !== 'STUDENT') {
+    if (!canAccessStudentFeatures(user)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const access = await getEffectiveStudentAccess(user);
+    if (!access) {
+      return NextResponse.json({ error: 'Aucun élève lié à ce compte parent' }, { status: 404 });
+    }
+    const studentId = access.effectiveStudentId;
 
     const { data: notifications, error } = await (supabaseAdmin as any)
       .from('notifications')
       .select('id, title, message, type, data, is_read, created_at')
-      .eq('user_id', user.id)
+      .eq('user_id', studentId)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -61,9 +67,14 @@ export async function PATCH(request: NextRequest) {
   try {
     // Vérifier l'authentification
     const user = await getUserSession();
-    if (!user || user.role !== 'STUDENT') {
+    if (!canAccessStudentFeatures(user)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const access = await getEffectiveStudentAccess(user);
+    if (!access) {
+      return NextResponse.json({ error: 'Aucun élève lié à ce compte parent' }, { status: 404 });
+    }
+    const studentId = access.effectiveStudentId;
 
     const body = await request.json().catch(() => ({}));
     const { notificationId, markAllAsRead } = body;
@@ -75,7 +86,7 @@ export async function PATCH(request: NextRequest) {
       const { error } = await (supabaseAdmin as any)
         .from('notifications')
         .update(updateData)
-        .eq('user_id', user.id)
+        .eq('user_id', studentId)
         .eq('is_read', false);
 
       if (error) {
@@ -88,10 +99,10 @@ export async function PATCH(request: NextRequest) {
         throw error;
       }
 
-      await publishUserMercureUpdate([user.id], {
+      await publishUserMercureUpdate([studentId, user.id], {
         type: 'notification',
         action: 'read-all',
-        userId: user.id,
+        userId: studentId,
       });
 
       return NextResponse.json({ success: true });
@@ -103,7 +114,7 @@ export async function PATCH(request: NextRequest) {
         .from('notifications')
         .update(updateData)
         .eq('id', notificationId)
-        .eq('user_id', user.id);
+        .eq('user_id', studentId);
 
       if (error) {
         if (isSupabaseUnreachableError(error)) {
@@ -115,10 +126,10 @@ export async function PATCH(request: NextRequest) {
         throw error;
       }
 
-      await publishUserMercureUpdate([user.id], {
+      await publishUserMercureUpdate([studentId, user.id], {
         type: 'notification',
         action: 'read',
-        userId: user.id,
+        userId: studentId,
       });
 
       return NextResponse.json({ success: true });

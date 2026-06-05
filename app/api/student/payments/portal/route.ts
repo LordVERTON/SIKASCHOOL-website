@@ -13,11 +13,12 @@ import { NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth-simple';
 import { stripe, assertStripeConfigured } from '@/lib/stripe';
 import { getOrCreateStripeCustomer } from '@/lib/stripe-customer';
+import { canAccessStudentFeatures } from '@/lib/student-access';
 
 export async function POST() {
   try {
     const user = await getUserSession();
-    if (!user || user.role !== 'STUDENT') {
+    if (!canAccessStudentFeatures(user)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
