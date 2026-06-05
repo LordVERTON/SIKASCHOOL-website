@@ -116,7 +116,7 @@ const Testimonial = () => {
                     <SingleTestimonial review={{
                       ...review,
                       id: parseInt(review?.id || '0'),
-                      image: (review as any)?.avatar_url || '/images/user/user-01.png',
+                      image: review?.avatar || '/images/user/user-01.png',
                       designation: (review as any)?.role || 'Utilisateur'
                     }} />
                   </SwiperSlide>

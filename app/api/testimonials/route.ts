@@ -5,11 +5,12 @@ const MOCK_TESTIMONIALS = [
   {
     id: '1',
     name: 'Marie Dubois',
-    role: 'Étudiante en Terminale',
+    role: "Parent d'élève en Terminale",
     content:
       "Excellent service ! Les tuteurs sont très compétents et l'approche pédagogique est adaptée à chaque élève.",
     rating: 5,
-    avatar: '/images/user/user-01.png',
+    avatar:
+      'https://images.pexels.com/photos/7880373/pexels-photo-7880373.jpeg?auto=compress&cs=tinysrgb&w=160&h=160&fit=crop',
   },
   {
     id: '2',
@@ -18,16 +19,18 @@ const MOCK_TESTIMONIALS = [
     content:
       "Ma fille a fait d'énormes progrès en mathématiques grâce à SikaSchool. Je recommande vivement !",
     rating: 5,
-    avatar: '/images/user/user-02.png',
+    avatar:
+      'https://images.pexels.com/photos/4259709/pexels-photo-4259709.jpeg?auto=compress&cs=tinysrgb&w=160&h=160&fit=crop',
   },
   {
     id: '3',
     name: 'Sophie Laurent',
-    role: 'Étudiante en Première',
+    role: "Parent d'élève en Première",
     content:
       "Les cours sont très bien structurés et les tuteurs sont à l'écoute. Parfait pour progresser !",
     rating: 5,
-    avatar: '/images/user/user-01.png',
+    avatar:
+      'https://images.pexels.com/photos/6482279/pexels-photo-6482279.jpeg?auto=compress&cs=tinysrgb&w=160&h=160&fit=crop',
   },
 ];
 

@@ -32,6 +32,11 @@ const nextConfig = {
         hostname: "cdn.sanity.io",
         port: "",
       },
+      {
+        protocol: "https",
+        hostname: "images.pexels.com",
+        port: "",
+      },
     ],
     formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 60,
