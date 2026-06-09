@@ -82,6 +82,7 @@ export default function TutorProfile() {
   const [deleting, setDeleting] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [subjectOptions, setSubjectOptions] = useState<string[]>([...TUTOR_SUBJECTS]);
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -116,6 +117,25 @@ export default function TutorProfile() {
       }
     };
     void loadTwoFactor();
+  }, []);
+
+  useEffect(() => {
+    const loadSubjectOptions = async () => {
+      try {
+        const res = await fetch("/api/tutor-subjects?includeCatalog=true", {
+          cache: "no-store",
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (Array.isArray(data.subjects) && data.subjects.length > 0) {
+          setSubjectOptions(data.subjects);
+        }
+      } catch {
+        // Keep the local catalog if the shared subject API is unavailable.
+      }
+    };
+
+    void loadSubjectOptions();
   }, []);
 
   const handleSaveProfile = async () => {
@@ -590,7 +610,7 @@ export default function TutorProfile() {
                       Matières enseignées
                     </label>
                     <div className="grid gap-3 sm:grid-cols-2">
-                      {TUTOR_SUBJECTS.map((subject) => {
+                      {subjectOptions.map((subject) => {
                         const checked = profile.subjects.includes(subject);
                         return (
                           <label

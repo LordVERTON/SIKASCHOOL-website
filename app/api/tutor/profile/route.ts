@@ -182,7 +182,13 @@ export async function PATCH(request: Request) {
     if (typeof body.bio === 'string') tutorPayload.bio = body.bio.trim();
     if (typeof body.experienceYears === 'number') tutorPayload.experience_years = body.experienceYears;
     if (Array.isArray(body.subjects)) {
-      const allowedSubjects = new Set<string>(TUTOR_SUBJECTS);
+      const { data: tutorSubjectRows } = await (supabaseAdmin as any)
+        .from('tutors')
+        .select('subjects');
+      const taughtSubjects = (tutorSubjectRows || []).flatMap((row: any) =>
+        Array.isArray(row.subjects) ? row.subjects : []
+      );
+      const allowedSubjects = new Set<string>([...TUTOR_SUBJECTS, ...taughtSubjects]);
       tutorPayload.subjects = body.subjects
         .map((s: any) => String(s).trim())
         .filter((subject: string) => allowedSubjects.has(subject));
@@ -204,13 +210,31 @@ export async function PATCH(request: Request) {
 
     if (Object.keys(tutorPayload).length > 0) {
       tutorPayload.updated_at = new Date().toISOString();
-      const { error: tutorUpdateError } = await (supabaseAdmin as any)
+      const { data: updatedTutor, error: tutorUpdateError } = await (supabaseAdmin as any)
         .from('tutors')
         .update(tutorPayload)
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .select('user_id')
+        .maybeSingle();
       if (tutorUpdateError) {
         console.error('Erreur update tutors:', tutorUpdateError);
         return NextResponse.json({ error: 'Échec de la mise à jour du profil tuteur' }, { status: 500 });
+      }
+
+      if (!updatedTutor) {
+        const { error: tutorInsertError } = await (supabaseAdmin as any)
+          .from('tutors')
+          .insert({
+            user_id: userId,
+            subjects: [],
+            is_available: true,
+            ...tutorPayload,
+          });
+
+        if (tutorInsertError) {
+          console.error('Erreur création tutors:', tutorInsertError);
+          return NextResponse.json({ error: 'Échec de la création du profil tuteur' }, { status: 500 });
+        }
       }
     }
 
