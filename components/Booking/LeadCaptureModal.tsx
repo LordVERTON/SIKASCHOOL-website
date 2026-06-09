@@ -17,6 +17,13 @@ type LeadCaptureModalProps = {
   initialEmail?: string;
 };
 
+type FirstSessionSlot = {
+  tutorId: string;
+  tutorName: string;
+  startedAt: string;
+  duration: number;
+};
+
 const LEVELS = [
   "6ème","5ème","4ème","3ème","Seconde","Première","Terminale","Supérieur"
 ] as const;
@@ -49,6 +56,13 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
   const [contest, setContest] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
+  const [firstSessionSlots, setFirstSessionSlots] = useState<FirstSessionSlot[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [slotsError, setSlotsError] = useState<string | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<FirstSessionSlot | null>(null);
+  const [bookingSlot, setBookingSlot] = useState(false);
+  const [bookingConfirmed, setBookingConfirmed] = useState(false);
+  const [subjectOptions, setSubjectOptions] = useState<string[]>([...TUTOR_SUBJECTS]);
 
   // Keep the form email in sync with the hero/header email as long as the
   // user has not manually edited the field inside the modal itself.
@@ -62,6 +76,35 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
   // opening can be prefilled again from the hero/header email.
   useEffect(() => {
     if (!isOpen) setEmailManuallyEdited(false);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    let cancelled = false;
+
+    async function loadSubjectOptions() {
+      try {
+        const response = await fetch("/api/tutor-subjects", {
+          cache: "no-store",
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !Array.isArray(data.subjects) || data.subjects.length === 0) {
+          return;
+        }
+        if (!cancelled) {
+          setSubjectOptions(data.subjects);
+        }
+      } catch {
+        // Keep the local fallback catalog if the API is unavailable.
+      }
+    }
+
+    void loadSubjectOptions();
+
+    return () => {
+      cancelled = true;
+    };
   }, [isOpen]);
 
   const selectedCountry = useMemo(
@@ -160,6 +203,7 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
         body: JSON.stringify({
           firstName,
           lastName,
+          civility,
           email,
           phone: fullPhone,
           phoneDialCode,
@@ -184,6 +228,8 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
       setStorageItem(STORAGE_KEYS.LAST_LEAD_EMAIL, email);
       onPrefillEmail?.(email);
       setError(null);
+      setSelectedSlot(null);
+      setBookingConfirmed(false);
       // Show a simple inline confirmation state
       setShowThanks(true);
     } catch {
@@ -195,6 +241,100 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
 
   const [showThanks, setShowThanks] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!showThanks || !subject) return;
+
+    let cancelled = false;
+
+    async function loadFirstSessionSlots() {
+      setSlotsLoading(true);
+      setSlotsError(null);
+      try {
+        const response = await fetch(`/api/leads/first-session-slots?subject=${encodeURIComponent(subject)}`, {
+          cache: "no-store",
+        });
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(data?.error || "slots_failed");
+        }
+
+        if (!cancelled) {
+          setFirstSessionSlots(Array.isArray(data.slots) ? data.slots : []);
+        }
+      } catch {
+        if (!cancelled) {
+          setFirstSessionSlots([]);
+          setSlotsError("Impossible de charger les créneaux pour le moment.");
+        }
+      } finally {
+        if (!cancelled) setSlotsLoading(false);
+      }
+    }
+
+    void loadFirstSessionSlots();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [showThanks, subject]);
+
+  const formatSlotDate = (startedAt: string) => {
+    const date = new Date(startedAt);
+    return date.toLocaleDateString("fr-FR", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+    });
+  };
+
+  const formatSlotTime = (startedAt: string) => {
+    const date = new Date(startedAt);
+    return date.toLocaleTimeString("fr-FR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const groupedFirstSessionSlots = useMemo(() => {
+    return firstSessionSlots.reduce<Record<string, FirstSessionSlot[]>>((acc, slot) => {
+      const dayKey = new Date(slot.startedAt).toISOString().slice(0, 10);
+      acc[dayKey] = acc[dayKey] || [];
+      acc[dayKey].push(slot);
+      return acc;
+    }, {});
+  }, [firstSessionSlots]);
+
+  const handleConfirmFirstSession = async () => {
+    if (!selectedSlot || !submittedEmail || bookingSlot) return;
+
+    setBookingSlot(true);
+    setSlotsError(null);
+    try {
+      const response = await fetch("/api/leads/first-session-slots", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: submittedEmail,
+          subject,
+          tutorId: selectedSlot.tutorId,
+          startedAt: selectedSlot.startedAt,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error || "booking_failed");
+      }
+
+      setBookingConfirmed(true);
+    } catch {
+      setSlotsError("Ce créneau n’a pas pu être réservé. Merci d’en choisir un autre.");
+    } finally {
+      setBookingSlot(false);
+    }
+  };
 
   const handleSigninRedirect = () => {
     if (submittedEmail?.trim()) {
@@ -224,11 +364,102 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
           </div>
         )}
         {showThanks ? (
-          <div className="py-16 text-center">
+          <div className="py-8">
+            <div className="text-center">
             <h3 className="mb-3 text-2xl font-semibold text-black dark:text-white">Merci pour votre inscription</h3>
             <p className="mx-auto max-w-xl text-waterloo dark:text-manatee">
-              Vérifiez vos e-mails (dont les spams) pour vos identifiants et la confirmation, connectez-vous ci-dessous, puis changez votre mot de passe après la première connexion.
+              Votre compte est prêt. Choisissez maintenant votre première séance gratuite avec un tuteur disponible en {subject}.
             </p>
+            </div>
+
+            <div className="mt-8 rounded-lg border border-stroke bg-white p-5 text-left dark:border-strokedark dark:bg-black">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h4 className="text-lg font-semibold text-black dark:text-white">
+                    Je choisis ma première séance gratuite
+                  </h4>
+                  <p className="mt-1 text-sm text-waterloo dark:text-manatee">
+                    Les créneaux affichés proviennent des tuteurs disponibles qui enseignent cette matière.
+                  </p>
+                </div>
+                <span className="rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
+                  1 heure
+                </span>
+              </div>
+
+              {bookingConfirmed ? (
+                <div className="mt-6 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+                  Votre demande de première séance a bien été enregistrée. Le tuteur recevra une notification pour confirmer le créneau.
+                </div>
+              ) : (
+                <>
+                  {slotsLoading ? (
+                    <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                      {[0, 1, 2, 3].map((item) => (
+                        <div key={item} className="h-16 animate-pulse rounded-lg bg-primary/10" />
+                      ))}
+                    </div>
+                  ) : firstSessionSlots.length > 0 ? (
+                    <div className="mt-6 space-y-5">
+                      {Object.entries(groupedFirstSessionSlots).map(([dateKey, slots]) => (
+                        <div key={dateKey}>
+                          <p className="mb-2 text-sm font-semibold capitalize text-black dark:text-white">
+                            {formatSlotDate(slots[0].startedAt)}
+                          </p>
+                          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                            {slots.map((slot) => {
+                              const isSelected =
+                                selectedSlot?.tutorId === slot.tutorId &&
+                                selectedSlot?.startedAt === slot.startedAt;
+
+                              return (
+                                <button
+                                  key={`${slot.tutorId}-${slot.startedAt}`}
+                                  type="button"
+                                  onClick={() => setSelectedSlot(slot)}
+                                  className={`rounded-lg border p-3 text-left text-sm transition ${
+                                    isSelected
+                                      ? "border-primary bg-primary text-white"
+                                      : "border-stroke bg-white text-black hover:border-primary hover:bg-primary/5 dark:border-strokedark dark:bg-blacksection dark:text-white"
+                                  }`}
+                                >
+                                  <span className="block font-semibold">{formatSlotTime(slot.startedAt)}</span>
+                                  <span className={isSelected ? "text-white/85" : "text-waterloo dark:text-manatee"}>
+                                    {slot.tutorName}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="mt-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-900">
+                      Aucun créneau disponible n’a été trouvé pour cette matière. Nous vous contacterons pour organiser la première séance.
+                    </div>
+                  )}
+
+                  {slotsError && (
+                    <div className="mt-4 rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+                      {slotsError}
+                    </div>
+                  )}
+
+                  <div className="mt-6 flex justify-center">
+                    <button
+                      type="button"
+                      disabled={!selectedSlot || bookingSlot}
+                      onClick={handleConfirmFirstSession}
+                      className="rounded-full bg-primary px-8 py-3 text-sm font-semibold text-white transition hover:bg-primaryho disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {bookingSlot ? "Réservation..." : "Confirmer ce créneau"}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+
             <button
               type="button"
               onClick={handleSigninRedirect}
@@ -282,7 +513,7 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
             <h3 className="mt-6 mb-2 text-xl font-semibold text-black dark:text-white">Matière</h3>
             <select value={subject} onChange={(e) => setSubject(e.target.value)} className="w-full rounded-md border border-stroke px-3 py-2 dark:border-strokedark dark:bg-black">
               <option value="">Sélectionner une matière</option>
-              {TUTOR_SUBJECTS.map((s) => (
+              {subjectOptions.map((s) => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
