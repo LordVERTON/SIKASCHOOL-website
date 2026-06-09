@@ -144,6 +144,13 @@ export async function POST(request: NextRequest) {
       }
 
       const verifyToken = await upsertEmailVerificationToken(supabase, existing.id);
+      await insertAdminNewStudentNotifications(supabaseAdmin as any, {
+        id: existing.id,
+        email,
+        first_name: firstName,
+        last_name: lastName,
+        role: resolvedRole,
+      }, intakeDetails);
       void sendRegistrationResendEmails(supabase, {
         newUser: {
           id: existing.id,
@@ -154,6 +161,7 @@ export async function POST(request: NextRequest) {
         },
         verifyToken,
         plainPassword: initialPassword,
+        intakeDetails,
       }).catch((err) => console.error('[leads] E-mails inscription existant:', err));
 
       const syncLead = await syncSupabaseAuthIdentity({
@@ -236,7 +244,7 @@ export async function POST(request: NextRequest) {
       first_name: firstName,
       last_name: lastName,
       role: resolvedRole,
-    });
+    }, intakeDetails);
     await insertStudentPasswordChangeNotification(supabase, newUser.id, 'lead_form');
 
     const verifyToken = await upsertEmailVerificationToken(supabase, newUser.id);
@@ -250,6 +258,7 @@ export async function POST(request: NextRequest) {
       },
       verifyToken,
       plainPassword: initialPassword,
+      intakeDetails,
     }).catch((err) => console.error('[leads] E-mails inscription nouveau:', err));
 
     const syncNew = await syncSupabaseAuthIdentity({

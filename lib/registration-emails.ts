@@ -250,6 +250,20 @@ export type NewUserRow = {
   role: string;
 };
 
+export type RegistrationIntakeDetails = {
+  civility?: string;
+  phone?: string;
+  zip?: string;
+  level?: string;
+  subject?: string;
+  goal?: string;
+  goalOther?: string;
+  goalSummary?: string;
+  contest?: string;
+  accountType?: string;
+  capturedAt?: string;
+};
+
 async function resolveAdminNotifyUsers(
   supabase: ServiceSupabase
 ): Promise<Array<{ id: string; email: string; role: string }>> {
@@ -298,7 +312,8 @@ async function resolveAdminNotifyUsers(
  */
 export async function insertAdminNewStudentNotifications(
   supabase: ServiceSupabase,
-  newUser: NewUserRow
+  newUser: NewUserRow,
+  intakeDetails?: RegistrationIntakeDetails
 ): Promise<void> {
   const admins = await resolveAdminNotifyUsers(supabase);
   if (admins.length === 0) {
@@ -315,6 +330,13 @@ export async function insertAdminNewStudentNotifications(
       student_id: newUser.id,
       student_name: studentName,
       student_email: newUser.email,
+      phone: intakeDetails?.phone || null,
+      zip: intakeDetails?.zip || null,
+      level: intakeDetails?.level || null,
+      subject: intakeDetails?.subject || null,
+      goal: intakeDetails?.goalSummary || intakeDetails?.goal || null,
+      contest: intakeDetails?.contest || null,
+      account_type: intakeDetails?.accountType || null,
       registered_at: new Date().toISOString(),
     },
     is_read: false,
@@ -410,14 +432,48 @@ function buildPasswordResetEmailHtml(params: {
   `;
 }
 
-function buildAdminNewStudentHtml(student: NewUserRow, adminUrl: string): string {
+function buildAdminNewStudentHtml(
+  student: NewUserRow,
+  adminUrl: string,
+  intakeDetails?: RegistrationIntakeDetails
+): string {
   const name = `${student.first_name} ${student.last_name}`.trim();
+  const details: Array<[string, string | undefined]> = [
+    ['Civilité', intakeDetails?.civility],
+    ['Téléphone', intakeDetails?.phone],
+    ['Code postal', intakeDetails?.zip],
+    ['Type de compte', intakeDetails?.accountType === 'parent' ? 'Parent' : intakeDetails?.accountType === 'student' ? 'Élève' : intakeDetails?.accountType],
+    ['Classe / niveau', intakeDetails?.level],
+    ['Matière demandée', intakeDetails?.subject],
+    ['Objectif', intakeDetails?.goalSummary || intakeDetails?.goal],
+    ['Objectif précisé', intakeDetails?.goalOther],
+    ['Concours', intakeDetails?.contest],
+    [
+      'Date de demande',
+      intakeDetails?.capturedAt
+        ? new Date(intakeDetails.capturedAt).toLocaleString('fr-FR', {
+            dateStyle: 'short',
+            timeStyle: 'short',
+          })
+        : '',
+    ],
+  ].filter((detail): detail is [string, string] => {
+    const value = detail[1];
+    return typeof value === 'string' && value.trim().length > 0;
+  });
+
   return `
   <p>Un nouvel élève s’est inscrit sur ${APP_CONFIG.NAME}.</p>
   <ul>
-    <li><strong>Nom :</strong> ${name}</li>
-    <li><strong>E-mail :</strong> ${student.email}</li>
-    <li><strong>Rôle :</strong> ${student.role}</li>
+    <li><strong>Nom :</strong> ${escapeHtml(name)}</li>
+    <li><strong>E-mail :</strong> ${escapeHtml(student.email)}</li>
+    <li><strong>Rôle :</strong> ${escapeHtml(student.role)}</li>
+    ${details
+      .map(
+        ([label, value]) =>
+          `<li><strong>${escapeHtml(label)} :</strong> ${escapeHtml(String(value))}</li>`
+      )
+      .join('')}
   </ul>
   <p>Vous pouvez assigner un ou plusieurs tuteurs depuis l’administration (lien direct vers cet élève) :</p>
   <p><a href="${adminUrl}">Ouvrir les affectations</a></p>
@@ -599,6 +655,7 @@ export async function sendRegistrationResendEmails(
     verifyToken: string | null;
     /** Mot de passe saisi à l’inscription, uniquement pour l’e-mail de rappel (jamais journalisé). */
     plainPassword?: string | null;
+    intakeDetails?: RegistrationIntakeDetails;
   }
 ): Promise<void> {
   const base = getAppBaseUrl();
@@ -635,7 +692,7 @@ export async function sendRegistrationResendEmails(
     });
   }
 
-  if (options.newUser.role === 'STUDENT') {
+  if (options.newUser.role === 'STUDENT' || options.newUser.role === 'PARENT') {
     const adminEmails = getAdminNewStudentEmailRecipients();
     if (adminEmails.length === 0) {
       return;
@@ -644,8 +701,8 @@ export async function sendRegistrationResendEmails(
     const studentName = `${options.newUser.first_name} ${options.newUser.last_name}`.trim();
     await sendEmail({
       to: adminEmails,
-      subject: `[${APP_CONFIG.NAME}] Nouvel élève : ${studentName}`,
-      html: buildAdminNewStudentHtml(options.newUser, adminUrl),
+      subject: `[${APP_CONFIG.NAME}] Nouvelle inscription : ${studentName}`,
+      html: buildAdminNewStudentHtml(options.newUser, adminUrl, options.intakeDetails),
     });
   }
 }
