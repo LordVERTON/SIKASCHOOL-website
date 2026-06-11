@@ -122,18 +122,23 @@ export async function POST(request: NextRequest) {
       last_name: newUser.last_name,
       role: newUser.role,
     };
+    const intakeDetails = {
+      phone: normalizedPhone || undefined,
+      accountType: resolvedRole === 'PARENT' ? 'parent' : 'student',
+    };
 
     const verifyToken = await upsertEmailVerificationToken(supabase, newUser.id);
 
     if (resolvedRole === 'STUDENT' || resolvedRole === 'PARENT') {
       await insertStudentPasswordChangeNotification(supabase, newUser.id, 'register_form');
-      await insertAdminNewStudentNotifications(supabase, newUserRow);
+      await insertAdminNewStudentNotifications(supabase, newUserRow, intakeDetails);
     }
 
     void sendRegistrationResendEmails(supabase, {
       newUser: newUserRow,
       verifyToken,
       plainPassword: rawPassword,
+      intakeDetails,
     }).catch((err) => console.error('[register] E-mails inscription:', err));
 
     const sync = await syncSupabaseAuthIdentity({
