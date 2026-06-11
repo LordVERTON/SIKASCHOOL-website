@@ -3,6 +3,10 @@ import Image from "next/image";
 import SectionHeader from "../Common/SectionHeader";
 
 const HowTo = () => {
+  const openLeadCapture = () => {
+    window.dispatchEvent(new CustomEvent("lead:open"));
+  };
+
   const steps = [
     {
       id: 1,
@@ -97,12 +101,13 @@ const HowTo = () => {
                   
                   {/* Button for step 1 */}
                   {step.buttonText && (
-                    <a
-                      href="#contact"
+                    <button
+                      type="button"
+                      onClick={openLeadCapture}
                       className="inline-flex items-center justify-center rounded-lg bg-primary px-8 py-3 text-white transition-all duration-300 hover:bg-primaryho"
                     >
                       {step.buttonText}
-                    </a>
+                    </button>
                   )}
                 </div>
               </div>
