@@ -349,6 +349,15 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
     router.push("/auth/signin");
   };
 
+  const isParentFlow = accountType === "PARENT";
+  const levelTitle = isParentFlow
+    ? "Sélectionnez la classe de votre enfant"
+    : "Sélectionne ton niveau";
+  const contactTitle = isParentFlow ? "Vos coordonnées" : "Mes coordonnées";
+  const contactDescription = isParentFlow
+    ? "Ces informations nous permettent de créer votre espace parent et de vous contacter pour la première séance."
+    : "Ces informations nous permettent de créer votre espace élève et de préparer votre première séance.";
+
   if (!isOpen) return null;
 
   return (
@@ -474,7 +483,7 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
           {/* Étape 1 */}
           <div className="rounded-lg bg-primary/10 p-6">
             <div className="mb-4 inline-block rounded bg-primary px-3 py-1 text-white text-sm font-semibold">ÉTAPE 1</div>
-            <h3 className="mb-3 text-xl font-semibold text-black dark:text-white">Vous inscrivez</h3>
+            <h3 className="mb-3 text-xl font-semibold text-black dark:text-white">Je suis</h3>
             <div className="mb-6 grid gap-3 sm:grid-cols-2">
               {[
                 { value: "PARENT", label: "Un parent" },
@@ -500,7 +509,7 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
                 </label>
               ))}
             </div>
-            <h3 className="mb-4 text-xl font-semibold text-black dark:text-white">Sélectionnez la classe de l'élève</h3>
+            <h3 className="mb-4 text-xl font-semibold text-black dark:text-white">{levelTitle}</h3>
             <div className="grid grid-cols-2 gap-y-3">
               {LEVELS.map((lv) => (
                 <label key={lv} className="flex items-center gap-3">
@@ -547,8 +556,11 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
           <div className="rounded-lg bg-primary/10 p-6">
             <div className="mb-4 inline-block rounded bg-primary px-3 py-1 text-white text-sm font-semibold">ÉTAPE 2</div>
             <h3 className="mb-4 text-xl font-semibold text-black dark:text-white">
-              {accountType === "PARENT" ? "Coordonnées du parent" : "Coordonnées de l'élève"}
+              {contactTitle}
             </h3>
+            <p className="mb-5 text-sm text-waterloo dark:text-manatee">
+              {contactDescription}
+            </p>
 
             <div className="space-y-3">
               <select value={civility} onChange={(e) => setCivility(e.target.value)} className="w-full rounded-full bg-white px-4 py-2 text-black">
@@ -559,13 +571,13 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
               <input
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                placeholder={accountType === "PARENT" ? "Nom du parent" : "Nom de l'élève"}
+                placeholder={isParentFlow ? "Votre nom" : "Mon nom"}
                 className="w-full rounded-full bg-white px-4 py-2 text-black"
               />
               <input
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                placeholder={accountType === "PARENT" ? "Prénom du parent" : "Prénom de l'élève"}
+                placeholder={isParentFlow ? "Votre prénom" : "Mon prénom"}
                 className="w-full rounded-full bg-white px-4 py-2 text-black"
               />
               <input
@@ -574,7 +586,7 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
                   setEmail(e.target.value);
                   setEmailManuallyEdited(true);
                 }}
-                placeholder="E-mail"
+                placeholder={isParentFlow ? "Votre e-mail" : "Mon e-mail"}
                 type="email"
                 className="w-full rounded-full bg-white px-4 py-2 text-black"
               />
@@ -694,7 +706,7 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
                         setPhone((prev) => (prev + pasted).replace(/\D+/g, ""));
                       }
                     }}
-                    placeholder="Numéro de téléphone"
+                    placeholder={isParentFlow ? "Votre numéro" : "Mon numéro"}
                     type="tel"
                     inputMode="numeric"
                     pattern="[0-9]*"
