@@ -89,24 +89,46 @@ VALUES (
 
 INSERT INTO reviews (student_id, tutor_id, student_name, student_role, content, rating, is_approved, avatar_url) VALUES
   (
-    '00000000-0000-4000-8000-000000000005'::uuid,
+    NULL,
     '00000000-0000-4000-8000-000000000002'::uuid,
-    'Camille R.',
-    'Parent d''eleve en Terminale',
-    'Plateforme claire et tuteurs tres pedagogues.',
+    'Milly Koula',
+    'préparation concours IAE',
+    $$« une fois 2 plus, j'aimerais te te remercie pour ton accompagnement et ton aide tout au long de la préparation de ce concours. Tes explications et tes conseils ont été précieux et seront utiles à la réussite de cet examen. Je ne manquerai pas de revenir vers toi une fois mon score connu alors. Merci encore et à bientôt. »$$,
     5,
     true,
     'https://images.pexels.com/photos/7880373/pexels-photo-7880373.jpeg?auto=compress&cs=tinysrgb&w=160&h=160&fit=crop'
   ),
   (
-    '00000000-0000-4000-8000-000000000006'::uuid,
+    NULL,
     '00000000-0000-4000-8000-000000000002'::uuid,
-    'Thomas L.',
-    'Parent',
-    'Suivi regulier, ma fille a gagne en confiance.',
+    'Steve Kenfack',
+    'école d’ingénieure informatique',
+    $$« Mon examen s’est super bien passé je pense au moins avoir 18, j’ai aussi appris beaucoup de chose sur npm next js et je kiffe vraiment tout ça grâce à toi merci »$$,
     5,
     true,
     'https://images.pexels.com/photos/4259709/pexels-photo-4259709.jpeg?auto=compress&cs=tinysrgb&w=160&h=160&fit=crop'
+  ),
+  (
+    NULL,
+    '00000000-0000-4000-8000-000000000002'::uuid,
+    'Raissa Bouity',
+    'maman de Liele - école primaire',
+    $$des tuteurs à l’écoute et bienveillants, patient avec ma fille. Ils ont su lui faire gagner en confiance en elle$$,
+    5,
+    true,
+    'https://images.pexels.com/photos/6482279/pexels-photo-6482279.jpeg?auto=compress&cs=tinysrgb&w=160&h=160&fit=crop'
+  ),
+  (
+    NULL,
+    '00000000-0000-4000-8000-000000000002'::uuid,
+    'Clara Briand-Nail',
+    'rattrapage de comptabilité',
+    $$« Bonsoir à vous !
+Je vous informe que j’ai validé mon rattrapage 🙏🏻
+Gloire à Dieu, merci Daniel pour les seances  »$$,
+    5,
+    true,
+    'https://images.pexels.com/photos/19797873/pexels-photo-19797873.jpeg?auto=compress&cs=tinysrgb&w=160&h=160&fit=crop'
   );
 
 INSERT INTO faqs (question, answer, is_active) VALUES
