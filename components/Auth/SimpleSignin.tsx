@@ -50,6 +50,7 @@ export default function SimpleSignin() {
     lastName: "",
     phone: "",
     accountType: "STUDENT" as "STUDENT" | "PARENT",
+    confirmPassword: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -62,6 +63,7 @@ export default function SimpleSignin() {
   const [twoFactorInfo, setTwoFactorInfo] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const isParentSignup = isSignup && data.accountType === "PARENT";
 
   useEffect(() => {
     const emailParam = searchParams?.get("email");
@@ -103,6 +105,10 @@ export default function SimpleSignin() {
         }
         if (data.password.length < 6) {
           setError('Le mot de passe doit contenir au moins 6 caractères');
+          return;
+        }
+        if (data.password !== data.confirmPassword) {
+          setError('Les mots de passe ne correspondent pas');
           return;
         }
         // Validation simple du téléphone (optionnelle)
@@ -287,34 +293,10 @@ export default function SimpleSignin() {
 
             <form onSubmit={handleSubmit}>
               {isSignup && (
-                <div className="mb-7.5 flex flex-col gap-7.5 lg:mb-12.5 lg:flex-row lg:justify-between lg:gap-14">
-                  <input
-                    type="text"
-                    placeholder="Votre prénom"
-                    name="firstName"
-                    value={data.firstName}
-                    onChange={(e) => setData({ ...data, firstName: e.target.value })}
-                    required={isSignup}
-                    className="w-full border-b border-stroke bg-white! pb-3.5 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:bg-black! dark:focus:border-manatee dark:focus:placeholder:text-white lg:w-1/2"
-                  />
-
-                  <input
-                    type="text"
-                    placeholder="Votre nom"
-                    name="lastName"
-                    value={data.lastName}
-                    onChange={(e) => setData({ ...data, lastName: e.target.value })}
-                    required={isSignup}
-                    className="w-full border-b border-stroke bg-white! pb-3.5 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:bg-black! dark:focus:border-manatee dark:focus:placeholder:text-white lg:w-1/2"
-                  />
-                </div>
-              )}
-
-              {isSignup && (
-                <div className="mb-7.5 space-y-7.5">
+                <div className="mb-7.5 space-y-7.5 lg:mb-12.5">
                   <div>
                     <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                      Vous êtes
+                      Je suis
                     </label>
                     <div className="grid gap-3 sm:grid-cols-2">
                       {[
@@ -344,15 +326,42 @@ export default function SimpleSignin() {
                       ))}
                     </div>
                   </div>
-                  <input
-                    type="tel"
-                    placeholder="Votre numéro de téléphone"
-                    name="phone"
-                    value={data.phone}
-                    onChange={(e) => setData({ ...data, phone: e.target.value })}
-                    required={isSignup}
-                    className="w-full border-b border-stroke bg-white! pb-3.5 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:bg-black! dark:focus:border-manatee dark:focus:placeholder:text-white"
-                  />
+
+                  <div>
+                    <h3 className="mb-5 text-lg font-semibold text-black dark:text-white">
+                      {isParentSignup ? "Vos coordonnées" : "Mes coordonnées"}
+                    </h3>
+                    <div className="flex flex-col gap-7.5 lg:flex-row lg:justify-between lg:gap-14">
+                      <input
+                        type="text"
+                        placeholder={isParentSignup ? "Votre prénom" : "Mon prénom"}
+                        name="firstName"
+                        value={data.firstName}
+                        onChange={(e) => setData({ ...data, firstName: e.target.value })}
+                        required={isSignup}
+                        className="w-full border-b border-stroke bg-white! pb-3.5 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:bg-black! dark:focus:border-manatee dark:focus:placeholder:text-white lg:w-1/2"
+                      />
+
+                      <input
+                        type="text"
+                        placeholder={isParentSignup ? "Votre nom" : "Mon nom"}
+                        name="lastName"
+                        value={data.lastName}
+                        onChange={(e) => setData({ ...data, lastName: e.target.value })}
+                        required={isSignup}
+                        className="w-full border-b border-stroke bg-white! pb-3.5 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:bg-black! dark:focus:border-manatee dark:focus:placeholder:text-white lg:w-1/2"
+                      />
+                    </div>
+                    <input
+                      type="tel"
+                      placeholder={isParentSignup ? "Votre numéro de téléphone" : "Mon numéro de téléphone"}
+                      name="phone"
+                      value={data.phone}
+                      onChange={(e) => setData({ ...data, phone: e.target.value })}
+                      required={isSignup}
+                      className="mt-7.5 w-full border-b border-stroke bg-white! pb-3.5 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:bg-black! dark:focus:border-manatee dark:focus:placeholder:text-white"
+                    />
+                  </div>
                 </div>
               )}
 
@@ -369,29 +378,46 @@ export default function SimpleSignin() {
                   className="w-full border-b border-stroke bg-white! pb-3.5 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:bg-black! dark:focus:border-manatee dark:focus:placeholder:text-white lg:w-1/2"
                 />
 
-                <div className="relative w-full lg:w-1/2">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Votre mot de passe"
-                    name="password"
-                    autoComplete={isSignup ? "new-password" : "current-password"}
-                    data-protonpass-ignore="true"
-                    value={data.password}
-                    onChange={(e) =>
-                      setData({ ...data, password: e.target.value })
-                    }
-                    required
-                    className="w-full border-b border-stroke bg-white! pb-3.5 pr-10 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:bg-black! dark:focus:border-manatee dark:focus:placeholder:text-white"
-                  />
-                  <button
-                    type="button"
-                    aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-                    aria-pressed={showPassword}
-                    onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 text-waterloo transition hover:text-primary dark:text-manatee"
-                  >
-                    {showPassword ? <EyeOffIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
-                  </button>
+                <div className="w-full lg:w-1/2">
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      placeholder={isSignup ? "Choisissez votre mot de passe" : "Votre mot de passe"}
+                      name="password"
+                      autoComplete={isSignup ? "new-password" : "current-password"}
+                      data-protonpass-ignore="true"
+                      value={data.password}
+                      onChange={(e) =>
+                        setData({ ...data, password: e.target.value })
+                      }
+                      required
+                      className="w-full border-b border-stroke bg-white! pb-3.5 pr-10 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:bg-black! dark:focus:border-manatee dark:focus:placeholder:text-white"
+                    />
+                    <button
+                      type="button"
+                      aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                      aria-pressed={showPassword}
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="absolute right-0 top-1/2 -translate-y-1/2 text-waterloo transition hover:text-primary dark:text-manatee"
+                    >
+                      {showPassword ? <EyeOffIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+                    </button>
+                  </div>
+                  {isSignup && (
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Confirmez votre mot de passe"
+                      name="confirmPassword"
+                      autoComplete="new-password"
+                      data-protonpass-ignore="true"
+                      value={data.confirmPassword}
+                      onChange={(e) =>
+                        setData({ ...data, confirmPassword: e.target.value })
+                      }
+                      required={isSignup}
+                      className="mt-7.5 w-full border-b border-stroke bg-white! pb-3.5 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:bg-black! dark:focus:border-manatee dark:focus:placeholder:text-white"
+                    />
+                  )}
                 </div>
               </div>
 
@@ -449,46 +475,48 @@ export default function SimpleSignin() {
               )}
 
               <div className="flex flex-wrap items-center gap-10 md:justify-between xl:gap-15">
-                <div className="flex flex-wrap gap-4 md:gap-10">
-                  <div className="mb-4 flex items-center">
-                    <input
-                      id="default-checkbox"
-                      type="checkbox"
-                      className="peer sr-only"
-                    />
-                    <span className="border-gray-300 bg-gray-100 text-blue-600 dark:border-gray-600 dark:bg-gray-700 group mt-1 flex h-5 min-w-[20px] items-center justify-center rounded-sm peer-checked:bg-primary">
-                      <svg
-                        className="opacity-0 in-[.group]:peer-checked:opacity-100"
-                        width="10"
-                        height="8"
-                        viewBox="0 0 10 8"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
+                {!isSignup && (
+                  <div className="flex flex-wrap gap-4 md:gap-10">
+                    <div className="mb-4 flex items-center">
+                      <input
+                        id="default-checkbox"
+                        type="checkbox"
+                        className="peer sr-only"
+                      />
+                      <span className="border-gray-300 bg-gray-100 text-blue-600 dark:border-gray-600 dark:bg-gray-700 group mt-1 flex h-5 min-w-[20px] items-center justify-center rounded-sm peer-checked:bg-primary">
+                        <svg
+                          className="opacity-0 in-[.group]:peer-checked:opacity-100"
+                          width="10"
+                          height="8"
+                          viewBox="0 0 10 8"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            clipRule="evenodd"
+                            d="M9.70704 0.792787C9.89451 0.980314 9.99983 1.23462 9.99983 1.49979C9.99983 1.76495 9.89451 2.01926 9.70704 2.20679L4.70704 7.20679C4.51951 7.39426 4.26521 7.49957 4.00004 7.49957C3.73488 7.49957 3.48057 7.39426 3.29304 7.20679L0.293041 4.20679C0.110883 4.01818 0.0100885 3.76558 0.0123669 3.50339C0.0146453 3.24119 0.119814 2.99038 0.305222 2.80497C0.490631 2.61956 0.741443 2.51439 1.00364 2.51211C1.26584 2.50983 1.51844 2.61063 1.70704 2.79279L4.00004 5.08579L8.29304 0.792787C8.48057 0.605316 8.73488 0.5 9.00004 0.5C9.26521 0.5 9.51951 0.605316 9.70704 0.792787Z"
+                            fill="white"
+                          />
+                        </svg>
+                      </span>
+                      <label
+                        htmlFor="default-checkbox"
+                        className="flex max-w-[425px] cursor-pointer select-none pl-3"
                       >
-                        <path
-                          fillRule="evenodd"
-                          clipRule="evenodd"
-                          d="M9.70704 0.792787C9.89451 0.980314 9.99983 1.23462 9.99983 1.49979C9.99983 1.76495 9.89451 2.01926 9.70704 2.20679L4.70704 7.20679C4.51951 7.39426 4.26521 7.49957 4.00004 7.49957C3.73488 7.49957 3.48057 7.39426 3.29304 7.20679L0.293041 4.20679C0.110883 4.01818 0.0100885 3.76558 0.0123669 3.50339C0.0146453 3.24119 0.119814 2.99038 0.305222 2.80497C0.490631 2.61956 0.741443 2.51439 1.00364 2.51211C1.26584 2.50983 1.51844 2.61063 1.70704 2.79279L4.00004 5.08579L8.29304 0.792787C8.48057 0.605316 8.73488 0.5 9.00004 0.5C9.26521 0.5 9.51951 0.605316 9.70704 0.792787Z"
-                          fill="white"
-                        />
-                      </svg>
-                    </span>
-                    <label
-                      htmlFor="default-checkbox"
-                      className="flex max-w-[425px] cursor-pointer select-none pl-3"
-                    >
-                      Se souvenir de moi
-                    </label>
-                  </div>
+                        Se souvenir de moi
+                      </label>
+                    </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setShowForgotPasswordModal(true)}
-                    className="hover:text-primary text-left"
-                  >
-                    Mot de passe oublié ?
-                  </button>
-                </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotPasswordModal(true)}
+                      className="hover:text-primary text-left"
+                    >
+                      Mot de passe oublié ?
+                    </button>
+                  </div>
+                )}
 
                 <button
                   type="submit"
@@ -514,10 +542,43 @@ export default function SimpleSignin() {
 
               <div className="mt-12.5 border-t border-stroke py-5 text-center dark:border-strokedark">
                 <p className="text-gray-600 dark:text-gray-400">
-                  {isSignup 
-                    ? 'Déjà un compte ? Utilisez l\'onglet "Connexion" ci-dessus'
-                    : 'Nouveau sur SikaSchool ? Utilisez l\'onglet "Inscription" ci-dessus'
-                  }
+                  {isSignup ? (
+                    <>
+                      Déjà un compte ?{" "}
+                      <a
+                        href="/auth/signin"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          setIsSignup(false);
+                          setTwoFactorRequired(false);
+                          setTwoFactorCode("");
+                          setTwoFactorTicket(null);
+                          setTwoFactorInfo(null);
+                        }}
+                        className="font-medium text-primary hover:underline"
+                      >
+                        Connectez-vous
+                      </a>
+                    </>
+                  ) : (
+                    <>
+                      Nouveau sur SikaSchool ?{" "}
+                      <a
+                        href="/auth/signin"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          setIsSignup(true);
+                          setTwoFactorRequired(false);
+                          setTwoFactorCode("");
+                          setTwoFactorTicket(null);
+                          setTwoFactorInfo(null);
+                        }}
+                        className="font-medium text-primary hover:underline"
+                      >
+                        Je m&apos;inscris
+                      </a>
+                    </>
+                  )}
                 </p>
               </div>
 
