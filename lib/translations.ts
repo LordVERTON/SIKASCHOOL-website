@@ -155,7 +155,7 @@ export const translations: Record<Language, Translations> = {
       aboutUs: 'Qui sommes nous ?',
       sessionPacks: 'Packs de séances',
       perSession: 'A la séance',
-      signIn: 'Connexion',
+      signIn: 'Mon espace',
     },
     hero: {
       title: 'Atteignez vos objectifs académiques',
@@ -278,7 +278,7 @@ export const translations: Record<Language, Translations> = {
       aboutUs: 'About us',
       sessionPacks: 'Session packs',
       perSession: 'Per session',
-      signIn: 'Sign in',
+      signIn: 'My space',
     },
     hero: {
       title: 'Understand, Progress, Succeed',
