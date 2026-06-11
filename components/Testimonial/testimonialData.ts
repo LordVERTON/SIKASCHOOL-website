@@ -10,36 +10,38 @@ const parentAvatar4 =
   "https://images.pexels.com/photos/19797873/pexels-photo-19797873.jpeg?auto=compress&cs=tinysrgb&w=160&h=160&fit=crop";
 
 // This will be updated to use translations dynamically
-export const getTestimonialData = (t: any): Testimonial[] => [
+export const getTestimonialData = (_t: any): Testimonial[] => [
   {
     id: 1,
-    name: "Nadège (Paris)",
-    designation: "Mère de Timothée (Lycée)",
+    name: "Milly Koula",
+    designation: "préparation concours IAE",
     image: parentAvatar1,
-    content: "Super prof, patient avec mon fils, il lui a fait aimer les maths. Merci Walid je le recommande.",
+    content:
+      "« une fois 2 plus, j'aimerais te te remercie pour ton accompagnement et ton aide tout au long de la préparation de ce concours. Tes explications et tes conseils ont été précieux et seront utiles à la réussite de cet examen. Je ne manquerai pas de revenir vers toi une fois mon score connu alors. Merci encore et à bientôt. »",
   },
   {
     id: 2,
-    name: t.testimonials.author,
-    designation: "Maman de Sarah (collège)",
+    name: "Steve Kenfack",
+    designation: "école d’ingénieure informatique",
     image: parentAvatar3,
-    content: t.testimonials.quote,
+    content:
+      "« Mon examen s’est super bien passé je pense au moins avoir 18, j’ai aussi appris beaucoup de chose sur npm next js et je kiffe vraiment tout ça grâce à toi merci »",
   },
   {
     id: 3,
-    name: "Cylia (Toulouse)",
-    designation: "élève ingénieur aéronautique",
+    name: "Raissa Bouity",
+    designation: "maman de Liele - école primaire",
     image: parentAvatar4,
     content:
-      "« J'ai fait appel à Distel pour des cours de mathématiques niveau bac+4. Il est à l'écoute et a réussi à cibler mes faiblesses en adaptant ses enseignements. Sa patience, sa pédagogie et sa disponibilité m'ont permis de redécouvrir les mathématiques. Grâce à lui, j'ai constaté une nette amélioration. »",
+      "des tuteurs à l’écoute et bienveillants, patient avec ma fille. Ils ont su lui faire gagner en confiance en elle",
   },
   {
     id: 4,
-    name: "Steve (Bruxelles)",
-    designation: "élève ingénieur ECAM",
+    name: "Clara Briand-Nail",
+    designation: "rattrapage de comptabilité",
     image: parentAvatar2,
     content:
-      "« Daniel est à l'écoute et très réactif. De plus il arrive à donner goût à l'apprentissage. Merci pour le suivi, je recommande vivement ! »",
+      "« Bonsoir à vous !\nJe vous informe que j’ai validé mon rattrapage 🙏🏻\nGloire à Dieu, merci Daniel pour les seances  »",
   },
 ];
 
@@ -47,33 +49,34 @@ export const getTestimonialData = (t: any): Testimonial[] => [
 export const testimonialData: Testimonial[] = [
   {
     id: 1,
-    name: "Nadège (Paris)",
-    designation: "Mère de Timothée (Lycée)",
+    name: "Milly Koula",
+    designation: "préparation concours IAE",
     image: parentAvatar1,
-    content: "Super prof, patient avec mon fils, il lui a fait aimer les maths. Merci Walid je le recommande.",
+    content:
+      "« une fois 2 plus, j'aimerais te te remercie pour ton accompagnement et ton aide tout au long de la préparation de ce concours. Tes explications et tes conseils ont été précieux et seront utiles à la réussite de cet examen. Je ne manquerai pas de revenir vers toi une fois mon score connu alors. Merci encore et à bientôt. »",
   },
   {
     id: 2,
-    name: "Hélène (Paris)",
-    designation: "Maman de Sarah (collège)",
+    name: "Steve Kenfack",
+    designation: "école d’ingénieure informatique",
     image: parentAvatar3,
     content:
-      "« Ruudy que dire… Un excellent professeur ! J'étais assez hésitant pour mon enfant au départ. Mais l'enseignement, la pédagogie, il se met à la place de l'enfant, il essaie de se mettre à sa portée. Et ça c'est vraiment très bien. JE RECOMMANDE ! »",
+      "« Mon examen s’est super bien passé je pense au moins avoir 18, j’ai aussi appris beaucoup de chose sur npm next js et je kiffe vraiment tout ça grâce à toi merci »",
   },
   {
     id: 3,
-    name: "Cylia (Toulouse)",
-    designation: "élève ingénieur aéronautique",
+    name: "Raissa Bouity",
+    designation: "maman de Liele - école primaire",
     image: parentAvatar4,
     content:
-      "« J'ai fait appel à Distel pour des cours de mathématiques niveau bac+4. Il est à l'écoute et a réussi à cibler mes faiblesses en adaptant ses enseignements. Sa patience, sa pédagogie et sa disponibilité m'ont permis de redécouvrir les mathématiques. Grâce à lui, j'ai constaté une nette amélioration. »",
+      "des tuteurs à l’écoute et bienveillants, patient avec ma fille. Ils ont su lui faire gagner en confiance en elle",
   },
   {
     id: 4,
-    name: "Steve (Bruxelles)",
-    designation: "élève ingénieur ECAM",
+    name: "Clara Briand-Nail",
+    designation: "rattrapage de comptabilité",
     image: parentAvatar2,
     content:
-      "« Daniel est à l'écoute et très réactif. De plus il arrive à donner goût à l'apprentissage. Merci pour le suivi, je recommande vivement ! »",
+      "« Bonsoir à vous !\nJe vous informe que j’ai validé mon rattrapage 🙏🏻\nGloire à Dieu, merci Daniel pour les seances  »",
   },
 ];

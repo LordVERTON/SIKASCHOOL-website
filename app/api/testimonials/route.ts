@@ -1,82 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { isSupabaseUnreachableError, supabaseAdmin } from '@/lib/supabase';
 
-const MOCK_TESTIMONIALS = [
+const HOMEPAGE_TESTIMONIALS = [
   {
     id: '1',
-    name: 'Marie Dubois',
-    role: "Parent d'élève en Terminale",
+    name: 'Milly Koula',
+    role: 'préparation concours IAE',
     content:
-      "Excellent service ! Les tuteurs sont très compétents et l'approche pédagogique est adaptée à chaque élève.",
+      "« une fois 2 plus, j'aimerais te te remercie pour ton accompagnement et ton aide tout au long de la préparation de ce concours. Tes explications et tes conseils ont été précieux et seront utiles à la réussite de cet examen. Je ne manquerai pas de revenir vers toi une fois mon score connu alors. Merci encore et à bientôt. »",
     rating: 5,
     avatar:
       'https://images.pexels.com/photos/7880373/pexels-photo-7880373.jpeg?auto=compress&cs=tinysrgb&w=160&h=160&fit=crop',
   },
   {
     id: '2',
-    name: 'Jean Martin',
-    role: "Parent d'élève",
+    name: 'Steve Kenfack',
+    role: 'école d’ingénieure informatique',
     content:
-      "Ma fille a fait d'énormes progrès en mathématiques grâce à SikaSchool. Je recommande vivement !",
+      '« Mon examen s’est super bien passé je pense au moins avoir 18, j’ai aussi appris beaucoup de chose sur npm next js et je kiffe vraiment tout ça grâce à toi merci »',
     rating: 5,
     avatar:
       'https://images.pexels.com/photos/4259709/pexels-photo-4259709.jpeg?auto=compress&cs=tinysrgb&w=160&h=160&fit=crop',
   },
   {
     id: '3',
-    name: 'Sophie Laurent',
-    role: "Parent d'élève en Première",
+    name: 'Raissa Bouity',
+    role: 'maman de Liele - école primaire',
     content:
-      "Les cours sont très bien structurés et les tuteurs sont à l'écoute. Parfait pour progresser !",
+      'des tuteurs à l’écoute et bienveillants, patient avec ma fille. Ils ont su lui faire gagner en confiance en elle',
     rating: 5,
     avatar:
       'https://images.pexels.com/photos/6482279/pexels-photo-6482279.jpeg?auto=compress&cs=tinysrgb&w=160&h=160&fit=crop',
   },
+  {
+    id: '4',
+    name: 'Clara Briand-Nail',
+    role: 'rattrapage de comptabilité',
+    content:
+      '« Bonsoir à vous !\nJe vous informe que j’ai validé mon rattrapage 🙏🏻\nGloire à Dieu, merci Daniel pour les seances  »',
+    rating: 5,
+    avatar:
+      'https://images.pexels.com/photos/19797873/pexels-photo-19797873.jpeg?auto=compress&cs=tinysrgb&w=160&h=160&fit=crop',
+  },
 ];
 
 export async function GET(_request: NextRequest) {
-  try {
-    const { data: testimonials, error } = await supabaseAdmin
-      .from('reviews')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      if (isSupabaseUnreachableError(error)) {
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('[testimonials] Supabase injoignable — mocks. Commande : npx supabase start');
-        }
-        return NextResponse.json(MOCK_TESTIMONIALS);
-      }
-      console.error('[testimonials]', error);
-      throw error;
-    }
-
-    if (!testimonials?.length) {
-      return NextResponse.json(MOCK_TESTIMONIALS);
-    }
-
-    const formattedTestimonials = testimonials.map((testimonial: any) => ({
-      id: testimonial.id,
-      name: testimonial.student_name,
-      role: testimonial.student_role,
-      content: testimonial.content,
-      rating: testimonial.rating,
-      avatar: testimonial.avatar_url || '/images/user/user-01.png',
-    }));
-
-    return NextResponse.json(formattedTestimonials);
-  } catch (error) {
-    if (isSupabaseUnreachableError(error)) {
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('[testimonials] Supabase injoignable — mocks. Commande : npx supabase start');
-      }
-      return NextResponse.json(MOCK_TESTIMONIALS);
-    }
-    console.error('[testimonials]', error);
-    return NextResponse.json(
-      { error: 'Erreur lors de la récupération des témoignages' },
-      { status: 500 },
-    );
-  }
+  return NextResponse.json(HOMEPAGE_TESTIMONIALS);
 }
