@@ -44,9 +44,12 @@ export async function POST(request: NextRequest) {
       goal,
       goalOther,
       contest,
-      accountType
+      accountType,
+      campaign
     } = body || {};
     const resolvedRole = accountType === 'PARENT' ? 'PARENT' : 'STUDENT';
+    const resolvedCampaign: 'summer_course' | undefined =
+      campaign === 'summer_course' ? 'summer_course' : undefined;
 
     if (!firstName || !lastName || !email) {
       return NextResponse.json({ error: 'Champs requis manquants' }, { status: 400 });
@@ -79,6 +82,7 @@ export async function POST(request: NextRequest) {
       goalSummary: resolvedGoal,
       contest: normalizedContest,
       accountType: resolvedRole === 'PARENT' ? 'parent' : 'student',
+      campaign: resolvedCampaign,
       capturedAt: new Date().toISOString()
     };
 

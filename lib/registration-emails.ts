@@ -261,6 +261,7 @@ export type RegistrationIntakeDetails = {
   goalSummary?: string;
   contest?: string;
   accountType?: string;
+  campaign?: 'summer_course';
   capturedAt?: string;
 };
 
@@ -320,11 +321,14 @@ export async function insertAdminNewStudentNotifications(
     return;
   }
   const studentName = `${newUser.first_name} ${newUser.last_name}`.trim();
+  const isSummerCourse = intakeDetails?.campaign === 'summer_course';
   const adminNotifications = admins.map((admin) => ({
     user_id: admin.id,
     type: 'SYSTEM' as const,
-    title: 'Nouvelle inscription',
-    message: `${studentName} (${newUser.email}) vient de s'inscrire sur la plateforme. Veuillez assigner un tuteur à cet élève.`,
+    title: isSummerCourse ? 'Demande de stage d\'été' : 'Nouvelle inscription',
+    message: isSummerCourse
+      ? `${studentName} (${newUser.email}) souhaite profiter de la promo stage d'été.`
+      : `${studentName} (${newUser.email}) vient de s'inscrire sur la plateforme. Veuillez assigner un tuteur à cet élève.`,
     data: {
       action: 'NEW_STUDENT_REGISTRATION',
       student_id: newUser.id,
@@ -335,6 +339,7 @@ export async function insertAdminNewStudentNotifications(
       level: intakeDetails?.level || null,
       subject: intakeDetails?.subject || null,
       goal: intakeDetails?.goalSummary || intakeDetails?.goal || null,
+      campaign: intakeDetails?.campaign || null,
       contest: intakeDetails?.contest || null,
       account_type: intakeDetails?.accountType || null,
       registered_at: new Date().toISOString(),
@@ -439,6 +444,7 @@ function buildAdminNewStudentHtml(
 ): string {
   const name = `${student.first_name} ${student.last_name}`.trim();
   const details: Array<[string, string | undefined]> = [
+    ['Type de demande', intakeDetails?.campaign === 'summer_course' ? 'Stage d\'été — offre 1 semaine réservée = 1 semaine offerte' : undefined],
     ['Civilité', intakeDetails?.civility],
     ['Téléphone', intakeDetails?.phone],
     ['Code postal', intakeDetails?.zip],
@@ -540,6 +546,7 @@ function buildTutorNewBookingRequestEmailHtml(params: {
   subject: string;
   startedAt: string;
   notificationsUrl: string;
+  campaign?: 'summer_course';
 }): string {
   const name = params.tutorFirstName?.trim() || 'Bonjour';
   const subjectLabel = params.subject?.trim() || 'Cours';
@@ -549,10 +556,12 @@ function buildTutorNewBookingRequestEmailHtml(params: {
   const timeLabel = isValidDate
     ? startedAtDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
     : '';
+  const isSummerCourse = params.campaign === 'summer_course';
 
   return `
   <p>${escapeHtml(name)},</p>
-  <p>Vous avez une <strong>nouvelle demande de séance</strong> de ${escapeHtml(params.studentName)}.</p>
+  <p>Vous avez une <strong>${isSummerCourse ? 'nouvelle demande de stage d’été' : 'nouvelle demande de séance'}</strong> de ${escapeHtml(params.studentName)}.</p>
+  ${isSummerCourse ? '<p><strong>Offre concernée :</strong> promo stage d’été — 1 semaine réservée = 1 semaine offerte.</p>' : ''}
   <ul>
     <li><strong>Matière :</strong> ${escapeHtml(subjectLabel)}</li>
     <li><strong>Date :</strong> ${escapeHtml(dateLabel || 'Non précisée')}</li>
@@ -699,9 +708,12 @@ export async function sendRegistrationResendEmails(
     }
     const adminUrl = `${base}${adminPath}`;
     const studentName = `${options.newUser.first_name} ${options.newUser.last_name}`.trim();
+    const isSummerCourse = options.intakeDetails?.campaign === 'summer_course';
     await sendEmail({
       to: adminEmails,
-      subject: `[${APP_CONFIG.NAME}] Nouvelle inscription : ${studentName}`,
+      subject: isSummerCourse
+        ? `[${APP_CONFIG.NAME}] [STAGE D'ÉTÉ] Nouvelle demande : ${studentName}`
+        : `[${APP_CONFIG.NAME}] Nouvelle inscription : ${studentName}`,
       html: buildAdminNewStudentHtml(options.newUser, adminUrl, options.intakeDetails),
     });
   }
@@ -760,17 +772,21 @@ export async function sendTutorNewBookingRequestEmail(options: {
   studentName: string;
   subject: string;
   startedAt: string;
+  campaign?: 'summer_course';
 }): Promise<void> {
   const notificationsUrl = `${getAppBaseUrl()}/tutor/notifications`;
   await sendEmail({
     to: options.tutorEmail,
-    subject: `Nouvelle demande de cours - Action requise | ${APP_CONFIG.NAME}`,
+    subject: options.campaign === 'summer_course'
+      ? `Demande de stage d'été - Action requise | ${APP_CONFIG.NAME}`
+      : `Nouvelle demande de cours - Action requise | ${APP_CONFIG.NAME}`,
     html: buildTutorNewBookingRequestEmailHtml({
       tutorFirstName: options.tutorFirstName,
       studentName: options.studentName,
       subject: options.subject,
       startedAt: options.startedAt,
       notificationsUrl,
+      campaign: options.campaign,
     }),
   });
 }

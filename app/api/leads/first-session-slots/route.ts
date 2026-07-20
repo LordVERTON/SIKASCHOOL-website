@@ -21,6 +21,7 @@ const BookSchema = z.object({
   subject: z.string().min(1),
   tutorId: z.string().uuid(),
   startedAt: z.string().min(1),
+  campaign: z.enum(['summer_course']).optional(),
 });
 
 type SlotTutor = {
@@ -155,7 +156,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Créneau invalide' }, { status: 400 });
     }
 
-    const { email, subject, tutorId, startedAt } = parsed.data;
+    const { email, subject, tutorId, startedAt, campaign } = parsed.data;
+    const isSummerCourse = campaign === 'summer_course';
     const slotStart = new Date(startedAt);
     const slotEnd = addMinutes(slotStart, SLOT_DURATION_MINUTES);
 
@@ -192,7 +194,9 @@ export async function POST(request: NextRequest) {
           tutor_id: tutorId,
           student_id: student.id,
           is_active: true,
-          notes: `Assignation automatique après choix de première séance gratuite (${subject})`,
+          notes: isSummerCourse
+            ? `Assignation automatique — demande de stage d'été (${subject})`
+            : `Assignation automatique après choix de première séance gratuite (${subject})`,
           updated_at: new Date().toISOString(),
         },
         { onConflict: 'tutor_id,student_id' }
@@ -235,8 +239,10 @@ export async function POST(request: NextRequest) {
       {
         user_id: tutorId,
         type: 'BOOKING',
-        title: 'Première séance gratuite demandée',
-        message: `${studentName} a choisi une première séance gratuite de ${subject} le ${slotStart.toLocaleDateString('fr-FR')} à ${slotStart.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}.`,
+        title: isSummerCourse ? 'Demande de stage d\'été' : 'Première séance gratuite demandée',
+        message: isSummerCourse
+          ? `${studentName} souhaite profiter de l'offre stage d'été en ${subject}, avec un premier créneau le ${slotStart.toLocaleDateString('fr-FR')} à ${slotStart.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}.`
+          : `${studentName} a choisi une première séance gratuite de ${subject} le ${slotStart.toLocaleDateString('fr-FR')} à ${slotStart.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}.`,
         data: {
           session_id: session.id,
           student_id: student.id,
@@ -245,6 +251,7 @@ export async function POST(request: NextRequest) {
           started_at: slotStart.toISOString(),
           duration_minutes: SLOT_DURATION_MINUTES,
           source: 'lead_first_session',
+          campaign: campaign || null,
         },
       },
       {
@@ -277,6 +284,7 @@ export async function POST(request: NextRequest) {
         studentName,
         subject,
         startedAt: slotStart.toISOString(),
+        campaign,
       });
     }
 

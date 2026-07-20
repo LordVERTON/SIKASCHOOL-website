@@ -8,12 +8,17 @@ import { useLanguage } from "@/context/LanguageContext";
 const Hero = () => {
   const [email, setEmail] = useState("");
   const [isLeadOpen, setIsLeadOpen] = useState(false);
+  const [leadCampaign, setLeadCampaign] = useState<"summer_course" | undefined>();
   
   // Listen to header CTA to open lead modal
   useEffect(() => {
-    const handler = () => setIsLeadOpen(true);
-    window.addEventListener('lead:open' as any, handler);
-    return () => window.removeEventListener('lead:open' as any, handler);
+    const handler = (event: Event) => {
+      const campaign = (event as CustomEvent<{ campaign?: string }>).detail?.campaign;
+      setLeadCampaign(campaign === "summer_course" ? "summer_course" : undefined);
+      setIsLeadOpen(true);
+    };
+    window.addEventListener('lead:open', handler);
+    return () => window.removeEventListener('lead:open', handler);
   }, []);
   const { t } = useLanguage();
 
@@ -31,6 +36,7 @@ const Hero = () => {
     setStorageItem(STORAGE_KEYS.LAST_LEAD_EMAIL, email.trim());
 
     // Open lead capture first per new requirement
+    setLeadCampaign(undefined);
     setIsLeadOpen(true);
   };
 
@@ -107,6 +113,7 @@ const Hero = () => {
         onClose={() => setIsLeadOpen(false)}
         onPrefillEmail={handlePrefillEmail}
         initialEmail={email}
+        campaign={leadCampaign}
       />
     </>
   );

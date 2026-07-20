@@ -15,6 +15,7 @@ type LeadCaptureModalProps = {
   onClose: () => void;
   onPrefillEmail?: (email: string) => void;
   initialEmail?: string;
+  campaign?: "summer_course";
 };
 
 type FirstSessionSlot = {
@@ -38,7 +39,7 @@ const GOALS = [
 ] as const;
 
 
-export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, initialEmail }: LeadCaptureModalProps) {
+export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, initialEmail, campaign }: LeadCaptureModalProps) {
   const router = useRouter();
   const [accountType, setAccountType] = useState<"PARENT" | "STUDENT">("PARENT");
   const [level, setLevel] = useState<string>("");
@@ -192,7 +193,8 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
           accountType,
           goal,
           goalOther: goal === "Autre" ? goalOther : "",
-          contest: subject === "Préparation à un concours" ? contest : ""
+          contest: subject === "Préparation à un concours" ? contest : "",
+          campaign,
         })
       );
 
@@ -214,7 +216,8 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
           subject,
           goal,
           goalOther,
-          contest
+          contest,
+          campaign,
         })
       });
 
@@ -320,6 +323,7 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
           subject,
           tutorId: selectedSlot.tutorId,
           startedAt: selectedSlot.startedAt,
+          campaign,
         }),
       });
       const data = await response.json().catch(() => ({}));
