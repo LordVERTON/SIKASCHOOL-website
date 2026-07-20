@@ -44,6 +44,15 @@ const nextConfig = {
   experimental: {
     optimizeCss: true,
   },
+  // Le cache disque Webpack peut perdre ses fichiers .pack.gz sous Windows
+  // pendant le développement. Le désactiver évite les erreurs ENOENT ; le
+  // cache de production reste inchangé.
+  webpack(config, { dev }) {
+    if (dev) {
+      config.cache = false;
+    }
+    return config;
+  },
   // Security headers
   async headers() {
     return [
