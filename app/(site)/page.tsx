@@ -5,6 +5,7 @@ import FunFact from "@/components/FunFact";
 import Pricing from "@/components/Pricing";
 import Contact from "@/components/Contact";
 import Testimonial from "@/components/Testimonial";
+import StagePromo from "@/components/StagePromo";
 
 export const metadata: Metadata = {
   title: "SikaSchool - Cours particuliers et accompagnement scolaire",
@@ -16,6 +17,7 @@ export default function Home() {
   return (
     <main>
       <Hero />
+      <StagePromo />
       <div id="about">
         <About />
       </div>

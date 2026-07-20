@@ -66,6 +66,16 @@ export interface Translations {
     discoverPack: string;
     legalNotice: string;
   };
+
+  stagePromo: {
+    title: string;
+    subtitle: string;
+    description: string;
+    benefitReview: string;
+    benefitConsolidate: string;
+    benefitConfidence: string;
+    cta: string;
+  };
   
   // Testimonials
   testimonials: {
@@ -192,7 +202,7 @@ export const translations: Record<Language, Translations> = {
     },
     pricing: {
       title: 'Packs de séances',
-      subtitle: 'Promo de rentrée*',
+      subtitle: 'Promo d\'été*',
       description: 'Choisissez le pack adapté : Collège, Lycée, ou Supérieur.',
       college: 'Collège',
       highSchool: 'Lycée',
@@ -200,6 +210,15 @@ export const translations: Record<Language, Translations> = {
       perCourse: '€/cours',
       discoverPack: 'Découvrir le pack',
       legalNotice: '*offre réservée à l\'achat de deux cours par semaine.',
+    },
+    stagePromo: {
+      title: 'Stages d\'été',
+      subtitle: 'Promo stage d\'été*',
+      description: 'Une semaine réservée = une semaine offerte. Donnez à votre enfant une longueur d\'avance pour la rentrée !',
+      benefitReview: 'Revoir les notions difficiles',
+      benefitConsolidate: 'Consolider ses bases',
+      benefitConfidence: 'Reprendre confiance',
+      cta: 'Profiter de l\'offre',
     },
     testimonials: {
       title: 'Témoignages',
@@ -315,7 +334,7 @@ export const translations: Record<Language, Translations> = {
     },
     pricing: {
       title: 'Session packs',
-      subtitle: 'Back to school promo*',
+      subtitle: 'Summer offer*',
       description: 'Choose the pack that suits you: Middle School, High School, or University.',
       college: 'Middle School',
       highSchool: 'High School',
@@ -323,6 +342,15 @@ export const translations: Record<Language, Translations> = {
       perCourse: '€/course',
       discoverPack: 'Discover the pack',
       legalNotice: '*offer reserved for the purchase of two courses per week.',
+    },
+    stagePromo: {
+      title: 'Summer courses',
+      subtitle: 'Summer course offer*',
+      description: 'Book one week and get the second week free. Give your child a head start on the new school year!',
+      benefitReview: 'Review difficult topics',
+      benefitConsolidate: 'Strengthen the basics',
+      benefitConfidence: 'Regain confidence',
+      cta: 'Claim the offer',
     },
     testimonials: {
       title: 'Testimonials',
