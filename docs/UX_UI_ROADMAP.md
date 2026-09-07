@@ -347,7 +347,7 @@
   - **Tests :** parcours Tab/Entrée/Espace/Échap, lecteur d’écran.
 
 - [ ] **40 — [P0] Formulaires : fournir des labels persistants.**
-  - **État actuel :** Hero et Contact s’appuient sur les placeholders ; Contact n’a pas de labels de champs visibles.
+  - **État actuel :** les champs publics de Contact et de réservation disposent de labels visibles ; les écrans Auth restent à traiter.
   - **Fichiers :** `components/{Hero,Contact}/**`, `components/Booking/LeadCaptureModal.tsx`, Auth.
   - **Solution :** ajouter `label` associé, visuellement visible ou au minimum conforme au design, et conserver le placeholder comme exemple.
   - **Dépendances :** inventaire de tous les champs.

@@ -602,36 +602,44 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
               ))}
             </div>
 
-            <h3 className="mt-6 mb-2 text-xl font-semibold text-black dark:text-white">Matière</h3>
-            <select value={subject} onChange={(e) => setSubject(e.target.value)} className="w-full rounded-md border border-stroke px-3 py-2 dark:border-strokedark dark:bg-black">
+            <label htmlFor="lead-subject" className="mt-6 mb-2 block text-xl font-semibold text-black dark:text-white">Matière</label>
+            <select id="lead-subject" value={subject} onChange={(e) => setSubject(e.target.value)} className="w-full rounded-md border border-stroke px-3 py-2 dark:border-strokedark dark:bg-black">
               <option value="">Sélectionner une matière</option>
               {subjectOptions.map((s) => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
             {subject === "Préparation à un concours" && (
-              <input
-                value={contest}
-                onChange={(e) => setContest(e.target.value)}
-                placeholder="Quel concours ? (ex: Passerelle, BCE, ingénieur, etc.)"
-                className="mt-3 w-full rounded-md border border-stroke px-3 py-2 dark:border-strokedark dark:bg-black"
-              />
+              <div className="mt-3">
+                <label htmlFor="lead-contest" className="mb-2 block text-sm font-medium text-black dark:text-white">Concours préparé</label>
+                <input
+                  id="lead-contest"
+                  value={contest}
+                  onChange={(e) => setContest(e.target.value)}
+                  placeholder="Ex. : Passerelle, BCE, ingénieur"
+                  className="w-full rounded-md border border-stroke px-3 py-2 dark:border-strokedark dark:bg-black"
+                />
+              </div>
             )}
 
-            <h3 className="mt-6 mb-2 text-xl font-semibold text-black dark:text-white">Objectif</h3>
-            <select value={goal} onChange={(e) => setGoal(e.target.value)} className="w-full rounded-md border border-stroke px-3 py-2 dark:border-strokedark dark:bg-black">
+            <label htmlFor="lead-goal" className="mt-6 mb-2 block text-xl font-semibold text-black dark:text-white">Objectif</label>
+            <select id="lead-goal" value={goal} onChange={(e) => setGoal(e.target.value)} className="w-full rounded-md border border-stroke px-3 py-2 dark:border-strokedark dark:bg-black">
               <option value="">Sélectionner un objectif</option>
               {GOALS.map((g) => (
                 <option key={g} value={g}>{g}</option>
               ))}
             </select>
             {goal === "Autre" && (
-              <input
-                value={goalOther}
-                onChange={(e) => setGoalOther(e.target.value)}
-                placeholder="Préciser votre objectif"
-                className="mt-3 w-full rounded-md border border-stroke px-3 py-2 dark:border-strokedark dark:bg-black"
-              />
+              <div className="mt-3">
+                <label htmlFor="lead-goal-other" className="mb-2 block text-sm font-medium text-black dark:text-white">Précisez votre objectif</label>
+                <input
+                  id="lead-goal-other"
+                  value={goalOther}
+                  onChange={(e) => setGoalOther(e.target.value)}
+                  placeholder="Votre objectif"
+                  className="w-full rounded-md border border-stroke px-3 py-2 dark:border-strokedark dark:bg-black"
+                />
+              </div>
             )}
           </div>
 
@@ -646,34 +654,54 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
             </p>
 
             <div className="space-y-3">
-              <select value={civility} onChange={(e) => setCivility(e.target.value)} className="w-full rounded-full bg-white px-4 py-2 text-black">
-                <option value="">Sélectionner une civilité</option>
-                <option value="Mme">Mme</option>
-                <option value="M.">M.</option>
-              </select>
-              <input
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                placeholder={isParentFlow ? "Votre nom" : "Mon nom"}
-                className="w-full rounded-full bg-white px-4 py-2 text-black"
-              />
-              <input
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                placeholder={isParentFlow ? "Votre prénom" : "Mon prénom"}
-                className="w-full rounded-full bg-white px-4 py-2 text-black"
-              />
-              <input
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setEmailManuallyEdited(true);
-                }}
-                placeholder={isParentFlow ? "Votre e-mail" : "Mon e-mail"}
-                type="email"
-                className="w-full rounded-full bg-white px-4 py-2 text-black"
-              />
-              <div className="flex w-full items-stretch gap-2">
+              <div>
+                <label htmlFor="lead-civility" className="mb-1 block text-sm font-medium text-black dark:text-white">Civilité</label>
+                <select id="lead-civility" value={civility} onChange={(e) => setCivility(e.target.value)} className="w-full rounded-full bg-white px-4 py-2 text-black">
+                  <option value="">Sélectionner une civilité</option>
+                  <option value="Mme">Mme</option>
+                  <option value="M.">M.</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="lead-last-name" className="mb-1 block text-sm font-medium text-black dark:text-white">Nom</label>
+                <input
+                  id="lead-last-name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder={isParentFlow ? "Votre nom" : "Mon nom"}
+                  autoComplete="family-name"
+                  className="w-full rounded-full bg-white px-4 py-2 text-black"
+                />
+              </div>
+              <div>
+                <label htmlFor="lead-first-name" className="mb-1 block text-sm font-medium text-black dark:text-white">Prénom</label>
+                <input
+                  id="lead-first-name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder={isParentFlow ? "Votre prénom" : "Mon prénom"}
+                  autoComplete="given-name"
+                  className="w-full rounded-full bg-white px-4 py-2 text-black"
+                />
+              </div>
+              <div>
+                <label htmlFor="lead-email" className="mb-1 block text-sm font-medium text-black dark:text-white">Adresse e-mail</label>
+                <input
+                  id="lead-email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setEmailManuallyEdited(true);
+                  }}
+                  placeholder={isParentFlow ? "Votre e-mail" : "Mon e-mail"}
+                  type="email"
+                  autoComplete="email"
+                  className="w-full rounded-full bg-white px-4 py-2 text-black"
+                />
+              </div>
+              <div>
+                <label htmlFor="lead-phone" className="mb-1 block text-sm font-medium text-black dark:text-white">Numéro de téléphone</label>
+                <div className="flex w-full items-stretch gap-2">
                 <div ref={dialPickerRef} className="relative shrink-0">
                   <button
                     type="button"
@@ -769,6 +797,7 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
                     {phoneDialCode}
                   </span>
                   <input
+                    id="lead-phone"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value.replace(/\D+/g, ""))}
                     onKeyDown={(e) => {
@@ -799,9 +828,13 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
                   />
                 </div>
               </div>
-              <input
-                value={zip}
-                onChange={(e) => setZip(e.target.value.replace(/\D+/g, ""))}
+              </div>
+              <div>
+                <label htmlFor="lead-zip" className="mb-1 block text-sm font-medium text-black dark:text-white">Code postal</label>
+                <input
+                  id="lead-zip"
+                  value={zip}
+                  onChange={(e) => setZip(e.target.value.replace(/\D+/g, ""))}
                 onKeyDown={(e) => {
                   if (
                     e.key.length === 1 &&
@@ -826,8 +859,9 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
                 pattern="[0-9]*"
                 autoComplete="postal-code"
                 maxLength={5}
-                className="w-full rounded-full bg-white px-4 py-2 text-black"
-              />
+                  className="w-full rounded-full bg-white px-4 py-2 text-black"
+                />
+              </div>
             </div>
 
             <div className="mt-6 text-xs text-black/70">
