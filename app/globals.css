@@ -146,6 +146,15 @@
   body {
     @apply relative z-1 font-inter text-regular font-normal text-waterloo dark:text-manatee;
   }
+
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 3px solid var(--color-primary) !important;
+    outline-offset: 3px !important;
+  }
+
+  [id] {
+    scroll-margin-top: 6rem;
+  }
 }
 
 @layer utilities {

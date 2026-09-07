@@ -17,6 +17,7 @@ export default function Home() {
   return (
     <main>
       <Hero />
+      <Testimonial />
       <StagePromo />
       <div id="about">
         <About />
@@ -24,7 +25,6 @@ export default function Home() {
       <div id="how-it-works">
         <FunFact />
       </div>
-      <Testimonial />
       <div id="pricing">
         <Pricing />
       </div>

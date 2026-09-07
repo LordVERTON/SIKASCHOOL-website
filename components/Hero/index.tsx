@@ -1,20 +1,19 @@
 "use client";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import LeadCaptureModal from "../Booking/LeadCaptureModal";
-import { validateEmail, sanitizeString } from "@/lib/validation";
 import { setStorageItem, STORAGE_KEYS } from "@/lib/storage";
 import { useLanguage } from "@/context/LanguageContext";
 
 const Hero = () => {
-  const [email, setEmail] = useState("");
   const [isLeadOpen, setIsLeadOpen] = useState(false);
-  const [leadCampaign, setLeadCampaign] = useState<"summer_course" | undefined>();
+  const [leadCampaign, setLeadCampaign] = useState<"back_to_school" | undefined>();
   
   // Listen to header CTA to open lead modal
   useEffect(() => {
     const handler = (event: Event) => {
       const campaign = (event as CustomEvent<{ campaign?: string }>).detail?.campaign;
-      setLeadCampaign(campaign === "summer_course" ? "summer_course" : undefined);
+      setLeadCampaign(campaign === "back_to_school" ? "back_to_school" : undefined);
       setIsLeadOpen(true);
     };
     window.addEventListener('lead:open', handler);
@@ -22,20 +21,7 @@ const Hero = () => {
   }, []);
   const { t } = useLanguage();
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    
-    // Validate email
-    const emailValidation = validateEmail(email);
-    if (!emailValidation.isValid) {
-      console.error('Email validation failed:', emailValidation.error);
-      return;
-    }
-    
-    // Persist email so it can also be reused when opening the modal from the header CTA
-    setStorageItem(STORAGE_KEYS.LAST_LEAD_EMAIL, email.trim());
-
-    // Open lead capture first per new requirement
+  const openBooking = () => {
     setLeadCampaign(undefined);
     setIsLeadOpen(true);
   };
@@ -50,10 +36,10 @@ const Hero = () => {
         <div className="mx-auto max-w-c-1390 px-4 md:px-8 2xl:px-0">
           <div className="flex lg:items-center lg:gap-8 xl:gap-32.5">
             <div className="w-full">
-              <h4 className="mb-4.5 text-lg font-medium text-black dark:text-white">
+              <p className="mb-4.5 text-lg font-medium text-black dark:text-white">
                 {t.hero.subtitle}
-              </h4>
-              <h1 className="mb-5 pr-16 text-4xl font-extrabold leading-tight text-black dark:text-white md:text-5xl xl:text-7xl">
+              </p>
+              <h1 className="mb-5 max-w-4xl text-4xl font-extrabold leading-tight text-black dark:text-white md:text-5xl xl:text-7xl">
                 {t.hero.title}
               </h1>
               <p className="mt-3 text-lg">
@@ -72,33 +58,28 @@ const Hero = () => {
                   <span className="absolute -bottom-1 left-0 right-0 z-0 h-2 rounded bg-green-300/70"></span>
                 </span>
               </p>
-              <p className="mt-4">
+              <p className="mt-4 max-w-2xl text-lg">
                 {t.hero.description}
               </p>
 
               <div className="mt-10">
-                <form onSubmit={handleSubmit}>
-                  <div className="flex flex-wrap gap-5">
-                    <input
-                      value={email}
-                      onChange={(e) => setEmail(sanitizeString(e.target.value))}
-                      type="email"
-                      placeholder={t.hero.emailPlaceholder}
-                      required
-                      autoComplete="email"
-                      maxLength={254}
-                      className="rounded-full border border-stroke px-6 py-2.5 shadow-solid-2 focus:border-primary focus:outline-hidden dark:border-strokedark dark:bg-black dark:shadow-none dark:focus:border-primary"
-                    />
-                    <button
-                      aria-label="get started button"
-                    className="flex rounded-full bg-black px-7.5 py-2.5 text-white duration-300 ease-in-out hover:bg-blackho dark:bg-btndark dark:hover:bg-blackho"
-                    >
-                      {t.hero.reserveButton}
-                    </button>
-                  </div>
-                </form>
+                <div className="flex flex-wrap items-center gap-4">
+                  <button
+                    type="button"
+                    onClick={openBooking}
+                    className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7.5 py-2.5 text-white duration-300 ease-in-out hover:bg-blackho dark:bg-btndark dark:hover:bg-blackho"
+                  >
+                    {t.hero.reserveButton}
+                  </button>
+                  <Link
+                    href="/packs"
+                    className="inline-flex min-h-11 items-center justify-center rounded-full border border-stroke px-7.5 py-2.5 font-medium text-black duration-300 hover:border-primary hover:text-primary dark:border-strokedark dark:text-white dark:hover:border-primary dark:hover:text-primary"
+                  >
+                    {t.hero.secondaryButton}
+                  </Link>
+                </div>
 
-                <p className="mt-5 text-black dark:text-white">
+                <p className="mt-5 text-sm font-medium text-black dark:text-white">
                   {t.hero.freeTrial}
                 </p>
               </div>
@@ -112,7 +93,6 @@ const Hero = () => {
         isOpen={isLeadOpen}
         onClose={() => setIsLeadOpen(false)}
         onPrefillEmail={handlePrefillEmail}
-        initialEmail={email}
         campaign={leadCampaign}
       />
     </>

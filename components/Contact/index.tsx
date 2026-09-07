@@ -28,13 +28,13 @@ const Contact = () => {
           <div className="absolute bottom-[-255px] left-0 -z-1 h-full w-full">
             <Image
               src="./images/shape/shape-dotted-light.svg"
-              alt="Dotted"
+              alt=""
               className="dark:hidden"
               fill
             />
             <Image
               src="./images/shape/shape-dotted-dark.svg"
-              alt="Dotted"
+              alt=""
               className="hidden dark:block"
               fill
             />
@@ -68,38 +68,74 @@ const Contact = () => {
                 method="POST"
               >
                 <div className="mb-7.5 flex flex-col gap-7.5 lg:flex-row lg:justify-between lg:gap-14">
-                  <input
-                    type="text"
-                    placeholder={t.contact.fullNamePlaceholder}
-                    className="w-full border-b border-stroke bg-transparent pb-3.5 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:focus:border-manatee dark:focus:placeholder:text-white lg:w-1/2"
-                  />
+                  <div className="w-full lg:w-1/2">
+                    <label htmlFor="contact-full-name" className="mb-2 block text-sm font-medium text-black dark:text-white">
+                      {t.contact.fullNamePlaceholder}
+                    </label>
+                    <input
+                      id="contact-full-name"
+                      name="fullName"
+                      type="text"
+                      autoComplete="name"
+                      placeholder={t.contact.fullNamePlaceholder}
+                      className="w-full border-b border-stroke bg-transparent pb-3.5 focus:border-waterloo focus:placeholder:text-black dark:border-strokedark dark:focus:border-manatee dark:focus:placeholder:text-white"
+                    />
+                  </div>
 
-                  <input
-                    type="email"
-                    placeholder={t.contact.emailPlaceholder}
-                    className="w-full border-b border-stroke bg-transparent pb-3.5 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:focus:border-manatee dark:focus:placeholder:text-white lg:w-1/2"
-                  />
+                  <div className="w-full lg:w-1/2">
+                    <label htmlFor="contact-email" className="mb-2 block text-sm font-medium text-black dark:text-white">
+                      {t.contact.emailPlaceholder}
+                    </label>
+                    <input
+                      id="contact-email"
+                      name="email"
+                      type="email"
+                      autoComplete="email"
+                      placeholder={t.contact.emailPlaceholder}
+                      className="w-full border-b border-stroke bg-transparent pb-3.5 focus:border-waterloo focus:placeholder:text-black dark:border-strokedark dark:focus:border-manatee dark:focus:placeholder:text-white"
+                    />
+                  </div>
                 </div>
 
                 <div className="mb-12.5 flex flex-col gap-7.5 lg:flex-row lg:justify-between lg:gap-14">
-                  <input
-                    type="text"
-                    placeholder={t.contact.subjectPlaceholder}
-                    className="w-full border-b border-stroke bg-transparent pb-3.5 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:focus:border-manatee dark:focus:placeholder:text-white lg:w-1/2"
-                  />
+                  <div className="w-full lg:w-1/2">
+                    <label htmlFor="contact-subject" className="mb-2 block text-sm font-medium text-black dark:text-white">
+                      {t.contact.subjectPlaceholder}
+                    </label>
+                    <input
+                      id="contact-subject"
+                      name="subject"
+                      type="text"
+                      placeholder={t.contact.subjectPlaceholder}
+                      className="w-full border-b border-stroke bg-transparent pb-3.5 focus:border-waterloo focus:placeholder:text-black dark:border-strokedark dark:focus:border-manatee dark:focus:placeholder:text-white"
+                    />
+                  </div>
 
-                  <input
-                    type="text"
-                    placeholder={t.contact.phonePlaceholder}
-                    className="w-full border-b border-stroke bg-transparent pb-3.5 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:focus:border-manatee dark:focus:placeholder:text-white lg:w-1/2"
-                  />
+                  <div className="w-full lg:w-1/2">
+                    <label htmlFor="contact-phone" className="mb-2 block text-sm font-medium text-black dark:text-white">
+                      {t.contact.phonePlaceholder}
+                    </label>
+                    <input
+                      id="contact-phone"
+                      name="phone"
+                      type="tel"
+                      autoComplete="tel"
+                      placeholder={t.contact.phonePlaceholder}
+                      className="w-full border-b border-stroke bg-transparent pb-3.5 focus:border-waterloo focus:placeholder:text-black dark:border-strokedark dark:focus:border-manatee dark:focus:placeholder:text-white"
+                    />
+                  </div>
                 </div>
 
-                <div className="mb-11.5 flex">
+                <div className="mb-11.5">
+                  <label htmlFor="contact-message" className="mb-2 block text-sm font-medium text-black dark:text-white">
+                    {t.contact.messagePlaceholder}
+                  </label>
                   <textarea
+                    id="contact-message"
+                    name="message"
                     placeholder={t.contact.messagePlaceholder}
                     rows={4}
-                    className="w-full border-b border-stroke bg-transparent focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:focus:border-manatee dark:focus:placeholder:text-white"
+                    className="w-full border-b border-stroke bg-transparent focus:border-waterloo focus:placeholder:text-black dark:border-strokedark dark:focus:border-manatee dark:focus:placeholder:text-white"
                   ></textarea>
                 </div>
 
@@ -110,7 +146,7 @@ const Contact = () => {
                       type="checkbox"
                       className="peer sr-only"
                     />
-                    <span className="border-gray-300 bg-gray-100 text-blue-600 dark:border-gray-600 dark:bg-gray-700 group mt-2 flex h-5 min-w-[20px] items-center justify-center rounded-sm peer-checked:bg-primary">
+                    <span className="border-gray-300 bg-gray-100 text-blue-600 dark:border-gray-600 dark:bg-gray-700 group mt-2 flex h-5 min-w-[20px] items-center justify-center rounded-sm peer-checked:bg-primary peer-focus-visible:ring-3 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2">
                       <svg
                         className="opacity-0 in-[.group]:peer-checked:opacity-100"
                         width="10"
@@ -136,8 +172,8 @@ const Contact = () => {
                   </div>
 
                   <button
-                    aria-label="send message"
-                    className="inline-flex items-center gap-2.5 rounded-full bg-black px-6 py-3 font-medium text-white duration-300 ease-in-out hover:bg-blackho dark:bg-btndark"
+                    type="submit"
+                    className="inline-flex min-h-11 items-center gap-2.5 rounded-full bg-black px-6 py-3 font-medium text-white duration-300 ease-in-out hover:bg-blackho dark:bg-btndark"
                   >
                     {t.contact.sendButton}
                     <svg

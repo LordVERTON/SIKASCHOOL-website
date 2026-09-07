@@ -20,7 +20,7 @@
 
 - La page d’accueil assemble actuellement `Hero → StagePromo → About → FunFact → Testimonial → Pricing → Contact` dans `app/(site)/page.tsx`.
 - Le hero réutilise des textes de `lib/translations.ts`, affiche un champ e-mail avant la réservation et ouvre `components/Booking/LeadCaptureModal.tsx`.
-- Une promotion « stage d’été » est rendue par `components/StagePromo/index.tsx` ; le texte est également utilisé dans la création de leads.
+- Une offre de rentrée à −15 % est rendue par `components/StagePromo/index.tsx` ; son identifiant de campagne est également utilisé dans la création de leads.
 - Les tarifs détaillés sont portés par `lib/payments-catalog.ts` et `components/Packs/index.tsx`; les cartes de `components/Pricing/index.tsx` restent descriptives.
 - Les composants de contact et plusieurs formulaires utilisent des placeholders ; le formulaire Contact ne fournit pas de labels visibles pour ses champs.
 - Les tokens de couleurs et de typographie existent dans `app/globals.css`, mais ni échelle d’espacement ni système de boutons/carte partagé n’y sont définis.
@@ -30,7 +30,7 @@
 
 ## Lot 1 — Promesse, CTA et contenu de la page d’accueil
 
-- [ ] **01 — [P0] Hero : rendre le H1 explicite.**
+- [x] **01 — [P0] Hero : rendre le H1 explicite.**
   - **État actuel :** le hero affiche la promesse générique « Excellence académique à votre portée » via `lib/translations.ts`.
   - **Fichiers :** `lib/translations.ts`, `components/Hero/index.tsx`.
   - **Solution :** utiliser un H1 orienté service, par exemple « Cours particuliers en ligne du collège au supérieur » ; réserver la promesse de réussite au sous-texte.
@@ -38,7 +38,7 @@
   - **Acceptation :** le H1 explique l’offre sans contexte externe et reste une unique balise `h1`.
   - **Tests :** desktop/mobile, lecteur d’écran (structure des titres).
 
-- [ ] **02 — [P0] Hero : expliciter la différenciation.**
+- [x] **02 — [P0] Hero : expliciter la différenciation.**
   - **État actuel :** la description est traduite mais ne formalise pas clairement l’adaptation tuteur/niveau/matière/objectif.
   - **Fichiers :** `lib/translations.ts`, `components/Hero/index.tsx`.
   - **Solution :** ajouter une ou deux phrases maximum expliquant l’accompagnement personnalisé.
@@ -46,7 +46,7 @@
   - **Acceptation :** la valeur ajoutée est comprise sans devoir ouvrir une autre page.
   - **Tests :** desktop/mobile, relecture FR/EN.
 
-- [ ] **03 — [P0] CTA : instaurer un CTA primaire unique.**
+- [x] **03 — [P0] CTA : instaurer un CTA primaire unique.**
   - **État actuel :** les libellés et points d’entrée varient entre hero, header, promotions et pages d’offres.
   - **Fichiers :** `components/Hero/index.tsx`, `components/Header/index.tsx`, `components/StagePromo/index.tsx`, `lib/translations.ts`.
   - **Solution :** centraliser un libellé tel que « Réserver ma séance d’essai gratuite » et une action d’ouverture de réservation.
@@ -62,7 +62,7 @@
   - **Acceptation :** une action principale et une secondaire sont reconnaissables immédiatement.
   - **Tests :** desktop/mobile, contraste et focus.
 
-- [ ] **05 — [P0] Conversion : retirer l’e-mail du hero.**
+- [x] **05 — [P0] Conversion : retirer l’e-mail du hero.**
   - **État actuel :** `components/Hero/index.tsx` demande un e-mail puis ouvre la modale de lead.
   - **Fichiers :** `components/Hero/index.tsx`, `components/Booking/LeadCaptureModal.tsx`, `lib/storage.ts`.
   - **Solution :** remplacer le formulaire par le CTA primaire ; recueillir les données au moment opportun dans le parcours de réservation.
@@ -70,7 +70,7 @@
   - **Acceptation :** aucun champ personnel n’est visible dans le hero ; la réservation conserve un préremplissage si nécessaire.
   - **Tests :** desktop/mobile, clavier, régression création de lead.
 
-- [ ] **06 — [P0] Hero : ajouter une réassurance vérifiable.**
+- [x] **06 — [P0] Hero : ajouter une réassurance vérifiable.**
   - **État actuel :** la mention d’essai gratuit existe, mais aucune micro-zone structurée sous les CTA.
   - **Fichiers :** `components/Hero/index.tsx`, `lib/translations.ts`.
   - **Solution :** afficher 2–3 preuves courtes (« Première séance gratuite », « Sans engagement », volume de familles) uniquement si justifiées.
@@ -79,7 +79,7 @@
   - **Tests :** desktop/mobile, contraste, relecture légale.
 
 - [ ] **07 — [P0] Contenu : rendre les campagnes saisonnières configurables.**
-  - **État actuel :** `StagePromo` et les traductions affichent le stage d’été ; le backend reconnaît la campagne `summer_course`.
+  - **État actuel :** l’offre de rentrée active est affichée par `StagePromo` et le backend reconnaît la campagne `back_to_school` ; son activation reste codée en dur.
   - **Fichiers :** `components/StagePromo/index.tsx`, `lib/translations.ts`, `app/api/leads/**`, `lib/registration-emails.ts`.
   - **Solution :** introduire une configuration de campagne datée/activable avec un fallback neutre, sans supprimer l’historique de suivi.
   - **Dépendances :** calendrier marketing, libellés et règles de lead validés.
@@ -136,7 +136,7 @@
   - **Acceptation :** page ou section courante identifiable sans ambiguïté.
   - **Tests :** desktop/mobile, clavier, scroll et thème sombre.
 
-- [ ] **14 — [P1] Navigation : vérifier le retour accueil du logo.**
+- [x] **14 — [P1] Navigation : vérifier le retour accueil du logo.**
   - **État actuel :** le logo est déjà un `Link` vers `/` dans le header.
   - **Fichiers :** `components/Header/index.tsx`.
   - **Solution :** conserver ce comportement, améliorer le nom accessible (`alt`/`aria-label`) et le tester.
@@ -152,7 +152,7 @@
   - **Acceptation :** mêmes termes dans UI, paiement, e-mails et documentation.
   - **Tests :** recherche textuelle, relecture FR/EN, parcours paiement.
 
-- [ ] **16 — [P0] Packs : faire du niveau l’information principale.**
+- [x] **16 — [P0] Packs : faire du niveau l’information principale.**
   - **État actuel :** le catalogue expose `NOTA`, `AVA`, `TODA`; le niveau est déjà un badge dans les cartes.
   - **Fichiers :** `lib/payments-catalog.ts`, `components/Packs/index.tsx`, `components/HowTo/index.tsx`, `lib/stripe.ts`.
   - **Solution :** titrer les cartes par Collège/Lycée/Supérieur, garder les noms internes en secondaire ou les retirer du front.
@@ -232,7 +232,7 @@
   - **Acceptation :** aucune apparence de partenariat officiel non démontré.
   - **Tests :** desktop/mobile, lecteur d’écran, validation légale.
 
-- [ ] **26 — [P0] Témoignages : remonter les preuves sociales.**
+- [x] **26 — [P0] Témoignages : remonter les preuves sociales.**
   - **État actuel :** `Testimonial` est après About et FunFact ; les avis proviennent de `/api/testimonials`.
   - **Fichiers :** `app/(site)/page.tsx`, `components/Testimonial/index.tsx`, `app/api/testimonials/route.ts`.
   - **Solution :** placer un aperçu d’avis crédibles plus tôt et conserver une section complète plus bas si utile.
@@ -330,7 +330,7 @@
   - **Acceptation :** les contrôles essentiels atteignent 24×24 CSS px au minimum, 44 px cible quand possible.
   - **Tests :** 320 px, appareil tactile, audit WCAG 2.2 cible tactile.
 
-- [ ] **38 — [P0] Accessibilité : rendre le focus visible.**
+- [x] **38 — [P0] Accessibilité : rendre le focus visible.**
   - **État actuel :** de nombreuses occurrences de `focus:outline-hidden`/`focus-visible:outline-hidden` ont été relevées ; le focus n’est pas garanti partout.
   - **Fichiers :** `app/globals.css`, composants contenant boutons/liens/champs.
   - **Solution :** définir un focus ring global visible avec les couleurs existantes et un `scroll-margin-top` compatible header sticky.

@@ -69,7 +69,7 @@ const Packs = () => {
             <Image
               fill
               src="./images/shape/shape-dotted-light.svg"
-              alt="Dotted"
+              alt=""
               className="dark:hidden"
             />
           </div>
@@ -88,11 +88,11 @@ const Packs = () => {
                     key={plan.id}
                     className="animate_top group relative rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection dark:shadow-none xl:p-12.5"
                   >
-                    <div className={`mb-3 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${colors.bg} ${colors.text}`}>
+                    <p className={`mb-3 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${colors.bg} ${colors.text}`}>
+                      Formule {plan.badge}
+                    </p>
+                    <h4 className="mb-1 text-xl font-semibold text-black dark:text-white">
                       {plan.levelLabel}
-                    </div>
-                    <h4 className="mb-1 text-lg font-semibold text-waterloo dark:text-manatee">
-                      {plan.name}
                     </h4>
                     <div className="mb-2">
                       <span className="text-3xl font-bold text-primary">{formatEuros(plan.priceCents)}</span>
@@ -112,8 +112,8 @@ const Packs = () => {
                     <button
                       onClick={() => onSelect(plan.id)}
                       disabled={isLoading}
-                      aria-label="Sélectionner button"
-                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-white transition-all duration-300 hover:bg-primaryho disabled:opacity-60"
+                      aria-label={`Choisir le pack ${plan.levelLabel} ${plan.badge}`}
+                      className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-white transition-all duration-300 hover:bg-primaryho disabled:opacity-60"
                     >
                       {isLoading ? (
                         <>
@@ -143,11 +143,11 @@ const Packs = () => {
                     key={plan.id}
                     className="animate_top group relative rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection dark:shadow-none xl:p-12.5"
                   >
-                    <div className={`mb-3 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${colors.bg} ${colors.text}`}>
+                    <p className={`mb-3 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${colors.bg} ${colors.text}`}>
+                      Formule {plan.badge}
+                    </p>
+                    <h4 className="mb-1 text-xl font-semibold text-black dark:text-white">
                       {plan.levelLabel}
-                    </div>
-                    <h4 className="mb-1 text-lg font-semibold text-waterloo dark:text-manatee">
-                      {plan.name}
                     </h4>
                     <div className="mb-2">
                       <span className="text-3xl font-bold text-primary">{formatEuros(plan.priceCents)}</span>
@@ -167,8 +167,8 @@ const Packs = () => {
                     <button
                       onClick={() => onSelect(plan.id)}
                       disabled={isLoading}
-                      aria-label="Sélectionner button"
-                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-white transition-all duration-300 hover:bg-primaryho disabled:opacity-60"
+                      aria-label={`Choisir le pack ${plan.levelLabel} ${plan.badge}`}
+                      className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-white transition-all duration-300 hover:bg-primaryho disabled:opacity-60"
                     >
                       {isLoading ? (
                         <>

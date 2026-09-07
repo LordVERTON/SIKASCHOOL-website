@@ -102,17 +102,17 @@ const Header = () => {
     >
       <div className="relative mx-auto max-w-c-1390 items-center justify-between px-4 md:px-8 xl:flex 2xl:px-0">
         <div className="flex w-full items-center justify-between xl:w-1/4">
-          <Link href="/">
+          <Link href="/" aria-label="SikaSchool — Accueil">
             <Image
               src="/images/logo/logo-dark.svg"
-              alt="logo"
+              alt=""
               width={170}
               height={50}
               className="hidden w-full dark:block"
             />
             <Image
               src="/images/logo/logo-light.svg"
-              alt="logo"
+              alt=""
               width={170}
               height={50}
               className="w-full dark:hidden"
@@ -122,7 +122,9 @@ const Header = () => {
           {/* <!-- Hamburger Toggle BTN --> */}
           <button
             aria-label="hamburger Toggler"
-            className="block xl:hidden"
+            aria-controls="mobile-navigation"
+            aria-expanded={navigationOpen}
+            className="block min-h-11 min-w-11 xl:hidden"
             onClick={() => setNavigationOpen(!navigationOpen)}
           >
             <span className="relative block h-5.5 w-5.5 cursor-pointer">
@@ -170,6 +172,7 @@ const Header = () => {
           <div className={`fixed inset-0 z-50 xl:hidden ${navigationOpen ? "pointer-events-auto" : "pointer-events-none"}`}>
             {/* Backdrop */}
             <div
+              id="mobile-navigation"
               className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${navigationOpen ? "opacity-100" : "opacity-0"}`}
               onClick={handleMenuClose}
             />
@@ -182,7 +185,7 @@ const Header = () => {
                 <button
                   aria-label="Fermer le menu"
                   onClick={handleMenuClose}
-                  className="text-waterloo hover:text-black dark:text-manatee dark:hover:text-white"
+                  className="min-h-11 min-w-11 text-waterloo hover:text-black dark:text-manatee dark:hover:text-white"
                 >
                   <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18" />
@@ -230,6 +233,7 @@ const Header = () => {
                               ? "text-primary hover:text-primary"
                               : "hover:text-primary"
                           }
+                          aria-current={pathUrl === menuItem.path ? "page" : undefined}
                           onClick={handleMenuClose}
                         >
                           {menuItem.title}
@@ -251,7 +255,7 @@ const Header = () => {
                 </Link>
                 <button
                   onClick={() => { openLeadModal(); handleMenuClose(); }}
-                  className="flex items-center justify-center rounded-full bg-primary px-7.5 py-2.5 text-regular text-white duration-300 ease-in-out hover:bg-primaryho"
+                  className="flex min-h-11 items-center justify-center rounded-full bg-primary px-7.5 py-2.5 text-regular text-white duration-300 ease-in-out hover:bg-primaryho"
                 >
                   {t.hero.reserveButton}
                 </button>
@@ -301,6 +305,7 @@ const Header = () => {
                             ? "text-primary hover:text-primary"
                             : "hover:text-primary"
                         }
+                        aria-current={pathUrl === menuItem.path ? "page" : undefined}
                         onClick={handleMenuClose}
                       >
                         {menuItem.title}
@@ -322,7 +327,7 @@ const Header = () => {
               </Link>
               <button
                 onClick={() => { openLeadModal(); handleMenuClose(); }}
-                className="flex items-center justify-center rounded-full bg-primary px-7.5 py-2.5 text-regular text-white duration-300 ease-in-out hover:bg-primaryho"
+                className="flex min-h-11 items-center justify-center rounded-full bg-primary px-7.5 py-2.5 text-regular text-white duration-300 ease-in-out hover:bg-primaryho"
               >
                 {t.hero.reserveButton}
               </button>
