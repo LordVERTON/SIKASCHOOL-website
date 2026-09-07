@@ -54,12 +54,12 @@
   - **Acceptation :** tous les CTA d’acquisition primaires ont le même libellé et le même résultat.
   - **Tests :** desktop/mobile, clavier, suivi du clic.
 
-- [ ] **04 — [P0] CTA : instaurer un CTA secondaire unique.**
+- [x] **04 — [P0] CTA : instaurer un CTA secondaire unique.**
   - **État actuel :** les liens vers les prix, packs et réservation sont visuellement proches selon les sections.
   - **Fichiers :** `components/Hero/index.tsx`, `components/Pricing/index.tsx`, `components/Header/index.tsx`.
   - **Solution :** adopter « Voir les tarifs » comme action secondaire, avec une variante visuelle inférieure au CTA primaire.
   - **Dépendances :** item 03 et composant bouton (item 36).
-  - **Acceptation :** une action principale et une secondaire sont reconnaissables immédiatement.
+  - **Acceptation :** une action principale et une secondaire sont reconnaissables immédiatement. « Voir les tarifs » / « View pricing » est désormais la formulation unique du CTA secondaire sur les points d’entrée tarifaires.
   - **Tests :** desktop/mobile, contraste et focus.
 
 - [x] **05 — [P0] Conversion : retirer l’e-mail du hero.**

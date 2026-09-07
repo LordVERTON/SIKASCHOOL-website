@@ -69,7 +69,6 @@ export interface Translations {
     highSchool: string;
     university: string;
     perCourse: string;
-    discoverPack: string;
     legalNotice: string;
   };
 
@@ -247,7 +246,6 @@ export const translations: Record<Language, Translations> = {
       highSchool: 'Lycée',
       university: 'Supérieur',
       perCourse: '€/cours',
-      discoverPack: 'Découvrir le pack',
       legalNotice: '*Offre de rentrée : −15 % sur les formules éligibles.',
     },
     stagePromo: {
@@ -403,7 +401,6 @@ export const translations: Record<Language, Translations> = {
       highSchool: 'High School',
       university: 'University',
       perCourse: '€/course',
-      discoverPack: 'Discover the pack',
       legalNotice: '*Back-to-school offer: 15% off eligible plans.',
     },
     stagePromo: {

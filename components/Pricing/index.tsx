@@ -31,21 +31,21 @@ const Pricing = () => {
               title={t.pricing.college}
               description="8 cours/mois. Méthodologies simples et efficaces pour le bien-être scolaire."
               items={["Suivi personnalisé", "Devoirs et méthodologie", "Bilan mensuel"]}
-              cta={t.pricing.discoverPack}
+              cta={t.hero.secondaryButton}
             />
             <PricingCard
               discount="-15%"
               title={t.pricing.highSchool}
               description="8 cours/mois. Consolider les savoirs et préparer l'avenir."
               items={["Approfondissement des compétences", "Préparation examens", "Suivi d'autonomie"]}
-              cta={t.pricing.discoverPack}
+              cta={t.hero.secondaryButton}
             />
             <PricingCard
               discount="-15%"
               title={t.pricing.university}
               description="8 cours/mois. Développer expertise et autonomie intellectuelle."
               items={["Cours ciblés par matière", "Accompagnement projets", "Orientation et mentoring"]}
-              cta={t.pricing.discoverPack}
+              cta={t.hero.secondaryButton}
             />
           </div>
 
