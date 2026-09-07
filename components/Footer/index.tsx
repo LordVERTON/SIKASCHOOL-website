@@ -44,9 +44,9 @@ const Footer = () => {
                   <Image
                     width={110}
                     height={80}
-                    src="/images/logo/logo-dark.svg"
+                    src="/images/logo/logo-light.svg"
                     alt="Logo"
-                    className="hidden dark:block"
+                    className="hidden dark:block dark:brightness-0 dark:invert"
                   />
                 </Link>
 

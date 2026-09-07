@@ -104,11 +104,11 @@ const Header = () => {
         <div className="flex w-full items-center justify-between xl:w-1/4">
           <Link href="/" aria-label="SikaSchool — Accueil">
             <Image
-              src="/images/logo/logo-dark.svg"
+              src="/images/logo/logo-light.svg"
               alt=""
               width={170}
               height={50}
-              className="hidden w-full dark:block"
+              className="hidden w-full dark:block dark:brightness-0 dark:invert"
             />
             <Image
               src="/images/logo/logo-light.svg"

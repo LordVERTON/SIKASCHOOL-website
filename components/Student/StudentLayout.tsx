@@ -67,11 +67,11 @@ export default function StudentLayout({ children, variant = "student" }: Student
           className="h-10 w-auto dark:hidden"
         />
         <Image
-          src="/images/logo/logo-dark.svg"
+          src="/images/logo/logo-light.svg"
           alt="SikaSchool Logo"
           width={120}
           height={40}
-          className="h-10 w-auto hidden dark:block"
+          className="hidden h-10 w-auto dark:block dark:brightness-0 dark:invert"
         />
       </div>
 
@@ -177,11 +177,11 @@ export default function StudentLayout({ children, variant = "student" }: Student
                 priority
               />
               <Image
-                src="/images/logo/logo-dark.svg"
+                src="/images/logo/logo-light.svg"
                 alt="SikaSchool"
                 width={118}
                 height={34}
-                className="hidden h-8 w-auto dark:block"
+                className="hidden h-8 w-auto dark:block dark:brightness-0 dark:invert"
                 priority
               />
             </Link>
