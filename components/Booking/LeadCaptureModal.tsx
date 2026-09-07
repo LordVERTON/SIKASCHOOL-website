@@ -15,7 +15,7 @@ type LeadCaptureModalProps = {
   onClose: () => void;
   onPrefillEmail?: (email: string) => void;
   initialEmail?: string;
-  campaign?: "summer_course";
+  campaign?: "back_to_school";
 };
 
 type FirstSessionSlot = {

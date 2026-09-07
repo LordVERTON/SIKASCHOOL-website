@@ -22,6 +22,7 @@ export interface Translations {
     description: string;
     emailPlaceholder: string;
     reserveButton: string;
+    secondaryButton: string;
     freeTrial: string;
   };
   
@@ -168,12 +169,13 @@ export const translations: Record<Language, Translations> = {
       signIn: 'Mon espace',
     },
     hero: {
-      title: 'Atteignez vos objectifs académiques',
-      subtitle: 'Excellence académique à votre portée',
-      description: 'Professeurs certifiés et étudiants des meilleures écoles. Programmez votre première séance GRATUITE avec un tuteur pédagogique.',
+      title: 'Cours particuliers en ligne du collège au supérieur',
+      subtitle: 'Un accompagnement adapté à chaque objectif',
+      description: 'Trouvez un tuteur adapté au niveau, à la matière et aux objectifs de votre enfant ou de votre parcours.',
       emailPlaceholder: 'Votre e-mail',
-      reserveButton: 'Commencer',
-      freeTrial: 'Programmez votre première séance GRATUITE avec un tuteur pédagogique',
+      reserveButton: 'Réserver ma séance d’essai gratuite',
+      secondaryButton: 'Voir les tarifs',
+      freeTrial: 'Première séance gratuite · Sans engagement · Réservation en quelques étapes',
     },
     about: {
       title: 'Nos Méthodes',
@@ -202,23 +204,23 @@ export const translations: Record<Language, Translations> = {
     },
     pricing: {
       title: 'Packs de séances',
-      subtitle: 'Promo d\'été*',
+      subtitle: 'Promo de rentrée',
       description: 'Choisissez le pack adapté : Collège, Lycée, ou Supérieur.',
       college: 'Collège',
       highSchool: 'Lycée',
       university: 'Supérieur',
       perCourse: '€/cours',
       discoverPack: 'Découvrir le pack',
-      legalNotice: '*offre réservée à l\'achat de deux cours par semaine.',
+      legalNotice: '*Offre de rentrée : −15 % sur les formules éligibles.',
     },
     stagePromo: {
-      title: 'Stages d\'été',
-      subtitle: 'Promo stage d\'été*',
-      description: 'Une semaine réservée = une semaine offerte. Donnez à votre enfant une longueur d\'avance pour la rentrée !',
+      title: 'Offre de rentrée',
+      subtitle: '−15 % sur votre accompagnement*',
+      description: 'Démarrez l’année scolaire sereinement avec un accompagnement personnalisé et bénéficiez de 15 % de réduction sur les formules éligibles.',
       benefitReview: 'Revoir les notions difficiles',
       benefitConsolidate: 'Consolider ses bases',
       benefitConfidence: 'Reprendre confiance',
-      cta: 'Profiter de l\'offre',
+      cta: 'Découvrir l’offre',
     },
     testimonials: {
       title: 'Témoignages',
@@ -300,12 +302,13 @@ export const translations: Record<Language, Translations> = {
       signIn: 'My space',
     },
     hero: {
-      title: 'Understand, Progress, Succeed',
-      subtitle: 'Free trial session',
-      description: 'Certified teachers and students from the best universities. Schedule your first FREE session with an educational tutor.',
+      title: 'Online tutoring from middle school to higher education',
+      subtitle: 'Support tailored to every goal',
+      description: 'Find a tutor matched to the level, subject and goals of your child or academic journey.',
       emailPlaceholder: 'Your email',
-      reserveButton: 'Reserve',
-      freeTrial: 'Try for free, no credit card required.',
+      reserveButton: 'Book my free trial session',
+      secondaryButton: 'View pricing',
+      freeTrial: 'First session free · No commitment · Book in a few steps',
     },
     about: {
       title: 'Our Methods',
@@ -334,23 +337,23 @@ export const translations: Record<Language, Translations> = {
     },
     pricing: {
       title: 'Session packs',
-      subtitle: 'Summer offer*',
+      subtitle: 'Back-to-school offer: 15% off*',
       description: 'Choose the pack that suits you: Middle School, High School, or University.',
       college: 'Middle School',
       highSchool: 'High School',
       university: 'University',
       perCourse: '€/course',
       discoverPack: 'Discover the pack',
-      legalNotice: '*offer reserved for the purchase of two courses per week.',
+      legalNotice: '*Back-to-school offer: 15% off eligible plans.',
     },
     stagePromo: {
-      title: 'Summer courses',
-      subtitle: 'Summer course offer*',
-      description: 'Book one week and get the second week free. Give your child a head start on the new school year!',
+      title: 'Back-to-school offer',
+      subtitle: '15% off your tutoring plan*',
+      description: 'Start the school year with confidence through personalised tutoring and receive 15% off eligible plans.',
       benefitReview: 'Review difficult topics',
       benefitConsolidate: 'Strengthen the basics',
       benefitConfidence: 'Regain confidence',
-      cta: 'Claim the offer',
+      cta: 'Discover the offer',
     },
     testimonials: {
       title: 'Testimonials',

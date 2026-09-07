@@ -21,7 +21,7 @@ const BookSchema = z.object({
   subject: z.string().min(1),
   tutorId: z.string().uuid(),
   startedAt: z.string().min(1),
-  campaign: z.enum(['summer_course']).optional(),
+  campaign: z.enum(['back_to_school']).optional(),
 });
 
 type SlotTutor = {
@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { email, subject, tutorId, startedAt, campaign } = parsed.data;
-    const isSummerCourse = campaign === 'summer_course';
+    const isBackToSchoolOffer = campaign === 'back_to_school';
     const slotStart = new Date(startedAt);
     const slotEnd = addMinutes(slotStart, SLOT_DURATION_MINUTES);
 
@@ -194,8 +194,8 @@ export async function POST(request: NextRequest) {
           tutor_id: tutorId,
           student_id: student.id,
           is_active: true,
-          notes: isSummerCourse
-            ? `Assignation automatique — demande de stage d'été (${subject})`
+          notes: isBackToSchoolOffer
+            ? `Assignation automatique — offre de rentrée −15 % (${subject})`
             : `Assignation automatique après choix de première séance gratuite (${subject})`,
           updated_at: new Date().toISOString(),
         },
@@ -239,9 +239,9 @@ export async function POST(request: NextRequest) {
       {
         user_id: tutorId,
         type: 'BOOKING',
-        title: isSummerCourse ? 'Demande de stage d\'été' : 'Première séance gratuite demandée',
-        message: isSummerCourse
-          ? `${studentName} souhaite profiter de l'offre stage d'été en ${subject}, avec un premier créneau le ${slotStart.toLocaleDateString('fr-FR')} à ${slotStart.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}.`
+        title: isBackToSchoolOffer ? 'Demande offre de rentrée −15 %' : 'Première séance gratuite demandée',
+        message: isBackToSchoolOffer
+          ? `${studentName} souhaite profiter de l’offre de rentrée à −15 % en ${subject}, avec un premier créneau le ${slotStart.toLocaleDateString('fr-FR')} à ${slotStart.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}.`
           : `${studentName} a choisi une première séance gratuite de ${subject} le ${slotStart.toLocaleDateString('fr-FR')} à ${slotStart.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}.`,
         data: {
           session_id: session.id,

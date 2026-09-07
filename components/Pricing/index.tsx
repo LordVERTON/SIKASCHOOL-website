@@ -23,25 +23,25 @@ const Pricing = () => {
 
         <div className="relative mx-auto mt-15 max-w-[1207px] px-4 md:px-8 xl:mt-20 xl:px-0">
           <div className="absolute -bottom-15 -z-1 h-full w-full">
-            <Image fill src="./images/shape/shape-dotted-light.svg" alt="Dotted" className="dark:hidden" />
+            <Image fill src="./images/shape/shape-dotted-light.svg" alt="" className="dark:hidden" />
           </div>
           <div className="flex flex-wrap justify-center gap-7.5 lg:flex-nowrap xl:gap-12.5">
             <PricingCard
-              discount="-30%"
+              discount="-15%"
               title={t.pricing.college}
               description="8 cours/mois. Méthodologies simples et efficaces pour le bien-être scolaire."
               items={["Suivi personnalisé", "Devoirs et méthodologie", "Bilan mensuel"]}
               cta={t.pricing.discoverPack}
             />
             <PricingCard
-              discount="-25%"
+              discount="-15%"
               title={t.pricing.highSchool}
               description="8 cours/mois. Consolider les savoirs et préparer l'avenir."
               items={["Approfondissement des compétences", "Préparation examens", "Suivi d'autonomie"]}
               cta={t.pricing.discoverPack}
             />
             <PricingCard
-              discount="-20%"
+              discount="-15%"
               title={t.pricing.university}
               description="8 cours/mois. Développer expertise et autonomie intellectuelle."
               items={["Cours ciblés par matière", "Accompagnement projets", "Orientation et mentoring"]}
