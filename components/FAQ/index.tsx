@@ -4,11 +4,13 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import FAQItem from "./FAQItem";
 import type { FAQ as FAQType } from "@/types/faq";
+import { useLanguage } from "@/context/LanguageContext";
 
 const FAQ = () => {
   const [activeFaq, setActiveFaq] = useState(1);
   const [faqData, setFaqData] = useState<FAQType[]>([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useLanguage();
 
   useEffect(() => {
     const fetchFAQs = async () => {
@@ -16,7 +18,7 @@ const FAQ = () => {
         const response = await fetch('/api/faqs');
         if (response.ok) {
           const data = await response.json();
-          setFaqData(data);
+          setFaqData(Array.isArray(data) ? data : []);
         } else {
           console.error('Erreur lors du chargement des FAQ');
         }
@@ -33,23 +35,30 @@ const FAQ = () => {
   const handleFaqToggle = (id: number) => {
     activeFaq === id ? setActiveFaq(0) : setActiveFaq(id);
   };
+  const displayedFaqs: FAQType[] = faqData.length > 0
+    ? faqData
+    : t.faq.fallback.map((faq, index) => ({
+        id: index + 1,
+        quest: faq.question,
+        ans: faq.answer,
+      }));
 
   return (
     <>
       {/* <!-- ===== FAQ Start ===== --> */}
-      <section className="overflow-hidden pb-20 lg:pb-25 xl:pb-30">
+      <section id="faq" className="overflow-hidden pb-20 pt-8 lg:pb-25 xl:pb-30" aria-labelledby="faq-title">
         <div className="relative mx-auto max-w-c-1235 px-4 md:px-8 xl:px-0">
           <div className="absolute -bottom-16 -z-1 h-full w-full">
             <Image
               fill
               src="/images/shape/shape-dotted-light.svg"
-              alt="Dotted"
+              alt=""
               className="dark:hidden"
             />
             <Image
               fill
               src="/images/shape/shape-dotted-light.svg"
-              alt="Dotted"
+              alt=""
               className="hidden dark:block"
             />
           </div>
@@ -73,32 +82,12 @@ const FAQ = () => {
               className="animate_left md:w-2/5 lg:w-1/2"
             >
               <span className="font-medium uppercase text-black dark:text-white">
-                OUR FAQS
+                {t.faq.eyebrow}
               </span>
-              <h2 className="relative mb-6 text-3xl font-bold text-black dark:text-white xl:text-hero">
-                Frequently Asked
-                <span className="relative inline-block before:absolute before:bottom-2.5 before:left-0 before:-z-1 before:h-3 before:w-full before:bg-titlebg2 dark:before:bg-titlebgdark">
-                  Questions
-                </span>
+              <h2 id="faq-title" className="relative mb-6 text-3xl font-bold text-black dark:text-white xl:text-hero">
+                {t.faq.title}
               </h2>
-
-              <a
-                href="#"
-                className="group mt-7.5 inline-flex items-center gap-2.5 text-black hover:text-primary dark:text-white dark:hover:text-primary"
-              >
-                <span className="duration-300 group-hover:pr-2">Know More</span>
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 14 14"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M10.4767 6.16701L6.00668 1.69701L7.18501 0.518677L13.6667 7.00034L7.18501 13.482L6.00668 12.3037L10.4767 7.83368H0.333344V6.16701H10.4767Z"
-                    fill="currentColor"
-                  />
-                </svg>
-              </a>
+              <p className="max-w-md">Retrouvez les informations essentielles pour choisir votre accompagnement en toute confiance.</p>
             </motion.div>
 
             <motion.div
@@ -120,12 +109,12 @@ const FAQ = () => {
               className="animate_right md:w-3/5 lg:w-1/2"
             >
               <div className="rounded-lg bg-white shadow-solid-8 dark:border dark:border-strokedark dark:bg-blacksection">
-                {loading ? (
+                {loading && faqData.length === 0 ? (
                   <div className="p-6 text-center">Chargement des FAQ...</div>
                 ) : (
-                  faqData.map((faq, key) => (
+                  displayedFaqs.map((faq) => (
                     <FAQItem
-                      key={key}
+                      key={faq.id}
                       faqData={{ ...faq, activeFaq, handleFaqToggle }}
                     />
                   ))

@@ -73,6 +73,15 @@ export interface Translations {
     legalNotice: string;
   };
 
+  faq: {
+    eyebrow: string;
+    title: string;
+    fallback: Array<{
+      question: string;
+      answer: string;
+    }>;
+  };
+
   stagePromo: {
     title: string;
     subtitle: string;
@@ -186,6 +195,24 @@ export const translations: Record<Language, Translations> = {
         schedule: 'Choisissez un créneau',
         learn: 'Commencez à progresser',
       },
+    },
+    faq: {
+      eyebrow: 'Vos questions, nos réponses',
+      title: 'Tout savoir avant de réserver',
+      fallback: [
+        {
+          question: 'Comment se déroule la première séance ?',
+          answer: 'Vous indiquez le niveau, la matière et vos objectifs, puis vous choisissez un créneau parmi les disponibilités proposées.',
+        },
+        {
+          question: 'Puis-je réserver une seule séance ?',
+          answer: 'Oui. Les séances à la carte sont disponibles pour le collège, le lycée et le supérieur, avec un prix affiché avant le paiement.',
+        },
+        {
+          question: 'Comment le tuteur est-il choisi ?',
+          answer: 'Les disponibilités proposées correspondent à des tuteurs disponibles pour la matière demandée.',
+        },
+      ],
     },
     about: {
       title: 'Nos Méthodes',
@@ -324,6 +351,24 @@ export const translations: Record<Language, Translations> = {
         schedule: 'Choose a time slot',
         learn: 'Start making progress',
       },
+    },
+    faq: {
+      eyebrow: 'Your questions, answered',
+      title: 'Everything you need to know before booking',
+      fallback: [
+        {
+          question: 'How does the first session work?',
+          answer: 'Tell us the level, subject and goals, then choose a time slot from the available options.',
+        },
+        {
+          question: 'Can I book just one session?',
+          answer: 'Yes. Pay-as-you-go sessions are available for middle school, high school and higher education, with the price shown before payment.',
+        },
+        {
+          question: 'How is the tutor selected?',
+          answer: 'The proposed availability comes from tutors available for the requested subject.',
+        },
+      ],
     },
     about: {
       title: 'Our Methods',

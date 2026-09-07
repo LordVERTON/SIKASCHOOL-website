@@ -6,6 +6,7 @@ import Pricing from "@/components/Pricing";
 import Contact from "@/components/Contact";
 import Testimonial from "@/components/Testimonial";
 import StagePromo from "@/components/StagePromo";
+import FAQ from "@/components/FAQ";
 
 export const metadata: Metadata = {
   title: "SikaSchool - Cours particuliers et accompagnement scolaire",
@@ -28,6 +29,7 @@ export default function Home() {
       <div id="pricing">
         <Pricing />
       </div>
+      <FAQ />
       <div id="contact">
         <Contact />
       </div>

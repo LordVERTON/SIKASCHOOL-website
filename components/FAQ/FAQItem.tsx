@@ -13,6 +13,10 @@ const FAQItem = ({ faqData }: { faqData: FaqData }) => {
     <>
       <div className="flex flex-col border-b border-stroke last-of-type:border-none dark:border-strokedark">
         <button
+          id={`faq-trigger-${id}`}
+          type="button"
+          aria-expanded={activeFaq === id}
+          aria-controls={`faq-panel-${id}`}
           onClick={() => {
             handleFaqToggle(id);
           }}
@@ -48,13 +52,16 @@ const FAQItem = ({ faqData }: { faqData: FaqData }) => {
             </svg>
           )}
         </button>
-        <p
+        <div
+          id={`faq-panel-${id}`}
+          role="region"
+          aria-labelledby={`faq-trigger-${id}`}
           className={`border-t border-stroke px-6 py-5 dark:border-strokedark lg:px-9 lg:py-7.5 ${
             activeFaq === id ? "block" : "hidden"
           }`}
         >
-          {ans}
-        </p>
+          <p>{ans}</p>
+        </div>
       </div>
     </>
   );
