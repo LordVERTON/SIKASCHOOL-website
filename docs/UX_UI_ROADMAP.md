@@ -107,7 +107,7 @@
   - **Fichiers :** `app/(site)/page.tsx`, composants de sections.
   - **Solution :** tester `Promesse → Réassurance → Avis → Fonctionnement → Tuteurs → Tarifs → FAQ → CTA final` avec ancres cohérentes.
   - **Dépendances :** contenus des items 06, 23–28 et FAQ ; mesure item 50.
-  - **Acceptation :** la séquence est validée par un prototype et les ancres/navigation restent fonctionnelles. Les témoignages ont déjà été remontés sous le hero ; les sections Tuteurs et FAQ restent à intégrer.
+  - **Acceptation :** la séquence est validée par un prototype et les ancres/navigation restent fonctionnelles. Les témoignages et la FAQ sont désormais intégrés ; la section Tuteurs reste à intégrer.
   - **Tests :** desktop/mobile, navigation par clavier, métriques de scroll et CTA.
 
 ## Lot 2 — Navigation, offres et confiance
