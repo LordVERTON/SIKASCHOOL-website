@@ -6,13 +6,14 @@ const ThemeToggler = () => {
 
   return (
     <button
+      type="button"
       aria-label="theme toggler"
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      className="bg-gray-2 dark:bg-dark-bg relative mr-1.5 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-black transition-all hover:shadow-sm dark:text-white"
+      className="bg-gray-2 dark:bg-dark-bg relative mr-1.5 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-black transition-all hover:shadow-sm dark:text-white"
     >
       <Image
         src="/images/icon/icon-moon.svg"
-        alt="logo"
+        alt=""
         width={21}
         height={21}
         className="dark:hidden"
@@ -20,7 +21,7 @@ const ThemeToggler = () => {
 
       <Image
         src="/images/icon/icon-sun.svg"
-        alt="logo"
+        alt=""
         width={22}
         height={22}
         className="hidden dark:block"

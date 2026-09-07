@@ -64,6 +64,9 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
   const [bookingSlot, setBookingSlot] = useState(false);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [subjectOptions, setSubjectOptions] = useState<string[]>([...TUTOR_SUBJECTS]);
+  const modalRef = useRef<HTMLDivElement | null>(null);
+  const previouslyFocusedElementRef = useRef<HTMLElement | null>(null);
+  const dialPickerOpenRef = useRef(false);
 
   // Keep the form email in sync with the hero/header email as long as the
   // user has not manually edited the field inside the modal itself.
@@ -124,6 +127,10 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
   const [dialSearch, setDialSearch] = useState("");
   const dialPickerRef = useRef<HTMLDivElement | null>(null);
   const dialSearchInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    dialPickerOpenRef.current = dialPickerOpen;
+  }, [dialPickerOpen]);
 
   const filteredCountries = useMemo(() => {
     const q = normalizeForSearch(dialSearch.trim());
@@ -362,13 +369,85 @@ export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, init
     ? "Ces informations nous permettent de créer votre espace parent et de vous contacter pour la première séance."
     : "Ces informations nous permettent de créer votre espace élève et de préparer votre première séance.";
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    previouslyFocusedElementRef.current = document.activeElement as HTMLElement | null;
+
+    const focusableSelector = [
+      'a[href]',
+      'button:not([disabled])',
+      'input:not([disabled])',
+      'select:not([disabled])',
+      'textarea:not([disabled])',
+      '[tabindex]:not([tabindex="-1"])',
+    ].join(',');
+
+    const focusFirstElement = () => {
+      const focusableElements = modalRef.current?.querySelectorAll<HTMLElement>(focusableSelector);
+      focusableElements?.[0]?.focus();
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        if (dialPickerOpenRef.current) {
+          setDialPickerOpen(false);
+          return;
+        }
+        onClose();
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+
+      const focusableElements = Array.from(
+        modalRef.current?.querySelectorAll<HTMLElement>(focusableSelector) ?? []
+      );
+      if (focusableElements.length === 0) {
+        event.preventDefault();
+        modalRef.current?.focus();
+        return;
+      }
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault();
+        firstElement.focus();
+      }
+    };
+
+    const focusTimer = window.setTimeout(focusFirstElement, 0);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.clearTimeout(focusTimer);
+      document.removeEventListener("keydown", handleKeyDown);
+      if (previouslyFocusedElementRef.current?.isConnected) {
+        previouslyFocusedElementRef.current.focus({ preventScroll: true });
+      }
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-99999 flex items-center justify-center bg-black/50 p-4" onTouchMove={(e) => e.preventDefault()}>
-      <div className="relative w-full max-w-3xl rounded-lg bg-white p-6 shadow-2xl dark:bg-blacksection max-h-[80vh] overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Réserver une séance d’essai"
+        tabIndex={-1}
+        className="relative max-h-[80vh] w-full max-w-3xl overflow-y-auto overscroll-contain rounded-lg bg-white p-6 shadow-2xl dark:bg-blacksection"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         {/* Close */}
-        <button onClick={onClose} className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+        <button type="button" onClick={onClose} aria-label="Fermer la réservation" className="absolute right-4 top-4 flex min-h-11 min-w-11 items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
           <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
         {error && (

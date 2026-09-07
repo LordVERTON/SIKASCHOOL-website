@@ -322,12 +322,12 @@
   - **Acceptation :** aucun CTA public ne masque son état focus/loading/disabled.
   - **Tests :** desktop/mobile, clavier, contraste, lecteur d’écran.
 
-- [ ] **37 — [P0] Mobile : assurer des cibles tactiles confortables.**
+- [x] **37 — [P0] Mobile : assurer des cibles tactiles confortables.**
   - **État actuel :** certaines commandes ont des paddings réduits et aucun minimum de taille partagé.
   - **Fichiers :** `components/{Header,Hero,StagePromo,Packs,Contact}/**`, styles communs.
   - **Solution :** viser environ 44×44 px pour les contrôles principaux, sans casser leur densité sur desktop.
   - **Dépendances :** item 36.
-  - **Acceptation :** les contrôles essentiels atteignent 24×24 CSS px au minimum, 44 px cible quand possible.
+  - **Acceptation :** les contrôles essentiels atteignent 24×24 CSS px au minimum, 44 px cible quand possible. Les CTA publics, la navigation, le sélecteur de thème et le consentement de contact disposent désormais d’une cible minimale de 44 px.
   - **Tests :** 320 px, appareil tactile, audit WCAG 2.2 cible tactile.
 
 - [x] **38 — [P0] Accessibilité : rendre le focus visible.**
@@ -339,7 +339,7 @@
   - **Tests :** Tab/Shift+Tab sur desktop, mobile clavier, thème clair/sombre.
 
 - [ ] **39 — [P0] Accessibilité : valider tous les parcours au clavier.**
-  - **État actuel :** Header et certaines modales gèrent Échap, mais le parcours entier n’est pas couvert par des tests.
+  - **État actuel :** la modale de réservation gère désormais Échap, le piège de focus et le retour du focus au déclencheur ; le parcours entier n’est pas encore couvert par des tests.
   - **Fichiers :** `components/Header/index.tsx`, `components/Booking/LeadCaptureModal.tsx`, composants Auth, accordéons et carrousels.
   - **Solution :** établir une matrice de navigation clavier, ajouter piège de focus/retour de focus dans les modales si manquants.
   - **Dépendances :** item 38 ; tests E2E à choisir.

@@ -201,7 +201,7 @@ const Header = () => {
                         <>
                           <button
                             onClick={() => setDropdownToggler(!dropdownToggler)}
-                            className="flex cursor-pointer items-center justify-between gap-3 hover:text-primary"
+                            className="flex min-h-11 cursor-pointer items-center justify-between gap-3 px-2 hover:text-primary"
                           >
                             {menuItem.title}
                             <span>
@@ -218,7 +218,7 @@ const Header = () => {
                           <ul className={`dropdown ${dropdownToggler ? "flex" : ""} items-center justify-center text-center`}>
                             {menuItem.submenu.map((item, key) => (
                               <li key={key} className="hover:text-primary">
-                                <Link href={item.path || "#"} onClick={handleMenuClose}>
+                                <Link href={item.path || "#"} className="inline-flex min-h-11 items-center px-2" onClick={handleMenuClose}>
                                   {item.title}
                                 </Link>
                               </li>
@@ -230,8 +230,8 @@ const Header = () => {
                           href={`${menuItem.path}`}
                           className={
                             pathUrl === menuItem.path
-                              ? "text-primary hover:text-primary"
-                              : "hover:text-primary"
+                              ? "inline-flex min-h-11 items-center px-2 text-primary hover:text-primary"
+                              : "inline-flex min-h-11 items-center px-2 hover:text-primary"
                           }
                           aria-current={pathUrl === menuItem.path ? "page" : undefined}
                           onClick={handleMenuClose}
@@ -248,7 +248,7 @@ const Header = () => {
                 <ThemeToggler />
                 <Link
                   href="/auth/signin"
-                  className="text-regular font-medium text-waterloo hover:text-primary"
+                  className="inline-flex min-h-11 items-center px-2 text-regular font-medium text-waterloo hover:text-primary"
                   onClick={handleMenuClose}
                 >
                   {t.nav.signIn}
@@ -273,7 +273,7 @@ const Header = () => {
                       <>
                         <button
                           onClick={() => setDropdownToggler(!dropdownToggler)}
-                          className="flex cursor-pointer items-center justify-between gap-3 hover:text-primary"
+                          className="flex min-h-11 cursor-pointer items-center justify-between gap-3 px-2 hover:text-primary"
                         >
                           {menuItem.title}
                           <span>
@@ -290,7 +290,7 @@ const Header = () => {
                         <ul className={`dropdown ${dropdownToggler ? "flex" : ""}`}>
                           {menuItem.submenu.map((item, key) => (
                             <li key={key} className="hover:text-primary">
-                              <Link href={item.path || "#"} onClick={handleMenuClose}>
+                              <Link href={item.path || "#"} className="inline-flex min-h-11 items-center px-2" onClick={handleMenuClose}>
                                 {item.title}
                               </Link>
                             </li>
@@ -302,8 +302,8 @@ const Header = () => {
                         href={`${menuItem.path}`}
                         className={
                           pathUrl === menuItem.path
-                            ? "text-primary hover:text-primary"
-                            : "hover:text-primary"
+                            ? "inline-flex min-h-11 items-center px-2 text-primary hover:text-primary"
+                            : "inline-flex min-h-11 items-center px-2 hover:text-primary"
                         }
                         aria-current={pathUrl === menuItem.path ? "page" : undefined}
                         onClick={handleMenuClose}
@@ -320,7 +320,7 @@ const Header = () => {
               <ThemeToggler />
               <Link
                 href="/auth/signin"
-                className="text-regular font-medium text-waterloo hover:text-primary"
+                className="inline-flex min-h-11 items-center px-2 text-regular font-medium text-waterloo hover:text-primary"
                 onClick={handleMenuClose}
               >
                 {t.nav.signIn}
