@@ -107,7 +107,7 @@
   - **Fichiers :** `app/(site)/page.tsx`, composants de sections.
   - **Solution :** tester `Promesse → Réassurance → Avis → Fonctionnement → Tuteurs → Tarifs → FAQ → CTA final` avec ancres cohérentes.
   - **Dépendances :** contenus des items 06, 23–28 et FAQ ; mesure item 50.
-  - **Acceptation :** la séquence est validée par un prototype et les ancres/navigation restent fonctionnelles.
+  - **Acceptation :** la séquence est validée par un prototype et les ancres/navigation restent fonctionnelles. Les témoignages ont déjà été remontés sous le hero ; les sections Tuteurs et FAQ restent à intégrer.
   - **Tests :** desktop/mobile, navigation par clavier, métriques de scroll et CTA.
 
 ## Lot 2 — Navigation, offres et confiance
@@ -160,7 +160,7 @@
   - **Acceptation :** la comparaison ne demande aucune connaissance des sigles internes.
   - **Tests :** desktop/mobile, checkout, régression des IDs produits.
 
-- [ ] **17 — [P0] Tarifs : afficher le prix unitaire.**
+- [x] **17 — [P0] Tarifs : afficher le prix unitaire.**
   - **État actuel :** les cartes promotionnelles de `Pricing` n’affichent pas de prix ; la page dédiée doit servir de source unique à vérifier.
   - **Fichiers :** `app/(site)/book-online/page.tsx`, `components/Pricing/index.tsx`, `lib/payments-catalog.ts`.
   - **Solution :** exposer le tarif de la séance, TTC et sans ambiguïté, depuis le catalogue.
@@ -168,7 +168,7 @@
   - **Acceptation :** un visiteur connaît le prix avant prise de rendez-vous.
   - **Tests :** desktop/mobile, cohérence catalogue/Stripe.
 
-- [ ] **18 — [P0] Tarifs : afficher le coût effectif par séance.**
+- [x] **18 — [P0] Tarifs : afficher le coût effectif par séance.**
   - **État actuel :** `components/Packs/index.tsx` calcule déjà « soit X €/séance » pour les packs.
   - **Fichiers :** `components/Packs/index.tsx`, `lib/payments-catalog.ts`.
   - **Solution :** conserver le calcul, le rendre systématique et le positionner au même endroit sur toutes les cartes.

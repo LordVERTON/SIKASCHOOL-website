@@ -24,6 +24,11 @@ export interface Translations {
     reserveButton: string;
     secondaryButton: string;
     freeTrial: string;
+    steps: {
+      needs: string;
+      schedule: string;
+      learn: string;
+    };
   };
   
   // About Section
@@ -176,6 +181,11 @@ export const translations: Record<Language, Translations> = {
       reserveButton: 'Réserver ma séance d’essai gratuite',
       secondaryButton: 'Voir les tarifs',
       freeTrial: 'Première séance gratuite · Sans engagement · Réservation en quelques étapes',
+      steps: {
+        needs: 'Partagez vos besoins',
+        schedule: 'Choisissez un créneau',
+        learn: 'Commencez à progresser',
+      },
     },
     about: {
       title: 'Nos Méthodes',
@@ -309,6 +319,11 @@ export const translations: Record<Language, Translations> = {
       reserveButton: 'Book my free trial session',
       secondaryButton: 'View pricing',
       freeTrial: 'First session free · No commitment · Book in a few steps',
+      steps: {
+        needs: 'Tell us what you need',
+        schedule: 'Choose a time slot',
+        learn: 'Start making progress',
+      },
     },
     about: {
       title: 'Our Methods',

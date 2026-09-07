@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import LeadCaptureModal from "../Booking/LeadCaptureModal";
@@ -32,9 +33,10 @@ const Hero = () => {
 
   return (
     <>
-      <section className="overflow-hidden pb-20 pt-35 md:pt-40 xl:pb-25 xl:pt-46">
+      <section className="relative overflow-hidden pb-20 pt-35 md:pt-40 xl:pb-25 xl:pt-46">
+        <div className="pointer-events-none absolute inset-x-0 top-20 -z-1 mx-auto h-80 max-w-5xl rounded-full bg-primary/5 blur-3xl dark:bg-primary/10" />
         <div className="mx-auto max-w-c-1390 px-4 md:px-8 2xl:px-0">
-          <div className="flex lg:items-center lg:gap-8 xl:gap-32.5">
+          <div className="grid items-center gap-12 lg:grid-cols-[1.08fr_0.92fr] lg:gap-10 xl:gap-18">
             <div className="w-full">
               <p className="mb-4.5 text-lg font-medium text-black dark:text-white">
                 {t.hero.subtitle}
@@ -82,6 +84,43 @@ const Hero = () => {
                 <p className="mt-5 text-sm font-medium text-black dark:text-white">
                   {t.hero.freeTrial}
                 </p>
+
+                <ol className="mt-8 grid gap-3 sm:grid-cols-3" aria-label="Comment fonctionne la réservation">
+                  {[t.hero.steps.needs, t.hero.steps.schedule, t.hero.steps.learn].map((step, index) => (
+                    <li key={step} className="flex items-center gap-3 rounded-xl border border-stroke bg-white/75 px-3 py-3 text-sm font-medium text-black shadow-solid-2 backdrop-blur dark:border-strokedark dark:bg-blacksection/75 dark:text-white">
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-white">
+                        {index + 1}
+                      </span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </div>
+
+            <div className="relative mx-auto w-full max-w-xl lg:justify-self-end">
+              <div className="absolute -inset-3 -z-1 rounded-[2rem] bg-linear-to-br from-primary/15 via-transparent to-meta/15 blur-2xl" />
+              <div className="overflow-hidden rounded-2xl border border-stroke bg-white p-2 shadow-solid-l dark:border-strokedark dark:bg-blacksection">
+                <Image
+                  src="/images/hero/hero-light.svg"
+                  alt=""
+                  width={700}
+                  height={444}
+                  priority
+                  className="h-auto w-full rounded-xl dark:hidden"
+                />
+                <Image
+                  src="/images/hero/hero-dark.svg"
+                  alt=""
+                  width={700}
+                  height={444}
+                  priority
+                  className="hidden h-auto w-full rounded-xl dark:block"
+                />
+              </div>
+              <div className="absolute -bottom-5 left-4 right-4 rounded-xl border border-stroke bg-white p-4 shadow-solid-5 dark:border-strokedark dark:bg-blacksection md:left-8 md:right-auto md:w-[78%]">
+                <p className="text-sm font-semibold text-black dark:text-white">Un accompagnement adapté à votre objectif</p>
+                <p className="mt-1 text-sm text-waterloo dark:text-manatee">Niveau, matière et créneau : vous choisissez ce qui vous convient.</p>
               </div>
             </div>
           </div>
