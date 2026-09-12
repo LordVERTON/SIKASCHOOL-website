@@ -19,11 +19,13 @@ Référence : [Database migrations (CLI)](https://supabase.com/docs/guides/cli/l
 ## Développeur — stack locale
 
 ```bash
-npx supabase start
-npx supabase db reset
+npm run db:start
+npm run db:reset
 ```
 
-`db reset` applique les migrations puis `seed.sql` (voir `[db.seed]` dans `config.toml`).
+`db:reset` cible explicitement la base locale : il applique les migrations puis `seed.sql` (voir `[db.seed]` dans `config.toml`). Les données distantes ne sont jamais modifiées.
+
+La racine du projet contient un `.env.local` qui doit pointer vers l'API locale (`http://127.0.0.1:54321`) ; Next.js lui donne priorité sur `.env`. Contrôler les services avec `npm run db:status`, les arrêter avec `npm run db:stop` et ouvrir Studio sur `http://127.0.0.1:54323`.
 
 ## Cloud (`db push`) et historique désynchronisé
 
