@@ -396,7 +396,8 @@ function buildVerificationEmailHtml(params: {
   const name = params.firstName?.trim() || 'Bonjour';
   return `
   <p>${escapeHtml(name)},</p>
-  <p>Merci de rejoindre ${APP_CONFIG.NAME}.</p>
+  <p>Votre inscription à ${APP_CONFIG.NAME} a bien été enregistrée.</p>
+  <p>Notre équipe vous contactera prochainement afin de vous affecter un tuteur ou une tutrice adapté(e) à vos besoins.</p>
   <p>Pour confirmer votre adresse e-mail, cliquez sur le lien ci-dessous. Ce lien reste valable 48&nbsp;h&nbsp;:</p>
   <p><a href="${params.verifyUrl}">Je confirme mon adresse e-mail</a></p>
   <p>Si vous n’êtes pas à l’origine de cette inscription, ignorez ce message.</p>

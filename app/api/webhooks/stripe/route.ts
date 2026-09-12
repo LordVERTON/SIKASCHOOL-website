@@ -10,7 +10,7 @@
  *
  * ⚠️  Cette route est publique (pas d'auth utilisateur) ; Stripe est
  *     identifié via la signature HMAC. Elle doit être whitelistée
- *     dans le middleware.
+ *     dans le proxy.
  *
  * Pour tester en local :
  *     stripe listen --forward-to localhost:3000/api/webhooks/stripe
@@ -410,26 +410,24 @@ async function addCredits(args: AddCreditsArgs) {
   }
 
   // Upsert du compteur
-  const { data: current } = await supabaseAdmin
+  const { data: current } = await (supabaseAdmin
     .from('student_credits')
     .select('id, remaining_sessions, total_purchased')
     .eq('student_id', args.studentId)
     .eq('level', args.level)
-    .maybeSingle();
+    .maybeSingle() as any);
 
   if (current) {
-    await supabaseAdmin
-      .from('student_credits')
-      // @ts-expect-error types db non régénérés
+    await (supabaseAdmin
+      .from('student_credits') as any)
       .update({
-        remaining_sessions: (current as any).remaining_sessions + args.delta,
-        total_purchased: (current as any).total_purchased + args.delta,
+        remaining_sessions: current.remaining_sessions + args.delta,
+        total_purchased: current.total_purchased + args.delta,
       })
-      .eq('id', (current as any).id);
+      .eq('id', current.id);
   } else {
-    await supabaseAdmin
-      .from('student_credits')
-      // @ts-expect-error types db non régénérés
+    await (supabaseAdmin
+      .from('student_credits') as any)
       .insert({
         student_id: args.studentId,
         level: args.level,
@@ -440,9 +438,8 @@ async function addCredits(args: AddCreditsArgs) {
   }
 
   // Ledger
-  await supabaseAdmin
-    .from('student_credit_ledger')
-    // @ts-expect-error types db non régénérés
+  await (supabaseAdmin
+    .from('student_credit_ledger') as any)
     .insert({
       student_id: args.studentId,
       level: args.level,
