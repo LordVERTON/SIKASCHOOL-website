@@ -1,5 +1,4 @@
 "use client";
-/* eslint-disable react-hooks/rules-of-hooks */
 // Link not used on this page
 import { useEffect, useMemo, useState } from "react";
 import ConfirmationModal from "@/components/ConfirmationModal";
