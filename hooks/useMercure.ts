@@ -18,6 +18,7 @@ export function mercureThreadTopic(threadId: string) {
 
 export function useMercure({ topics, enabled = true, onMessage }: UseMercureOptions) {
   const onMessageRef = useRef(onMessage);
+  const topicsKey = topics.filter(Boolean).join('|');
 
   useEffect(() => {
     onMessageRef.current = onMessage;
@@ -25,7 +26,7 @@ export function useMercure({ topics, enabled = true, onMessage }: UseMercureOpti
 
   useEffect(() => {
     const hubUrl = process.env.NEXT_PUBLIC_MERCURE_URL;
-    const cleanTopics = Array.from(new Set(topics.filter(Boolean) as string[]));
+    const cleanTopics = Array.from(new Set(topicsKey.split('|').filter(Boolean)));
 
     if (!enabled || !hubUrl || cleanTopics.length === 0 || typeof EventSource === "undefined") {
       return;
@@ -43,6 +44,5 @@ export function useMercure({ topics, enabled = true, onMessage }: UseMercureOpti
     };
 
     return () => source.close();
-  }, [enabled, topics.join("|")]);
+  }, [enabled, topicsKey]);
 }
-
