@@ -19,7 +19,7 @@ flowchart TD
 ## Opérations élève/parent
 
 - `GET|PATCH /api/student/profile` lit/modifie le profil de l’élève effectif.
-- `PATCH /api/student/profile/password` exige la preuve requise par la route et remplace le hash.
+- `PATCH /api/student/profile/password` vérifie le mot de passe courant via Supabase Auth et remplace le mot de passe dans `auth.users`.
 - `GET|POST /api/student/profile/2fa` expose et modifie l’activation SMS/numéro correspondant.
 - Le parent opère sur l’élève lié lorsque la route passe par les helpers d’accès élève.
 
@@ -37,7 +37,7 @@ sequenceDiagram
   actor U as Utilisateur
   participant P as Page profil
   participant API as API 2FA
-  participant DB as user_credentials
+  participant DB as user_security_challenges
   participant T as Twilio
   U->>P: active/désactive et renseigne le numéro
   P->>API: POST 2FA

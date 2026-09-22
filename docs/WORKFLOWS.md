@@ -91,13 +91,13 @@ Les critères de recette paiement sont centralisés dans `ROADMAP.md` sous TECH-
 
 ### État actuel
 
-Sessions HMAC HttpOnly dans `lib/auth-simple.ts`, middleware pour les pages, contrôles d'API répétés, RLS activée et accès service role pour l'API. Parent → élève effectif est résolu dans `lib/student-access.ts`. Des e-mails de tuteurs codés en dur donnent aussi l'administration.
+Les identités et mots de passe sont gérés par Supabase Auth dans `auth.users`. Auth.js fournit la session HttpOnly aux pages et routes Next.js ; les rôles métier proviennent de `public.profiles`. Parent → élève effectif est résolu dans `lib/student-access.ts`. Les routes API conservent leurs contrôles de rôle et de propriété.
 
 ### Workflow recommandé
 
 ```mermaid
 flowchart LR
-  A[Requête] --> B[Session HMAC valide]
+  A[Requête] --> B[Session Auth.js valide]
   B --> C[Guard de capacité]
   C --> D[Résolution parent/élève si nécessaire]
   D --> E[Service métier]

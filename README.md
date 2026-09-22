@@ -11,8 +11,8 @@ Plateforme de cours particuliers (**Next.js 15**, **React 19**, **TypeScript**) 
 | **Élève** | Dashboard, agenda, historique, profil, messagerie, notifications realtime, tuteurs assignés, chat **Sika AI** |
 | **Tuteur** | Dashboard, élèves, séances, paiements / commissions, messagerie |
 | **Admin** | Utilisateurs (statut, reset MDP), séances, assignations tuteur ↔ élève |
-| **Acquisition** | Leads homepage → création compte élève + MDP initial type `prenom.nom12345` |
-| **Auth** | Sessions cookie HttpOnly (HMAC), `bcrypt`, rôles `STUDENT` / `TUTOR` / `ADMIN` |
+| **Acquisition** | Leads homepage → compte Supabase Auth + lien sécurisé pour définir le mot de passe |
+| **Auth** | Supabase Auth (`auth.users`) + sessions Auth.js HttpOnly, rôles métier dans `public.profiles` |
 | **Temps réel** | Mercure (notifications, messagerie, calendrier), LiveKit pour les séances vidéo |
 
 ---
@@ -35,7 +35,8 @@ app/
   student/ | tutor/   Espaces connectés
 lib/
   ai-tutor/        Agent Sika AI
-  auth-simple.ts   Session HMAC + login
+  auth.ts          Helpers de session Auth.js
+  user-management.ts  Création et sécurité des comptes Supabase Auth
   supabase.ts      Clients anon + service role
 supabase/
   migrations/      Schéma versionné (voir supabase/README.md)
@@ -67,11 +68,11 @@ Renseigner au minimum **`JWT_SECRET`**, **`NEXT_PUBLIC_SUPABASE_*`**, **`SUPABAS
 ### Supabase en local
 
 ```bash
-npx supabase start
-npx supabase db reset    # migrations + seed.sql
+npm run supabase:start
+npm run supabase:reset    # migrations + seed.sql
 ```
 
-Copier dans `.env.local` l’URL et les clés affichées par **`npx supabase status`** (URL du type `http://127.0.0.1:54321`). Redémarrer **`npm run dev`** après modification des `.env`.
+La configuration locale déjà fournie dans `.env.development.local` pointe vers `http://127.0.0.1:54321` et contient les clés de cette instance : aucune variable Supabase supplémentaire n'est à renseigner pour le développement local. Redémarrer **`npm run dev`** après modification des `.env`.
 
 Détails migrations, `db push` cloud, dépannage : **[supabase/README.md](supabase/README.md)**.
 
@@ -212,7 +213,7 @@ Tables centrales : `users`, `students`, `tutors`, `sessions`, `notifications`, `
 | `npm run mailpit:down` | Arrête Mailpit (Docker Compose) |
 | `npm run mercure` / `npm run mercure:down` | Démarre / arrête le hub Mercure local |
 | `npm run lint` / `npm run type-check` | Qualité |
-| `npm run db:types` | Génère les types TS depuis Supabase local |
+| `npm run supabase:types` | Génère les types TS depuis Supabase local |
 | `npm run security:check` | Audit npm via script |
 
 ---

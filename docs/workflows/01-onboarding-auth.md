@@ -1,91 +1,91 @@
-# 01 — Onboarding, inscription et connexion
+# 01 — Onboarding, authentification et récupération
 
-## Objectif
+## Architecture
 
-Créer un compte, vérifier l’adresse e-mail, ouvrir une session et récupérer l’accès après perte de mot de passe. Le formulaire de lead crée un compte `STUDENT` ou `PARENT`; l’inscription standard publique crée un `STUDENT`; la route interne `register` peut aussi créer un `TUTOR`.
+Supabase Auth est l’unique source de vérité pour l’identité et les mots de passe :
+
+- `auth.users` contient l’identité, l’e-mail confirmé, le hash du mot de passe et l’état de bannissement ;
+- `public.profiles` contient uniquement les données métier (`first_name`, `last_name`, rôle, coordonnées, état actif) ;
+- `students` et `tutors` complètent le profil selon le rôle ;
+- Auth.js crée la session applicative chiffrée et HttpOnly utilisée par les routes Next.js ;
+- la session Supabase côté navigateur est conservée pour Realtime et les politiques RLS.
+
+Il ne doit plus exister de mot de passe ou de token de récupération dans le schéma `public`.
 
 ## Inscription directe
 
-**Entrées :** pages `app/(site)/auth/signup`, routes `POST /api/auth/signup` et `POST /api/auth/register`.
+Entrées : pages `app/(site)/auth/signup`, routes `POST /api/auth/signup` et `POST /api/auth/register`.
 
 ```mermaid
 sequenceDiagram
   actor U as Utilisateur
-  participant UI as Formulaire d'inscription
-  participant API as API auth
-  participant DB as Supabase
-  participant Mail as Resend/SMTP
+  participant UI as Formulaire
+  participant API as API Next.js
+  participant Auth as Supabase Auth
+  participant DB as public.profiles
   U->>UI: prénom, nom, e-mail, mot de passe
   UI->>API: POST signup/register
-  API->>API: valide et hache le mot de passe (bcrypt)
-  API->>DB: crée users + profil student/tutor
-  API->>DB: crée notification et token de vérification
-  API-->>Mail: e-mail de vérification et bienvenue (asynchrone)
-  API->>API: synchronise l'identité Supabase Auth
-  API-->>U: session HttpOnly et espace selon rôle
+  API->>Auth: crée auth.users
+  Auth->>DB: trigger crée le profil minimal
+  API->>DB: complète profil + sous-profil
+  API->>API: Auth.js crée la session applicative
+  API-->>U: utilisateur et redirection par rôle
 ```
 
-### Règles
+Règles :
 
-- E-mail normalisé et unique ; mot de passe minimum 6 caractères pour `signup`.
-- `signup` attribue toujours le rôle `STUDENT`; `register` accepte `STUDENT`, `PARENT` ou `TUTOR`.
-- Les profils `students` et `tutors` sont créés au mieux : une erreur de profil ne doit pas annuler la création de l’utilisateur.
-- Une session HMAC est déposée à la fin ; le middleware redirige ensuite vers `/student`, `/family` ou `/tutor`.
+- e-mail normalisé et unique ; mot de passe de 8 caractères minimum ;
+- l’inscription publique autorise seulement `STUDENT` et `PARENT` ;
+- les rôles `TUTOR` et `ADMIN` sont créés depuis l’administration ;
+- si la création du profil métier échoue, l’identité Auth nouvellement créée est supprimée afin d’éviter un compte incomplet ;
+- le trigger Auth ignore tout rôle fourni par le client et crée toujours un profil minimal `STUDENT`. Seul le serveur de confiance peut ensuite attribuer un autre rôle.
 
 ## Demande de première séance (lead)
 
-**Entrées :** `components/Booking/LeadCaptureModal.tsx`, `POST /api/leads`, `GET|POST /api/leads/first-session-slots`.
+Entrées : `components/Booking/LeadCaptureModal.tsx`, `POST /api/leads`, `GET|POST /api/leads/first-session-slots`.
 
 ```mermaid
 flowchart TD
-  A[Visiteur clique Réserver] --> B[Saisit niveau, matière et coordonnées]
-  B --> C[POST /api/leads]
-  C --> D{E-mail existant ?}
-  D -- Non --> E[Crée user + profil student]
-  D -- Oui --> F[Met à jour le compte et régénère le mot de passe initial]
-  E --> G[Crée notifications admin/compte]
-  F --> G
-  G --> H[GET créneaux : tuteurs disponibles par matière]
-  H --> I[Choix du créneau]
-  I --> J[POST first-session-slots]
-  J --> K[Assigne tuteur-élève et crée séance TRIAL PENDING]
-  K --> L[Notifie élève/parent et tuteur, e-mail tuteur]
+  A[Visiteur saisit ses besoins] --> B[POST /api/leads]
+  B --> C{E-mail existant ?}
+  C -- Non --> D[Crée auth.users et public.profiles]
+  C -- Oui --> E[Met à jour les données métier sans toucher au mot de passe]
+  D --> F[Envoie un lien Supabase de définition du mot de passe]
+  E --> G[Conserve les identifiants existants]
+  F --> H[Propose les créneaux]
+  G --> H
+  H --> I[Assigne le tuteur et crée la séance d'essai]
 ```
 
-### Règles
+Un compte créé depuis un lead reçoit un mot de passe aléatoire non communiqué, puis un lien de récupération Supabase lui permet de choisir son propre mot de passe. Aucun mot de passe en clair n’est stocké, journalisé ou envoyé par e-mail.
 
-- Le mot de passe initial est généré sous la forme `prenom.nom12345`; l’utilisateur est invité à le changer.
-- Le compte est `PARENT` seulement lorsque `accountType` est `PARENT`, sinon `STUDENT`.
-- Les créneaux proposés couvrent au plus 14 jours, hors dimanche, de 9 h à 20 h, et excluent les conflits de tuteur.
-- La première séance est une `TRIAL`, dure 60 minutes, est gratuite et reçoit `payment_status: COMPLETED`.
-
-## Connexion, vérification et récupération
+## Connexion et récupération
 
 ```mermaid
 flowchart LR
-  A[Connexion e-mail + mot de passe] --> B{2FA SMS activée ?}
-  B -- Non --> C[Créer session HMAC]
-  B -- Oui --> D[Créer challenge, envoyer SMS]
-  D --> E[Valider ticket + code]
-  E --> C
-  C --> F[Redirection par rôle]
-  G[Mot de passe oublié] --> H[Token à durée 1 h + e-mail]
-  H --> I[POST reset-password]
-  I --> J[Mot de passe hashé, token invalidé, notification]
-  K[Lien vérification e-mail] --> L[GET verify-email]
-  L --> M[email_verified = true]
+  A[E-mail + mot de passe] --> B[Supabase signInWithPassword]
+  B --> C{2FA SMS applicative activée ?}
+  C -- Non --> D[Session Auth.js]
+  C -- Oui --> E[Challenge SMS à durée limitée]
+  E --> D
+  D --> F[Redirection selon le rôle]
+  G[Mot de passe oublié] --> H[Lien recovery Supabase]
+  H --> I[verifyOtp]
+  I --> J[Mise à jour auth.users]
 ```
 
-| Parcours | Routes | Garanties |
+| Parcours | Route | Garantie |
 | --- | --- | --- |
-| Connexion | `POST /api/auth/login` | Vérifie bcrypt, déclenche 2FA si activée, synchronise Supabase Auth et crée la session |
-| Déconnexion | `POST /api/auth/logout` | Supprime la session applicative |
-| Vérification e-mail | `GET /api/auth/verify-email?token=` | Active la vérification si le token est valide |
-| Mot de passe oublié | `POST /api/auth/forgot-password` | Réponse non énumérante, token 1 h, e-mail et notification |
-| Réinitialisation | `POST /api/auth/reset-password` | Valide token, remplace le hash, invalide le token |
+| Connexion | `POST /api/auth/login` | Supabase vérifie le mot de passe, puis Auth.js ouvre la session |
+| Déconnexion | `POST /api/auth/logout` | Ferme la session Auth.js ; le client ferme aussi sa session Supabase |
+| Mot de passe oublié | `POST /api/auth/forgot-password` | Réponse non énumérante et lien recovery natif Supabase |
+| Réinitialisation | `POST /api/auth/reset-password` | Vérifie le token Supabase puis remplace le mot de passe dans `auth.users` |
+| Vérification e-mail | `GET /api/auth/verify-email?token=` | Vérifie un token e-mail Supabase lorsqu’un flux non confirmé est utilisé |
 
 ## Tests de recette
 
-- Créer un élève, un parent et un tuteur via les parcours autorisés ; vérifier la redirection de rôle.
-- Essayer un e-mail existant, un mot de passe invalide, un token expiré et un code 2FA expiré.
-- Réserver une séance gratuite avec puis sans créneau disponible ; contrôler les notifications et l’assignation.
+- connecter un élève, un parent, un tuteur et un admin, puis vérifier la redirection de rôle ;
+- vérifier qu’un compte inactif ou banni ne peut pas se connecter ;
+- tester un mauvais mot de passe, un lien recovery expiré et un challenge 2FA expiré ;
+- créer un compte public et un compte depuis l’administration, puis contrôler `auth.users`, `profiles` et le sous-profil ;
+- vérifier que chaque bouton de déconnexion invalide les sessions Auth.js et Supabase.

@@ -18,9 +18,9 @@ L'application est un monolithe Next.js 15 App Router : site public dans `app/(si
 **Priorité :** P0  
 **Impact :** Confidentialité / intégrité des comptes
 
-**État actuel :** `POST /api/leads` accepte un e-mail public. Si l'utilisateur existe, `app/api/leads/route.ts` met à jour son profil, remplace son `password_hash` par le mot de passe prévisible `prenom.nom12345`, puis renvoie `initialPassword` au navigateur.
+**État actuel (corrigé en septembre 2026) :** `POST /api/leads` ne modifie plus le rôle ni le mot de passe d’un compte existant. Un nouveau compte est créé dans Supabase Auth avec un secret aléatoire non communiqué, puis reçoit un lien recovery à usage limité.
 
-**Problème :** connaître l'e-mail et le nom d'une personne permet de réinitialiser son mot de passe et d'obtenir le nouveau mot de passe dans la réponse. Le parcours peut en outre modifier rôle et données d'un parent/élève existant.
+**Résolution :** aucun mot de passe n’est renvoyé ou envoyé par e-mail. Le parcours lead conserve les identifiants et le rôle d’un compte existant ; un nouveau compte choisit son mot de passe via un lien recovery Supabase.
 
 **Fichiers concernés :**
 
@@ -29,13 +29,14 @@ L'application est un monolithe Next.js 15 App Router : site public dans `app/(si
 - `lib/registration-emails.ts`
 - `docs/workflows/01-onboarding-auth.md`
 
-**Solution proposée :** ne jamais créer ni renvoyer de mot de passe à partir d'un lead. Pour un e-mail existant, créer une demande de réservation liée à un mécanisme de vérification par e-mail, sans modifier rôle/mot de passe. Pour un nouveau compte, utiliser un lien de définition de mot de passe à usage unique, expirant, et empêcher la session avant vérification. Journaliser l'événement sans exposer de données.
+**Solution appliquée :** le mot de passe provisoire aléatoire n’est jamais exposé ; le lien de définition utilise les tokens recovery natifs de Supabase Auth. Les comptes existants ne subissent aucune modification de rôle ou d’identifiants.
 
 **Critères d'acceptation :**
 
-- [ ] La réponse API ne contient jamais un mot de passe.
-- [ ] Un e-mail existant ne peut ni modifier rôle ni hash sans authentification ou lien signé.
-- [ ] Les messages sont non-énumérants et limités en débit.
+- [x] La réponse API ne contient jamais un mot de passe.
+- [x] Un e-mail existant ne peut ni modifier rôle ni mot de passe sans authentification ou lien signé.
+- [x] Les réponses ne révèlent pas si l’e-mail disposait déjà d’un compte.
+- [ ] La route doit encore être limitée en débit au niveau de l’infrastructure.
 
 **Tests :**
 
@@ -164,7 +165,7 @@ L'application est un monolithe Next.js 15 App Router : site public dans `app/(si
 
 - `middleware.ts`
 - `lib/admin-permissions.ts`
-- `lib/auth-simple.ts`
+- `auth.ts` et `lib/auth.ts`
 - `app/api/admin/**`
 
 **Solution proposée :** faire du rôle ou d'une permission persistée la source unique, retirer le bypass par e-mail après migration contrôlée, et fournir des gardes de route standardisés (`requireUser`, `requireRole`, `requireCapability`). Auditer exhaustivement les API par matrice rôle/ressource/action.

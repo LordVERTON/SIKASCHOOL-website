@@ -11,7 +11,7 @@ Ce document ne crée pas de tickets supplémentaires. Il explique les **choix st
 | App Router + Route Handlers | `app/**`, `app/api/**` | Front/API co-localisés, découpage par rôle lisible. | Les routes portent souvent tous les niveaux de responsabilité. |
 | Provider | `ClientProviders`, `AuthContext`, `LanguageContext`, `ToastContext` | Thème, langue et feedback globaux. | La réservation traverse un événement DOM global et duplique la modale. |
 | Adapter externe | `lib/{stripe,supabase,livekit,mercure}.ts` | Centralise partiellement les SDK. | L'accès `supabaseAdmin` est ensuite répété dans les routes. |
-| RBAC / guard | `lib/auth-simple.ts`, `lib/admin-permissions.ts`, `lib/student-access.ts` | Vérifications serveur fréquentes, séparation parent/élève effective. | Source de vérité mélangée : rôle DB, rôle cookie et liste d'e-mails. |
+| RBAC / guard | `auth.ts`, `lib/auth.ts`, `lib/admin-permissions.ts`, `lib/student-access.ts` | Identité Supabase Auth, session Auth.js et séparation parent/élève effective. | Les routes doivent encore appliquer systématiquement leurs contrôles de capacité et de propriété. |
 | Composition UI | `StudentLayout`, `TutorLayout`, `SectionHeader`, `EmptyState`, `Skeleton` | Bons débuts de composants partagés. | Cartes, boutons, champs et dialogs restent dupliqués. |
 | Event/observer | Mercure hooks et `publishUserMercureUpdate` | Bon usage pour rafraîchir messages/séances. | Les effets best-effort n'ont pas de suivi/outbox ; `lead:open` n'est pas typé. |
 | Catalogue de données | `lib/payments-catalog.ts`, `lib/stripe.ts` | Les identifiants Stripe sont séparés de l'affichage client. | Trois représentations tarifaires divergent encore. |

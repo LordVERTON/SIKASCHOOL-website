@@ -50,7 +50,7 @@ Cette roadmap est le **seul backlog d'exécution**. Chaque ID y apparaît une se
 
 ## Phase 0 — Corrections critiques
 
-- [ ] **[P0][SECURITY][TECH-001] Supprimer toute réinitialisation de mot de passe déclenchée par un lead**
+- [x] **[P0][SECURITY][TECH-001] Supprimer toute réinitialisation de mot de passe déclenchée par un lead**
   - Impact : élevé
   - Effort : moyen
   - Risque : élevé
@@ -58,8 +58,8 @@ Cette roadmap est le **seul backlog d'exécution**. Chaque ID y apparaît une se
   - Fichiers concernés : `app/api/leads/route.ts`, `components/Booking/LeadCaptureModal.tsx`, `lib/registration-emails.ts`
   - Travail : séparer lead, compte existant et récupération de mot de passe ; rendre les réponses non-énumérantes ; supprimer `initialPassword` et le mot de passe prévisible.
   - Critères d'acceptation :
-    - [ ] Aucune réponse/log/e-mail ne contient un mot de passe généré.
-    - [ ] Un lead ne peut pas modifier un compte existant sans preuve de possession de l'e-mail.
+    - [x] Aucune réponse/log/e-mail ne contient un mot de passe généré.
+    - [x] Un lead ne peut pas modifier le rôle ni le mot de passe d'un compte existant.
 
 - [ ] **[P0][SECURITY][TECH-002] Rendre l'attribution de crédits Stripe atomique et idempotente**
   - Impact : élevé
@@ -208,7 +208,7 @@ Cette roadmap est le **seul backlog d'exécution**. Chaque ID y apparaît une se
 - [ ] **[P1][SECURITY][ARCH][TECH-006] Centraliser les guards d'autorisation**
   - Impact : élevé ; Effort : moyen ; Risque : moyen
   - Dépendances : matrice permissions validée
-  - Fichiers concernés : `lib/{auth-simple,admin-permissions,student-access}.ts`, `app/api/**`
+  - Fichiers concernés : `auth.ts`, `lib/{auth,admin-permissions,student-access}.ts`, `app/api/**`
   - Travail : supprimer liste e-mails admin, guards cohérents, ownership au niveau service.
   - Critères d'acceptation :
     - [ ] Privilèges uniquement issus d'un rôle/capacité persisté.
