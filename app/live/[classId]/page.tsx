@@ -21,10 +21,20 @@ export default function LiveClassPage({ params }: PageProps) {
     if (!raw) return null;
     const url = String(raw).trim();
     try {
-      // If already ws/wss, keep as-is
+      const isLoopback = (hostname: string) =>
+        hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
+
+      // Keep an explicit loopback ws:// endpoint local. This is intentionally
+      // allowed for the Docker-backed development server; remote endpoints on
+      // an HTTPS page continue to be upgraded to wss://.
       if (url.startsWith('ws://') || url.startsWith('wss://')) {
-        // If page is https and url is ws://, upgrade to wss:// to avoid mixed content
-        if (typeof window !== 'undefined' && window.location.protocol === 'https:' && url.startsWith('ws://')) {
+        const parsed = new URL(url);
+        if (
+          typeof window !== 'undefined' &&
+          window.location.protocol === 'https:' &&
+          url.startsWith('ws://') &&
+          !isLoopback(parsed.hostname)
+        ) {
           return url.replace(/^ws:/, 'wss:');
         }
         return url;
@@ -36,8 +46,11 @@ export default function LiveClassPage({ params }: PageProps) {
       // Prepend scheme if missing
       const hasScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url);
       const u = new URL(hasScheme ? url : `https://${url}`);
-      // On https pages, always use wss to avoid mixed-content blocks
-      const shouldUseSecure = (typeof window !== 'undefined' && window.location.protocol === 'https:') || u.protocol === 'https:';
+      // Only remote endpoints require wss:// from an HTTPS page. Loopback is
+      // the local development exception defined above.
+      const shouldUseSecure =
+        ((!isLoopback(u.hostname) && typeof window !== 'undefined' && window.location.protocol === 'https:') ||
+          u.protocol === 'https:');
       u.protocol = shouldUseSecure ? 'wss:' : 'ws:';
       return u.toString();
     } catch {

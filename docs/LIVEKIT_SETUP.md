@@ -1,5 +1,41 @@
 # Configuration LiveKit
 
+## Développement local sans Internet
+
+Le serveur LiveKit de développement est fourni par Docker et n'utilise aucun service Cloud.
+
+1. Une seule fois, avec Internet, récupérer l'image épinglée :
+
+   ```bash
+   docker compose -f docker-compose.livekit.yml pull
+   ```
+
+2. Les valeurs locales LiveKit et Supabase sont fournies dans `.env.development.local`. Pour un nouveau clone, copiez d'abord `.env.development.local.example` vers ce fichier : aucune clé n'est à renseigner.
+
+   ```bash
+   NEXT_PUBLIC_LIVEKIT_SERVER_URL=ws://127.0.0.1:7880
+   LIVEKIT_HTTP_URL=http://127.0.0.1:7880
+   LIVEKIT_API_KEY=devkey
+   LIVEKIT_API_SECRET=secret
+   ```
+
+3. Démarrer le service et l'application :
+
+   ```bash
+   npm run livekit
+   npm run dev
+   ```
+
+Les ports 7880 (signalisation/API), 7881 (ICE TCP) et 7882/UDP (WebRTC) sont publiés uniquement sur la boucle locale. L'image `livekit/livekit-server:v1.13.7` reste utilisable après `npm cache clean`; ne lancez pas `docker image prune -a` si vous souhaitez conserver les images hors ligne.
+
+`npm run livekit:down` arrête le service. `npm run livekit:logs` affiche ses journaux.
+
+Ces identifiants `devkey`/`secret` sont strictement réservés au développement local. La configuration Cloud de production demeure dans l'environnement de déploiement, et ne doit pas être remplacée par ces valeurs.
+
+## Production
+
+Utilisez une URL `wss://` et des clés LiveKit propres à l'environnement. Un déploiement public requiert TLS, des règles réseau adaptées pour WebRTC et, selon le contexte, TURN. Ne réutilisez jamais le fichier `livekit.local.yaml` en production.
+
 ## Variables d'environnement requises
 
 Pour que LiveKit fonctionne correctement, vous devez configurer les variables d'environnement suivantes :
