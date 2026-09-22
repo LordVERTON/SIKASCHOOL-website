@@ -88,8 +88,8 @@ const Header = () => {
 
   // Close menu on route change
   useEffect(() => {
-    handleMenuClose();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setNavigationOpen(false);
+    setDropdownToggler(false);
   }, [pathUrl]);
 
   return (

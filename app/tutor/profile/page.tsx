@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { TUTOR_SUBJECTS } from "@/lib/tutor-subjects";
 
@@ -54,6 +55,7 @@ function getPasswordLastUpdateTooltip(value?: string | null): string {
 }
 
 export default function TutorProfile() {
+  const router = useRouter();
   const [profile, setProfile] = useState<TutorProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -363,7 +365,8 @@ export default function TutorProfile() {
       if (!res.ok) {
         throw new Error(data?.error || "Impossible de désactiver le compte.");
       }
-      window.location.href = "/auth/signin";
+      router.push("/auth/signin");
+      router.refresh();
     } catch (e: any) {
       setError(e.message || "Erreur lors de la désactivation.");
     } finally {
