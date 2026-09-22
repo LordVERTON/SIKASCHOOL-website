@@ -76,8 +76,8 @@ const Signup = () => {
       return;
     }
     
-    if (data.password.length < 6) {
-      toast.error('Le mot de passe doit contenir au moins 6 caractères');
+    if (data.password.length < 8) {
+      toast.error('Le mot de passe doit contenir au moins 8 caractères');
       return;
     }
     

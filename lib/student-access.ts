@@ -1,4 +1,4 @@
-import type { User } from '@/lib/auth-simple';
+import type { User } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 
 export function canAccessStudentFeatures<T extends Pick<User, 'role'>>(

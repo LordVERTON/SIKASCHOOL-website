@@ -1,7 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import LiveClass from "@/components/LiveClass";
 import { createLiveKitToken } from "@/lib/livekit";
-import { getUserSession } from "@/lib/auth-simple";
+import { getUserSession } from "@/lib/auth";
 import { buildClassRoomName, resolveLiveClassMembership } from "@/lib/livekit-access";
 
 export const dynamic = "force-dynamic";

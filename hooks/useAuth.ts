@@ -77,7 +77,10 @@ export function useAuth(requiredRole?: UserRole | UserRole[]): UseAuthReturn {
       if (requiredRole) {
         const allowedRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
         if (!allowedRoles.includes(userData.role)) {
-          console.log(`🔒 useAuth: Rôle incorrect. Requis: ${allowedRoles.join(' ou ')}, Reçu: ${userData.role}`);
+          logger.warn('useAuth: rôle incorrect', {
+            required: allowedRoles,
+            received: userData.role,
+          });
           setError(`${ERROR_MESSAGES.ACCESS_DENIED} ${allowedRoles.join(' ou ')}`);
           
           // Rediriger vers l'espace approprié selon le rôle

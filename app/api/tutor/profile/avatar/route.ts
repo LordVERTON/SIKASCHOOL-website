@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { canAccessTutorFeatures } from '@/lib/admin-permissions';
 import { supabaseAdmin } from '@/lib/supabase';
 
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
     const avatarUrl = publicUrlData.publicUrl;
 
     const { error: updateError } = await (supabaseAdmin as any)
-      .from('users')
+      .from('profiles')
       .update({ avatar_url: avatarUrl, updated_at: new Date().toISOString() })
       .eq('id', user.id);
 

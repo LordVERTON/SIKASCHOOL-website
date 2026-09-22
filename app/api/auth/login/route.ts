@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticateUser, setUserSession } from '@/lib/auth-simple';
-import { syncSupabaseAuthIdentity } from '@/lib/supabase-auth-sync';
+import { AuthError } from 'next-auth';
+import { createClient } from '@supabase/supabase-js';
+import { signIn } from '@/auth';
+import { supabaseAdmin } from '@/lib/supabase';
 import {
   clearLoginChallenge,
   createLoginChallenge,
@@ -14,96 +16,98 @@ import {
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, twoFactorCode, twoFactorTicket } = await request.json();
+    const body = await request.json();
+    const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
+    const password = typeof body?.password === 'string' ? body.password : '';
 
     if (!email || !password) {
-      return NextResponse.json(
-        { error: 'E-mail et mot de passe requis' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'E-mail et mot de passe requis' }, { status: 400 });
     }
 
-    const user = await authenticateUser(email, password);
-
-    if (!user) {
-      return NextResponse.json(
-        { error: 'E-mail ou mot de passe incorrect' },
-        { status: 401 }
-      );
+    // Supabase Auth is the credential authority. This first call obtains the
+    // immutable Auth user id needed by the optional SMS challenge.
+    const authClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } },
+    );
+    const { data: authData, error: authError } = await authClient.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (authError || !authData.user) {
+      return NextResponse.json({ error: 'E-mail ou mot de passe incorrect' }, { status: 401 });
     }
 
-    const twoFactorEnabled = await isSms2faEnabled(user.id);
-    if (twoFactorEnabled) {
+    const userId = authData.user.id;
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('first_name, last_name, role, is_active')
+      .eq('id', userId)
+      .single();
+    if (!profile?.is_active) {
+      return NextResponse.json({ error: 'Compte désactivé' }, { status: 403 });
+    }
+    if (await isSms2faEnabled(userId)) {
       if (!isTwilioConfigured()) {
         return NextResponse.json(
           { error: '2FA activée mais Twilio non configuré côté serveur' },
-          { status: 500 }
+          { status: 500 },
         );
       }
 
-      const phone = await getSms2faPhone(user.id);
+      const phone = await getSms2faPhone(userId);
       if (!phone) {
         return NextResponse.json(
-          { error: '2FA activée mais numéro SMS introuvable, contactez le support' },
-          { status: 500 }
+          { error: '2FA activée mais aucun téléphone vérifié n’est disponible' },
+          { status: 500 },
         );
       }
 
-      const hasCode = typeof twoFactorCode === 'string' && twoFactorCode.trim().length > 0;
-      const hasTicket = typeof twoFactorTicket === 'string' && twoFactorTicket.trim().length > 0;
+      const code = typeof body?.twoFactorCode === 'string' ? body.twoFactorCode.trim() : '';
+      const ticket = typeof body?.twoFactorTicket === 'string' ? body.twoFactorTicket.trim() : '';
 
-      if (!hasCode || !hasTicket) {
-        const challenge = await createLoginChallenge(user.id, phone);
+      if (!code || !ticket) {
+        const challenge = await createLoginChallenge(userId, phone);
         const sms = await sendTwilioSms(
           phone,
-          `SikaSchool: votre code de connexion est ${challenge.code}. Il expire dans 10 minutes.`
+          `SikaSchool: votre code de connexion est ${challenge.code}. Il expire dans 10 minutes.`,
         );
-        if (!sms.ok) {
-          return NextResponse.json({ error: sms.error || 'Impossible d’envoyer le code SMS' }, { status: 502 });
-        }
+        if (!sms.ok) return NextResponse.json({ error: sms.error }, { status: 502 });
+
         return NextResponse.json(
           {
             success: false,
             requiresTwoFactor: true,
             twoFactorTicket: challenge.ticket,
-            message: `Code SMS envoyé vers ${maskPhone(phone)}`,
+            message: `Code envoyé au ${maskPhone(phone)}`,
           },
-          { status: 202 }
+          { status: 202 },
         );
       }
 
-      const valid = await verifyLoginChallenge(user.id, String(twoFactorTicket), String(twoFactorCode).trim());
-      if (!valid) {
+      if (!(await verifyLoginChallenge(userId, ticket, code))) {
         return NextResponse.json({ error: 'Code de double authentification invalide ou expiré' }, { status: 401 });
       }
-      await clearLoginChallenge(user.id);
+      await clearLoginChallenge(userId);
     }
 
-    const synced = await syncSupabaseAuthIdentity({
-      userId: user.id,
-      email: user.email,
-      password: String(password),
-    });
-    if (!synced.ok) {
-      console.warn('[login] Sync Supabase Auth (Realtime):', synced.message);
-    }
-
-    await setUserSession(user);
+    await signIn('credentials', { email, password, redirect: false });
 
     return NextResponse.json({
       success: true,
       user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role
-      }
+        id: authData.user.id,
+        email: authData.user.email,
+        name: `${profile.first_name} ${profile.last_name}`.trim(),
+        role: profile.role,
+      },
     });
   } catch (error) {
-    console.error('Erreur de connexion:', error);
-    return NextResponse.json(
-      { error: 'Erreur interne du serveur' },
-      { status: 500 }
-    );
+    if (error instanceof AuthError) {
+      return NextResponse.json({ error: 'E-mail ou mot de passe incorrect' }, { status: 401 });
+    }
+    console.error('[auth/login]', error);
+    return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });
   }
 }

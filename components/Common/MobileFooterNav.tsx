@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { supabaseBrowser } from "@/lib/supabase-browser";
 
 type NavItem = {
   href: string;
@@ -33,6 +34,7 @@ export default function MobileFooterNav({
 
   const handleLogout = async () => {
     try {
+      await supabaseBrowser.auth.signOut();
       await fetch("/api/auth/logout", { method: "POST" });
       setMenuOpen(false);
       router.push("/");

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { mercureThreadTopic, mercureUserTopic, publishMercureUpdate, publishUserMercureUpdate } from '@/lib/mercure';
 import { canAccessStudentFeatures, getEffectiveStudentAccess } from '@/lib/student-access';
@@ -86,7 +86,7 @@ export async function GET(
     // Récupérer les informations des utilisateurs qui ont envoyé des messages
     const userIds = [...new Set((messages || []).map((msg: any) => msg.sender_id))];
     const { data: users, error: usersError } = await supabaseAdmin
-      .from('users')
+      .from('profiles')
       .select('id, email, first_name, last_name, avatar_url, role')
       .in('id', userIds);
 
@@ -205,7 +205,7 @@ export async function POST(
     if (participants && participants.length > 0) {
       // Récupérer les informations de l'expéditeur
       const { data: sender, error: senderError } = await supabaseAdmin
-        .from('users')
+        .from('profiles')
         .select('first_name, last_name')
         .eq('id', studentId)
         .single();

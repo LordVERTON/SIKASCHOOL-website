@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { canAccessAdminFeatures } from '@/lib/admin-permissions';
+import { setUserActive } from '@/lib/user-management';
 
 export async function PUT(
   request: NextRequest,
@@ -19,7 +20,7 @@ export async function PUT(
 
     // Vérifier que l'utilisateur existe
     const { data: existingUser, error: userError } = await supabaseAdmin
-      .from('users')
+      .from('profiles')
       .select('id, email')
       .eq('id', userId)
       .single();
@@ -31,7 +32,7 @@ export async function PUT(
     // Vérifier que l'email n'est pas déjà utilisé par un autre utilisateur
     if (email !== (existingUser as any).email) {
       const { data: emailExists } = await supabaseAdmin
-        .from('users')
+        .from('profiles')
         .select('id')
         .eq('email', email)
         .neq('id', userId)
@@ -43,17 +44,26 @@ export async function PUT(
     }
 
     // Mettre à jour l'utilisateur
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    const { error: authUpdateError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+      email: normalizedEmail,
+      email_confirm: true,
+      app_metadata: { role },
+      user_metadata: { first_name, last_name },
+    });
+    if (authUpdateError) {
+      return NextResponse.json({ error: 'Impossible de mettre à jour l’identité Auth' }, { status: 500 });
+    }
+
     const updateData = {
       first_name,
       last_name,
-      email,
       role,
-      is_active,
       updated_at: new Date().toISOString()
     } as any;
 
     const { data: updatedUser, error: updateError } = await (supabaseAdmin as any)
-      .from('users')
+      .from('profiles')
       .update(updateData)
       .eq('id', userId)
       .select()
@@ -62,6 +72,11 @@ export async function PUT(
     if (updateError) {
       console.error('Erreur lors de la mise à jour de l\'utilisateur:', updateError);
       return NextResponse.json({ error: 'Impossible de mettre à jour l’utilisateur' }, { status: 500 });
+    }
+
+    if (typeof is_active === 'boolean' && is_active !== updatedUser.is_active) {
+      await setUserActive(userId, is_active);
+      updatedUser.is_active = is_active;
     }
 
     return NextResponse.json({ 
@@ -89,7 +104,7 @@ export async function DELETE(
 
     // Vérifier que l'utilisateur existe
     const { data: existingUser, error: userError } = await supabaseAdmin
-      .from('users')
+      .from('profiles')
       .select('id, email, first_name, last_name')
       .eq('id', userId)
       .single();
@@ -104,11 +119,9 @@ export async function DELETE(
       return NextResponse.json({ error: 'Suppression des administrateurs interdite' }, { status: 403 });
     }
 
-    // Supprimer l'utilisateur (cascade supprimera les credentials et autres données liées)
-    const { error: deleteError } = await supabaseAdmin
-      .from('users')
-      .delete()
-      .eq('id', userId);
+    // Supprimer l'identité Auth ; la FK profiles(id) ON DELETE CASCADE nettoie
+    // le profil et toutes les données métier dépendantes.
+    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
     if (deleteError) {
       console.error('Erreur lors de la suppression de l\'utilisateur:', deleteError);

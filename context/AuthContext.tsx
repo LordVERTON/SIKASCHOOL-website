@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { useRouter } from 'next/navigation';
 import { API_ENDPOINTS, ROLE_REDIRECTS, ERROR_MESSAGES, type UserRole } from '@/lib/constants';
 import { logger } from '@/lib/logger';
+import { supabaseBrowser } from '@/lib/supabase-browser';
 
 // Types
 interface User {
@@ -26,7 +27,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Cache global pour éviter les appels API répétés
-let authCache: {
+const authCache: {
   user: User | null;
   loading: boolean;
   lastCheck: number;
@@ -96,6 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
+      await supabaseBrowser.auth.signOut();
       await fetch(API_ENDPOINTS.AUTH.LOGOUT, { method: 'POST' });
       authCache.user = null;
       authCache.lastCheck = 0;

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { canAccessAdminFeatures } from '@/lib/admin-permissions';
 
@@ -19,7 +19,7 @@ export async function PUT(
 
     // Vérifier que l'utilisateur existe
     const { data: existingUser, error: userError } = await supabaseAdmin
-      .from('users')
+      .from('profiles')
       .select('id, role')
       .eq('id', userId)
       .single();
@@ -105,7 +105,7 @@ export async function POST(
 
     // Vérifier que l'utilisateur existe
     const { data: existingUser, error: userError } = await supabaseAdmin
-      .from('users')
+      .from('profiles')
       .select('id, role, first_name, last_name, email')
       .eq('id', userId)
       .single();

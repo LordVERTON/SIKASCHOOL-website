@@ -1,51 +1,29 @@
+import { randomBytes } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserSession } from '@/lib/auth-simple';
-import { supabaseAdmin } from '@/lib/supabase';
+import { getUserSession } from '@/lib/auth';
 import { canAccessAdminFeatures } from '@/lib/admin-permissions';
-import bcrypt from 'bcryptjs';
+import { updateUserPassword } from '@/lib/user-management';
 
 export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ userId: string }> }
+  _request: NextRequest,
+  { params }: { params: Promise<{ userId: string }> },
 ) {
+  const admin = await getUserSession();
+  if (!admin || !canAccessAdminFeatures(admin)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
-    // Vérifier l'authentification et les permissions admin
-    const user = await getUserSession();
-    if (!user || !canAccessAdminFeatures(user)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const { userId } = await params;
-
-    // Générer un nouveau mot de passe temporaire
-    const tempPassword = Math.random().toString(36).slice(-8);
-    const hashedPassword = await bcrypt.hash(tempPassword, 12);
-
-    // Mettre à jour le mot de passe dans user_credentials
-    const updateData = {
-      credential_value: hashedPassword,
-      updated_at: new Date().toISOString()
-    } as any;
-
-    const { error: updateError } = await (supabaseAdmin as any)
-      .from('user_credentials')
-      .update(updateData)
-      .eq('user_id', userId)
-      .eq('credential_type', 'password');
-
-    if (updateError) {
-      console.error('Erreur lors de la mise à jour du mot de passe:', updateError);
-      return NextResponse.json({ error: 'Failed to reset password' }, { status: 500 });
-    }
-
-    // Retourner le mot de passe temporaire (en production, il faudrait l'envoyer par email)
-    return NextResponse.json({ 
-      success: true, 
-      tempPassword: tempPassword,
-      message: 'Mot de passe réinitialisé avec succès'
+    const temporaryPassword = `Sika-${randomBytes(9).toString('base64url')}!`;
+    await updateUserPassword(userId, temporaryPassword);
+    return NextResponse.json({
+      success: true,
+      tempPassword: temporaryPassword,
+      message: 'Mot de passe temporaire créé dans Supabase Auth',
     });
   } catch (error) {
-    console.error('Erreur dans /api/admin/users/[userId]/reset-password:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('[admin/reset-password]', error);
+    return NextResponse.json({ error: 'Failed to reset password' }, { status: 500 });
   }
 }

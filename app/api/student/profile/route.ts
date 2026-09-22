@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { canAccessStudentFeatures } from '@/lib/student-access';
 
@@ -18,7 +18,7 @@ export async function GET() {
       { data: passwordNotifications, error: passwordNotificationsError },
     ] = await Promise.all([
       supabaseAdmin
-        .from('users')
+        .from('profiles')
         .select('id, email, first_name, last_name, avatar_url, timezone, language, created_at, postal_code, phone')
         .eq('id', userId)
         .single(),

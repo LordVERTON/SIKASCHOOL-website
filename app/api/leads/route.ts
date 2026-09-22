@@ -1,284 +1,117 @@
+import { randomBytes } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import bcrypt from 'bcryptjs';
 import { supabaseAdmin } from '@/lib/supabase';
+import { createApplicationUser } from '@/lib/user-management';
 import {
   insertAdminNewStudentNotifications,
   insertStudentPasswordChangeNotification,
+  sendPasswordResetEmail,
   sendRegistrationResendEmails,
-  upsertEmailVerificationToken,
+  type RegistrationIntakeDetails,
 } from '@/lib/registration-emails';
-import { syncSupabaseAuthIdentity } from '@/lib/supabase-auth-sync';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-const sanitizeNameForPassword = (value: string) => {
-  return value
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '');
-};
-
-const buildInitialPassword = (firstName: string, lastName: string) => {
-  const safeFirst = sanitizeNameForPassword(firstName) || 'eleve';
-  const safeLast = sanitizeNameForPassword(lastName) || 'sikaschool';
-  return `${safeFirst}.${safeLast}12345`;
-};
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const {
-      firstName,
-      lastName,
-      email,
-      phone,
-      zip,
-      civility,
-      level,
-      subject,
-      goal,
-      goalOther,
-      contest,
-      accountType,
-      campaign
-    } = body || {};
-    const resolvedRole = accountType === 'PARENT' ? 'PARENT' : 'STUDENT';
-    const resolvedCampaign: 'back_to_school' | undefined =
-      campaign === 'back_to_school' ? 'back_to_school' : undefined;
+    const firstName = typeof body?.firstName === 'string' ? body.firstName.trim() : '';
+    const lastName = typeof body?.lastName === 'string' ? body.lastName.trim() : '';
+    const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
+    const phone = typeof body?.phone === 'string' ? body.phone.trim() : '';
+    const zip = typeof body?.zip === 'string' ? body.zip.trim() : '';
+    const role = body?.accountType === 'PARENT' ? 'PARENT' : 'STUDENT';
 
     if (!firstName || !lastName || !email) {
       return NextResponse.json({ error: 'Champs requis manquants' }, { status: 400 });
     }
 
-    const initialPassword = buildInitialPassword(firstName, lastName);
-    const hashedPassword = await bcrypt.hash(initialPassword, 12);
-
-    // Check existing user
-    const { data: existing, error: existingErr } = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', email)
-      .single();
-
-    const normalizedContest = subject === 'Préparation à un concours' ? (contest || '') : '';
-    const resolvedGoal = goal === 'Autre' ? (goalOther || '') : (goal || '');
-    const academicGoals = [resolvedGoal, subject, normalizedContest].filter(Boolean).join(' | ') || 'Non spécifié';
-    const intakeDetails = {
-      civility: civility || '',
-      guardianFirstName: firstName,
-      guardianLastName: lastName,
-      email,
-      phone: phone || '',
-      zip: zip || '',
-      level: level || '',
-      subject: subject || '',
-      goal: goal || '',
-      goalOther: goalOther || '',
-      goalSummary: resolvedGoal,
-      contest: normalizedContest,
-      accountType: resolvedRole === 'PARENT' ? 'parent' : 'student',
-      campaign: resolvedCampaign,
-      capturedAt: new Date().toISOString()
+    const contest = body?.subject === 'Préparation à un concours' ? String(body?.contest || '') : '';
+    const goal = body?.goal === 'Autre' ? String(body?.goalOther || '') : String(body?.goal || '');
+    const academicGoals = [goal, body?.subject, contest].filter(Boolean).join(' | ') || 'Non spécifié';
+    const intakeDetails: RegistrationIntakeDetails = {
+      civility: body?.civility || '',
+      phone,
+      zip,
+      level: body?.level || '',
+      subject: body?.subject || '',
+      goal: body?.goal || '',
+      goalOther: body?.goalOther || '',
+      goalSummary: goal,
+      contest,
+      accountType: role === 'PARENT' ? 'parent' : 'student',
+      campaign: body?.campaign === 'back_to_school' ? 'back_to_school' : undefined,
+      capturedAt: new Date().toISOString(),
     };
 
-    if (existing && !existingErr) {
-      const { error: updateUserError } = await supabase
-        .from('users')
-        .update({
-          first_name: firstName,
-          last_name: lastName,
+    const { data: existing } = await supabaseAdmin
+      .from('profiles')
+      .select('id, email, first_name, last_name, role, is_active')
+      .eq('email', email)
+      .maybeSingle();
+
+    let profile = existing;
+    let created = false;
+    if (!profile) {
+      profile = await createApplicationUser({
+        email,
+        password: `Sika-${randomBytes(18).toString('base64url')}!`,
+        firstName,
+        lastName,
+        phone,
+        role,
+      });
+      created = true;
+    } else {
+      await supabaseAdmin
+        .from('profiles')
+        .update({ first_name: firstName, last_name: lastName, phone: phone || null, postal_code: zip || null })
+        .eq('id', profile.id);
+    }
+
+    if (profile.role === 'STUDENT') {
+      await supabaseAdmin.from('students').upsert(
+        {
+          user_id: profile.id,
+          grade_level: body?.level || 'Non spécifié',
+          academic_goals: academicGoals,
           phone: phone || null,
+          parent_phone: phone || null,
+          parent_email: email,
           postal_code: zip || null,
-          role: resolvedRole,
-          password_hash: hashedPassword,
+          learning_style: JSON.stringify(intakeDetails),
           is_active: true,
-          updated_at: new Date().toISOString()
-        } as any)
-        .eq('id', existing.id);
-
-      if (updateUserError) {
-        console.error('Lead existing user update error:', updateUserError);
-        return NextResponse.json({ error: 'Erreur mise à jour utilisateur' }, { status: 500 });
-      }
-
-      const { error: upsertStudentError } = await supabase
-        .from('students')
-        .upsert(
-          {
-            user_id: existing.id,
-            grade_level: level || 'Non spécifié',
-            academic_goals: academicGoals,
-            phone: phone || null,
-            parent_phone: phone || null,
-            parent_email: email,
-            postal_code: zip || null,
-            learning_style: JSON.stringify(intakeDetails),
-            is_active: true,
-            updated_at: new Date().toISOString()
-          } as any,
-          { onConflict: 'user_id' }
-        );
-
-      if (upsertStudentError) {
-        console.error('Lead existing student upsert error:', upsertStudentError);
-        // continue, non blocking
-      }
-
-      const { error: resetNotificationError } = await supabase
-        .from('notifications')
-        .insert({
-          user_id: existing.id,
-          type: 'PASSWORD',
-          title: 'Mot de passe réinitialisé',
-          message: 'Votre mot de passe a été réinitialisé suite à une nouvelle demande de séance. Pensez à le modifier depuis votre espace une fois connecté.',
-          data: {
-            action: 'PASSWORD_RESET',
-            source: 'lead_form',
-            captured_at: intakeDetails.capturedAt
-          }
-        });
-
-      if (resetNotificationError) {
-        console.error('Lead password reset notification error:', resetNotificationError);
-      }
-
-      const verifyToken = await upsertEmailVerificationToken(supabase, existing.id);
-      await insertAdminNewStudentNotifications(supabaseAdmin as any, {
-        id: existing.id,
-        email,
-        first_name: firstName,
-        last_name: lastName,
-        role: resolvedRole,
-      }, intakeDetails);
-      void sendRegistrationResendEmails(supabase, {
-        newUser: {
-          id: existing.id,
-          email,
-          first_name: firstName,
-          last_name: lastName,
-          role: resolvedRole,
         },
-        verifyToken,
-        plainPassword: initialPassword,
-        intakeDetails,
-      }).catch((err) => console.error('[leads] E-mails inscription existant:', err));
-
-      const syncLead = await syncSupabaseAuthIdentity({
-        userId: existing.id,
-        email,
-        password: initialPassword,
-      });
-      if (!syncLead.ok) {
-        console.warn('[leads] Sync Supabase Auth (existant):', syncLead.message);
-      }
-
-      return NextResponse.json({ success: true, alreadyExists: true, initialPassword });
+        { onConflict: 'user_id' },
+      );
+      await insertStudentPasswordChangeNotification(supabaseAdmin, profile.id, 'lead_form');
     }
 
-    if (existingErr && existingErr.code !== 'PGRST116') {
-      return NextResponse.json({ error: 'Erreur vérification utilisateur' }, { status: 500 });
-    }
-
-    const { data: newUser, error: userErr } = await supabase
-      .from('users')
-      .insert({
-        email,
-        password_hash: hashedPassword,
-        first_name: firstName,
-        last_name: lastName,
-        phone: phone || null,
-        postal_code: zip || null,
-        role: resolvedRole,
-        is_active: true
-      })
-      .select('id')
-      .single();
-
-    if (userErr || !newUser) {
-      console.error('Lead new user insert error:', userErr);
-      return NextResponse.json({ error: 'Erreur création utilisateur' }, { status: 500 });
-    }
-
-    // Create student profile (best-effort)
-    const { error: studentErr } = await supabase
-      .from('students')
-      .insert({
-        user_id: newUser.id,
-        grade_level: level || 'Non spécifié',
-        academic_goals: academicGoals,
-        phone: phone || null,
-        parent_phone: phone || null,
-        parent_email: email,
-        postal_code: zip || null,
-        learning_style: JSON.stringify(intakeDetails),
-        is_active: true
-      });
-
-    if (studentErr) {
-      console.error('Lead new student insert error:', studentErr);
-      // continue, non blocking
-    }
-
-    const { error: profileNotificationError } = await supabase
-      .from('notifications')
-      .insert({
-        user_id: newUser.id,
-        type: 'PROFILE',
-        title: 'Bienvenue sur SikaSchool 🎉',
-        message: 'Votre compte a été créé avec succès. Nous vous contacterons prochainement pour organiser une première séance.',
-        data: {
-          action: 'PROFILE_CREATED',
-          source: 'lead_form',
-          captured_at: intakeDetails.capturedAt
-        }
-      });
-
-    if (profileNotificationError) {
-      console.error('Lead profile notification error:', profileNotificationError);
-    }
-
-    await insertAdminNewStudentNotifications(supabaseAdmin as any, {
-      id: newUser.id,
+    const userForNotifications = {
+      id: profile.id,
       email,
       first_name: firstName,
       last_name: lastName,
-      role: resolvedRole,
-    }, intakeDetails);
-    await insertStudentPasswordChangeNotification(supabase, newUser.id, 'lead_form');
-
-    const verifyToken = await upsertEmailVerificationToken(supabase, newUser.id);
-    void sendRegistrationResendEmails(supabase, {
-      newUser: {
-        id: newUser.id,
-        email,
-        first_name: firstName,
-        last_name: lastName,
-        role: resolvedRole,
-      },
-      verifyToken,
-      plainPassword: initialPassword,
+      role: profile.role,
+    };
+    await insertAdminNewStudentNotifications(supabaseAdmin, userForNotifications, intakeDetails);
+    void sendRegistrationResendEmails(supabaseAdmin, {
+      newUser: userForNotifications,
       intakeDetails,
-    }).catch((err) => console.error('[leads] E-mails inscription nouveau:', err));
+    }).catch((error) => console.error('[leads/email]', error));
 
-    const syncNew = await syncSupabaseAuthIdentity({
-      userId: newUser.id,
-      email,
-      password: initialPassword,
-    });
-    if (!syncNew.ok) {
-      console.warn('[leads] Sync Supabase Auth (nouveau):', syncNew.message);
+    if (created) {
+      const { data: recovery } = await supabaseAdmin.auth.admin.generateLink({ type: 'recovery', email });
+      if (recovery.properties?.hashed_token) {
+        void sendPasswordResetEmail({
+          to: email,
+          firstName,
+          resetToken: recovery.properties.hashed_token,
+        }).catch((error) => console.error('[leads/recovery-email]', error));
+      }
     }
 
-    return NextResponse.json({ success: true, initialPassword });
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Lead create error:', error);
+    console.error('[leads]', error);
     return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });
   }
 }
-
-

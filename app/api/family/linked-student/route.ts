@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getEffectiveStudentAccess } from '@/lib/student-access';
 
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     }
 
     const { data: student, error: studentError } = await supabaseAdmin
-      .from('users')
+      .from('profiles')
       .select('id, email, first_name, last_name, avatar_url, role')
       .eq('email', studentEmail)
       .eq('role', 'STUDENT')

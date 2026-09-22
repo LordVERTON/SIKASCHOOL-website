@@ -1,22 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
-import { verifyEmailToken } from '@/lib/registration-emails';
+import { createClient } from '@supabase/supabase-js';
 
 export async function GET(request: NextRequest) {
-  const token = request.nextUrl.searchParams.get('token');
-  const result = await verifyEmailToken(supabaseAdmin, token);
+  const tokenHash = request.nextUrl.searchParams.get('token');
+  if (!tokenHash) return NextResponse.json({ error: 'Jeton manquant' }, { status: 400 });
 
-  if (result.ok) {
-    return NextResponse.json({ success: true });
-  }
-
-  const status = result.error === 'server_error' ? 500 : 400;
-  const message =
-    result.error === 'missing_token'
-      ? 'Jeton manquant'
-      : result.error === 'invalid_or_expired'
-        ? 'Lien invalide ou expiré'
-        : 'Erreur serveur';
-
-  return NextResponse.json({ success: false, error: message }, { status });
+  const authClient = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } },
+  );
+  const { error } = await authClient.auth.verifyOtp({ token_hash: tokenHash, type: 'email' });
+  if (error) return NextResponse.json({ error: 'Lien invalide ou expiré' }, { status: 400 });
+  return NextResponse.json({ success: true });
 }

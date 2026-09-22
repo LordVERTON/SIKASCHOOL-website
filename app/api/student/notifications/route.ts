@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { isSupabaseUnreachableError, supabaseAdmin } from '@/lib/supabase';
 import { publishUserMercureUpdate } from '@/lib/mercure';
 import { canAccessStudentFeatures, getEffectiveStudentAccess } from '@/lib/student-access';

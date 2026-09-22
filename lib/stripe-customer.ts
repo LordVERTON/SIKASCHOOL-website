@@ -1,6 +1,6 @@
 /**
  * Helpers pour associer un user SikaSchool à un Stripe Customer.
- * Cette association est stockée dans users.stripe_customer_id.
+ * Cette association métier est stockée dans profiles.stripe_customer_id.
  */
 
 import { stripe, assertStripeConfigured } from './stripe';
@@ -21,7 +21,7 @@ export async function getOrCreateStripeCustomer(userId: string): Promise<string>
   assertStripeConfigured();
 
   const { data, error } = await supabaseAdmin
-    .from('users')
+    .from('profiles')
     .select('id, email, first_name, last_name, stripe_customer_id')
     .eq('id', userId)
     .single();
@@ -47,8 +47,7 @@ export async function getOrCreateStripeCustomer(userId: string): Promise<string>
   });
 
   const { error: updateError } = await supabaseAdmin
-    .from('users')
-    // @ts-expect-error stripe_customer_id n'est pas encore typé dans Database
+    .from('profiles')
     .update({ stripe_customer_id: customer.id })
     .eq('id', userId);
 

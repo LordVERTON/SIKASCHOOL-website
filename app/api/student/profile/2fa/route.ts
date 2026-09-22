@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { canAccessStudentFeatures } from '@/lib/student-access';
 import {
   clearSetupCode,

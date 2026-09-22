@@ -1,12 +1,12 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { canAccessAdminFeatures } from '@/lib/admin-permissions';
 import { supabaseAdmin } from '@/lib/supabase';
 import type { Database } from '@/types/supabase';
 
-type UsersRow = Database['public']['Tables']['users']['Row'];
+type UsersRow = Database['public']['Tables']['profiles']['Row'];
 type AssignmentRow = Database['public']['Tables']['tutor_student_assignments']['Row'];
 
 type TutorAssignmentRow = AssignmentRow & {
@@ -83,7 +83,7 @@ export async function GET(
     const { userId } = parsedParams.data;
 
     const { data: userData, error: userError } = await supabaseAdmin
-      .from('users')
+      .from('profiles')
       .select(userFields)
       .eq('id', userId)
       .single();

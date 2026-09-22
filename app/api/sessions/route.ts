@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { sendTutorNewBookingRequestEmail } from '@/lib/registration-emails';
 import { publishUserMercureUpdate } from '@/lib/mercure';
@@ -156,7 +156,7 @@ export async function POST(req: NextRequest) {
 
     // Get student name and tutor contact for notifications (in-app + email)
     const { data: studentData, error: studentError } = await supabaseAdmin
-      .from('users')
+      .from('profiles')
       .select('first_name, last_name')
       .eq('id', student_id)
       .single();
@@ -167,7 +167,7 @@ export async function POST(req: NextRequest) {
 
     const studentName = studentData ? `${(studentData as any).first_name} ${(studentData as any).last_name}` : 'Un étudiant';
     const { data: tutorRow, error: tutorError } = await supabaseAdmin
-      .from('users')
+      .from('profiles')
       .select('email, first_name, last_name')
       .eq('id', tutor_id)
       .single();

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { canAccessTutorFeatures } from '@/lib/admin-permissions';
 import { sendStudentSessionDecisionEmail } from '@/lib/registration-emails';
@@ -112,7 +112,7 @@ export async function PATCH(request: NextRequest) {
     let studentFirstName = '';
     if (studentId) {
       const { data: studentData } = await (supabaseAdmin as any)
-        .from('users')
+        .from('profiles')
         .select('email, first_name')
         .eq('id', studentId)
         .single();
@@ -123,7 +123,7 @@ export async function PATCH(request: NextRequest) {
       }
     }
     const { data: tutorData } = await (supabaseAdmin as any)
-      .from('users')
+      .from('profiles')
       .select('first_name, last_name')
       .eq('id', user.id)
       .single();

@@ -1,110 +1,58 @@
+import { randomBytes } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { canAccessAdminFeatures } from '@/lib/admin-permissions';
-import { syncSupabaseAuthIdentity } from '@/lib/supabase-auth-sync';
+import { createApplicationUser } from '@/lib/user-management';
+import type { UserRole } from '@/lib/constants';
 
 export async function GET() {
-  try {
-    // Vérifier l'authentification
-    const user = await getUserSession();
-    if (!user || !canAccessAdminFeatures(user)) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-    }
-
-    // Récupérer tous les utilisateurs
-    const { data: users, error } = await supabaseAdmin
-      .from('users')
-      .select('id, email, first_name, last_name, role, is_active, created_at')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      return NextResponse.json({ error: 'Impossible de récupérer les utilisateurs' }, { status: 500 });
-    }
-
-    return NextResponse.json(users || []);
-      } catch {
-    return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });
+  const admin = await getUserSession();
+  if (!admin || !canAccessAdminFeatures(admin)) {
+    return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
   }
+
+  const { data, error } = await supabaseAdmin
+    .from('profiles')
+    .select('id, email, first_name, last_name, role, is_active, created_at')
+    .order('created_at', { ascending: false });
+  if (error) return NextResponse.json({ error: 'Impossible de récupérer les utilisateurs' }, { status: 500 });
+  return NextResponse.json(data || []);
 }
 
 export async function POST(request: NextRequest) {
+  const admin = await getUserSession();
+  if (!admin || !canAccessAdminFeatures(admin)) {
+    return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+  }
+
   try {
-    // Vérifier l'authentification
-    const user = await getUserSession();
-    if (!user || !canAccessAdminFeatures(user)) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-    }
-
-    const { first_name, last_name, email, role, is_active } = await request.json();
-
-    // Vérifier que l'email n'existe pas déjà
-    const { data: existingUser } = await supabaseAdmin
-      .from('users')
-      .select('id')
-      .eq('email', email)
-      .single();
-
-    if (existingUser) {
-      return NextResponse.json({ error: 'Un utilisateur avec cet e-mail existe déjà' }, { status: 400 });
-    }
-
-    // Créer un mot de passe temporaire
-    const tempPassword = Math.random().toString(36).slice(-8);
-    const bcrypt = await import('bcryptjs');
-    const hashedPassword = await bcrypt.hash(tempPassword, 12);
-
-    // Créer l'utilisateur
-    const { data: newUser, error: userError } = await supabaseAdmin
-      .from('users')
-      .insert({
-        first_name,
-        last_name,
-        email,
-        role,
-        is_active: is_active ?? true,
-        email_verified: false,
-        password_hash: hashedPassword // Ajouter le hash temporaire
-      } as any)
-      .select()
-      .single();
-
-    if (userError) {
-      console.error('Erreur lors de la création de l\'utilisateur:', userError);
-      return NextResponse.json({ error: 'Impossible de créer l’utilisateur' }, { status: 500 });
-    }
-
-    // Ajouter les credentials (utiliser le même hash)
-    const { error: credError } = await supabaseAdmin
-      .from('user_credentials')
-      .insert({
-        user_id: (newUser as any).id,
-        credential_type: 'password',
-        credential_value: hashedPassword,
-        is_active: true
-      } as any);
-
-    if (credError) {
-      // Supprimer l'utilisateur créé si les credentials échouent
-      await supabaseAdmin.from('users').delete().eq('id', (newUser as any).id);
-      return NextResponse.json({ error: 'Impossible de créer les identifiants' }, { status: 500 });
-    }
-
-    const syncAdmin = await syncSupabaseAuthIdentity({
-      userId: (newUser as any).id,
-      email: String(email).trim().toLowerCase(),
-      password: tempPassword,
+    const body = await request.json();
+    const allowedRoles: UserRole[] = ['ADMIN', 'TUTOR', 'STUDENT', 'PARENT'];
+    const role = allowedRoles.includes(body.role) ? body.role : 'STUDENT';
+    const temporaryPassword = `Sika-${randomBytes(9).toString('base64url')}!`;
+    const created = await createApplicationUser({
+      email: String(body.email || ''),
+      password: temporaryPassword,
+      firstName: String(body.first_name || ''),
+      lastName: String(body.last_name || ''),
+      role,
     });
-    if (!syncAdmin.ok) {
-      console.warn('[admin/users] Sync Supabase Auth:', syncAdmin.message);
+
+    if (body.is_active === false) {
+      const { setUserActive } = await import('@/lib/user-management');
+      await setUserActive(created.id, false);
+      created.is_active = false;
     }
 
-    return NextResponse.json({ 
-      user: newUser, 
-      tempPassword,
-      message: 'Utilisateur créé avec succès' 
+    return NextResponse.json({
+      user: created,
+      tempPassword: temporaryPassword,
+      message: 'Utilisateur créé dans Supabase Auth',
     });
-      } catch {
-    return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });
+  } catch (error: any) {
+    console.error('[admin/users]', error);
+    const status = /already|registered|exists|unique/i.test(String(error?.message || '')) ? 409 : 500;
+    return NextResponse.json({ error: 'Impossible de créer l’utilisateur' }, { status });
   }
 }

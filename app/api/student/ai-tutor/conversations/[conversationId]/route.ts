@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { runSikaAgent, type StoredMessage, type StoredAttachment } from '@/lib/ai-tutor/agent';
 import { canAccessStudentFeatures, getEffectiveStudentAccess } from '@/lib/student-access';

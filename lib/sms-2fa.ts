@@ -74,7 +74,7 @@ export async function sendTwilioSms(to: string, body: string): Promise<{ ok: boo
 
 export async function isSms2faEnabled(userId: string): Promise<boolean> {
   const { data } = await (supabaseAdmin as any)
-    .from('user_credentials')
+    .from('user_security_challenges')
     .select('credential_value, is_active')
     .eq('user_id', userId)
     .eq('credential_type', CREDENTIAL_TYPES.SMS_2FA_ENABLED)
@@ -85,7 +85,7 @@ export async function isSms2faEnabled(userId: string): Promise<boolean> {
 
 export async function getSms2faPhone(userId: string): Promise<string | null> {
   const { data } = await (supabaseAdmin as any)
-    .from('user_credentials')
+    .from('user_security_challenges')
     .select('credential_value, is_active')
     .eq('user_id', userId)
     .eq('credential_type', CREDENTIAL_TYPES.SMS_2FA_PHONE)
@@ -96,7 +96,7 @@ export async function getSms2faPhone(userId: string): Promise<string | null> {
 }
 
 export async function saveSms2faPhone(userId: string, phone: string): Promise<void> {
-  await (supabaseAdmin as any).from('user_credentials').upsert(
+  await (supabaseAdmin as any).from('user_security_challenges').upsert(
     {
       user_id: userId,
       credential_type: CREDENTIAL_TYPES.SMS_2FA_PHONE,
@@ -110,7 +110,7 @@ export async function saveSms2faPhone(userId: string, phone: string): Promise<vo
 }
 
 export async function setSms2faEnabled(userId: string, enabled: boolean): Promise<void> {
-  await (supabaseAdmin as any).from('user_credentials').upsert(
+  await (supabaseAdmin as any).from('user_security_challenges').upsert(
     {
       user_id: userId,
       credential_type: CREDENTIAL_TYPES.SMS_2FA_ENABLED,
@@ -126,7 +126,7 @@ export async function setSms2faEnabled(userId: string, enabled: boolean): Promis
 export async function createSetupCode(userId: string, phone: string): Promise<string> {
   const code = generateOtpCode();
   const expiresAt = new Date(Date.now() + OTP_TTL_MS).toISOString();
-  await (supabaseAdmin as any).from('user_credentials').upsert(
+  await (supabaseAdmin as any).from('user_security_challenges').upsert(
     {
       user_id: userId,
       credential_type: CREDENTIAL_TYPES.SMS_2FA_SETUP,
@@ -142,7 +142,7 @@ export async function createSetupCode(userId: string, phone: string): Promise<st
 
 export async function verifySetupCode(userId: string, phone: string, code: string): Promise<boolean> {
   const { data } = await (supabaseAdmin as any)
-    .from('user_credentials')
+    .from('user_security_challenges')
     .select('credential_value, expires_at, is_active')
     .eq('user_id', userId)
     .eq('credential_type', CREDENTIAL_TYPES.SMS_2FA_SETUP)
@@ -165,7 +165,7 @@ export async function verifySetupCode(userId: string, phone: string, code: strin
 
 export async function clearSetupCode(userId: string): Promise<void> {
   await (supabaseAdmin as any)
-    .from('user_credentials')
+    .from('user_security_challenges')
     .update({ is_active: false, updated_at: new Date().toISOString() })
     .eq('user_id', userId)
     .eq('credential_type', CREDENTIAL_TYPES.SMS_2FA_SETUP);
@@ -175,7 +175,7 @@ export async function createLoginChallenge(userId: string, _phone: string): Prom
   const code = generateOtpCode();
   const ticket = generateTicket();
   const expiresAt = new Date(Date.now() + OTP_TTL_MS).toISOString();
-  await (supabaseAdmin as any).from('user_credentials').upsert(
+  await (supabaseAdmin as any).from('user_security_challenges').upsert(
     {
       user_id: userId,
       credential_type: CREDENTIAL_TYPES.SMS_2FA_LOGIN,
@@ -191,7 +191,7 @@ export async function createLoginChallenge(userId: string, _phone: string): Prom
 
 export async function verifyLoginChallenge(userId: string, ticket: string, code: string): Promise<boolean> {
   const { data } = await (supabaseAdmin as any)
-    .from('user_credentials')
+    .from('user_security_challenges')
     .select('credential_value, expires_at, is_active')
     .eq('user_id', userId)
     .eq('credential_type', CREDENTIAL_TYPES.SMS_2FA_LOGIN)
@@ -214,7 +214,7 @@ export async function verifyLoginChallenge(userId: string, ticket: string, code:
 
 export async function clearLoginChallenge(userId: string): Promise<void> {
   await (supabaseAdmin as any)
-    .from('user_credentials')
+    .from('user_security_challenges')
     .update({ is_active: false, updated_at: new Date().toISOString() })
     .eq('user_id', userId)
     .eq('credential_type', CREDENTIAL_TYPES.SMS_2FA_LOGIN);

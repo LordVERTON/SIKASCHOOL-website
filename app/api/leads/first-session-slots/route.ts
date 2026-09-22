@@ -177,7 +177,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { data: student, error: studentError } = await (supabaseAdmin as any)
-      .from('users')
+      .from('profiles')
       .select('id, first_name, last_name, email')
       .eq('email', email)
       .in('role', ['STUDENT', 'PARENT'])
@@ -272,7 +272,7 @@ export async function POST(request: NextRequest) {
     ]);
 
     const { data: tutorUser } = await (supabaseAdmin as any)
-      .from('users')
+      .from('profiles')
       .select('email, first_name, last_name')
       .eq('id', tutorId)
       .single();

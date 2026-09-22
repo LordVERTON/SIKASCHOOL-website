@@ -1,14 +1,12 @@
-import { randomBytes } from 'node:crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import nodemailer, { type Transporter } from 'nodemailer';
 import { Resend } from 'resend';
-import { APP_CONFIG, CREDENTIAL_TYPES } from '@/lib/constants';
+import { APP_CONFIG } from '@/lib/constants';
 import { getAdminTutorEmails } from '@/lib/admin-permissions';
 
 /** Client service-role : les types générés ne couvrent pas toutes les tables utilisées ici. */
 type ServiceSupabase = SupabaseClient<any>;
 
-const VERIFY_TTL_MS = 48 * 60 * 60 * 1000;
 const DEFAULT_FROM_ADDRESS = 'SikaSchool <noreply@sikaschool.app>';
 const DEFAULT_ADMIN_NEW_STUDENT_EMAILS = [
   'sikaschoolservice@gmail.com',
@@ -159,89 +157,6 @@ async function sendEmail(payload: EmailPayload): Promise<void> {
   }
 }
 
-/**
- * Génère un jeton, l’enregistre dans user_credentials (upsert) et retourne le jeton brut pour le lien e-mail.
- */
-export async function upsertEmailVerificationToken(
-  supabase: ServiceSupabase,
-  userId: string
-): Promise<string | null> {
-  const token = randomBytes(32).toString('hex');
-  const expiresAt = new Date(Date.now() + VERIFY_TTL_MS).toISOString();
-  const now = new Date().toISOString();
-
-  const { error } = await supabase.from('user_credentials').upsert(
-    {
-      user_id: userId,
-      credential_type: CREDENTIAL_TYPES.EMAIL_VERIFICATION,
-      credential_value: token,
-      is_active: true,
-      expires_at: expiresAt,
-      updated_at: now,
-    },
-    { onConflict: 'user_id,credential_type' }
-  );
-
-  if (error) {
-    console.error('[email] Échec enregistrement jeton de vérification:', error);
-    return null;
-  }
-  return token;
-}
-
-export type VerifyEmailResult =
-  | { ok: true }
-  | { ok: false; error: 'missing_token' | 'invalid_or_expired' | 'server_error' };
-
-export async function verifyEmailToken(
-  supabase: ServiceSupabase,
-  token: string | null
-): Promise<VerifyEmailResult> {
-  if (!token?.trim()) {
-    return { ok: false, error: 'missing_token' };
-  }
-  const raw = token.trim();
-
-  try {
-    const { data: row, error: fetchError } = await supabase
-      .from('user_credentials')
-      .select('user_id, expires_at, is_active')
-      .eq('credential_type', CREDENTIAL_TYPES.EMAIL_VERIFICATION)
-      .eq('credential_value', raw)
-      .eq('is_active', true)
-      .maybeSingle();
-
-    if (fetchError || !row) {
-      return { ok: false, error: 'invalid_or_expired' };
-    }
-
-    if (row.expires_at && new Date(row.expires_at).getTime() < Date.now()) {
-      return { ok: false, error: 'invalid_or_expired' };
-    }
-
-    const { error: userErr } = await supabase
-      .from('users')
-      .update({ email_verified: true, updated_at: new Date().toISOString() })
-      .eq('id', row.user_id);
-
-    if (userErr) {
-      console.error('[email] Échec de mise à jour email_verified :', userErr);
-      return { ok: false, error: 'server_error' };
-    }
-
-    await supabase
-      .from('user_credentials')
-      .update({ is_active: false, updated_at: new Date().toISOString() })
-      .eq('user_id', row.user_id)
-      .eq('credential_type', CREDENTIAL_TYPES.EMAIL_VERIFICATION);
-
-    return { ok: true };
-  } catch (e) {
-    console.error('[email] Erreur verifyEmailToken :', e);
-    return { ok: false, error: 'server_error' };
-  }
-}
-
 export type NewUserRow = {
   id: string;
   email: string;
@@ -277,7 +192,7 @@ async function resolveAdminNotifyUsers(
   const emails = Array.from(emailSet);
 
   const { data: roleAdmins, error: e1 } = await supabase
-    .from('users')
+    .from('profiles')
     .select('id, email, role')
     .eq('role', 'ADMIN')
     .eq('is_active', true);
@@ -289,7 +204,7 @@ async function resolveAdminNotifyUsers(
   let listed: Array<{ id: string; email: string; role: string }> = [];
   if (emails.length > 0) {
     const { data: byEmail, error: e2 } = await supabase
-      .from('users')
+      .from('profiles')
       .select('id, email, role')
       .in('email', emails)
       .eq('is_active', true);
@@ -387,40 +302,6 @@ function escapeHtml(s: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
-}
-
-function buildVerificationEmailHtml(params: {
-  firstName: string;
-  verifyUrl: string;
-}): string {
-  const name = params.firstName?.trim() || 'Bonjour';
-  return `
-  <p>${escapeHtml(name)},</p>
-  <p>Votre inscription à ${APP_CONFIG.NAME} a bien été enregistrée.</p>
-  <p>Notre équipe vous contactera prochainement afin de vous affecter un tuteur ou une tutrice adapté(e) à vos besoins.</p>
-  <p>Pour confirmer votre adresse e-mail, cliquez sur le lien ci-dessous. Ce lien reste valable 48&nbsp;h&nbsp;:</p>
-  <p><a href="${params.verifyUrl}">Je confirme mon adresse e-mail</a></p>
-  <p>Si vous n’êtes pas à l’origine de cette inscription, ignorez ce message.</p>
-  `;
-}
-
-function buildPasswordEmailHtml(params: {
-  firstName: string;
-  plainPassword: string;
-  signinUrl: string;
-}): string {
-  const name = params.firstName?.trim() || 'Bonjour';
-  return `
-  <p>${escapeHtml(name)},</p>
-  <p>Voici votre mot de passe de connexion pour ${APP_CONFIG.NAME} :</p>
-  <p style="font-family:monospace;font-size:15px;padding:10px 12px;background:#f4f4f5;border-radius:8px;">${escapeHtml(
-    params.plainPassword
-  )}</p>
-  <p>Par sécurité, nous vous recommandons de le modifier juste après votre première connexion.</p>
-  <p><a href="${params.signinUrl}">Se connecter</a></p>
-  <p style="font-size:12px;color:#666;">L’e-mail n’est pas un canal totalement sûr : évitez de le transférer et gardez ce message confidentiel.</p>
-  <p>En cas de besoin, contactez <a href="mailto:${APP_CONFIG.SUPPORT_EMAIL}">${APP_CONFIG.SUPPORT_EMAIL}</a>.</p>
-  `;
 }
 
 function buildPasswordResetEmailHtml(params: {
@@ -654,53 +535,19 @@ function buildStudentSessionCancelledEmailHtml(params: {
   `;
 }
 
-/**
- * Envoie l’e-mail de vérification à l’utilisateur et un e-mail récap aux admins (élèves uniquement pour le mail admin).
- * Les erreurs Resend sont journalisées ; l’inscription peut quand même réussir.
- */
+/** Envoie le récapitulatif d'inscription aux administrateurs. */
 export async function sendRegistrationResendEmails(
   supabase: ServiceSupabase,
   options: {
     newUser: NewUserRow;
-    verifyToken: string | null;
-    /** Mot de passe saisi à l’inscription, uniquement pour l’e-mail de rappel (jamais journalisé). */
-    plainPassword?: string | null;
     intakeDetails?: RegistrationIntakeDetails;
   }
 ): Promise<void> {
   const base = getAppBaseUrl();
-  const signinUrl = `${base}/auth/signin`;
   const adminPath =
     options.newUser.role === 'STUDENT'
       ? `/tutor/administration?tab=assignments&studentId=${encodeURIComponent(options.newUser.id)}`
       : '/tutor/administration?tab=assignments';
-
-  const verifyUrl = options.verifyToken
-    ? `${base}/auth/verify-email?token=${encodeURIComponent(options.verifyToken)}`
-    : null;
-  const plainPassword = options.plainPassword?.trim() || null;
-  if (verifyUrl) {
-    await sendEmail({
-      to: options.newUser.email,
-      subject: `Confirmez votre adresse e-mail - ${APP_CONFIG.NAME}`,
-      html: buildVerificationEmailHtml({
-        firstName: options.newUser.first_name,
-        verifyUrl,
-      }),
-    });
-  }
-
-  if (plainPassword) {
-    await sendEmail({
-      to: options.newUser.email,
-      subject: `Vos informations de connexion - ${APP_CONFIG.NAME}`,
-      html: buildPasswordEmailHtml({
-        firstName: options.newUser.first_name,
-        plainPassword,
-        signinUrl,
-      }),
-    });
-  }
 
   if (options.newUser.role === 'STUDENT' || options.newUser.role === 'PARENT') {
     const adminEmails = getAdminNewStudentEmailRecipients();

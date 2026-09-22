@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { canAccessAdminFeatures } from '@/lib/admin-permissions';
 import {
   getAdminNewStudentEmailRecipients,

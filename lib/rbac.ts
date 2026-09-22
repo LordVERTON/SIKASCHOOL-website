@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { getUserSession } from "./auth-simple";
+import { getUserSession } from "./auth";
 
 export enum Role {
   ADMIN = "ADMIN",

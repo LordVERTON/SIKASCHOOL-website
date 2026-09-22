@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { canAccessAdminFeatures } from '@/lib/admin-permissions';
 import { syncSessionParticipants } from '@/lib/session-participants';
@@ -54,7 +54,7 @@ export async function GET() {
     let users: any[] = [];
     if (userIds.length > 0) {
       const { data: usersData, error: usersError } = await supabaseAdmin
-        .from('users')
+        .from('profiles')
         .select('id, first_name, last_name')
         .in('id', userIds);
 
@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
       await request.json();
 
     const { data: student, error: studentError } = await supabaseAdmin
-      .from('users')
+      .from('profiles')
       .select('id, role')
       .eq('id', student_id)
       .eq('role', 'STUDENT')
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { data: tutor, error: tutorError } = await supabaseAdmin
-      .from('users')
+      .from('profiles')
       .select('id, role')
       .eq('id', tutor_id)
       .eq('role', 'TUTOR')

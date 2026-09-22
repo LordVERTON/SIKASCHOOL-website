@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { canAccessAdminFeatures } from '@/lib/admin-permissions';
 import { syncSessionParticipants } from '@/lib/session-participants';
@@ -31,7 +31,7 @@ export async function PUT(
 
     // Vérifier que l'étudiant et le tuteur existent
     const { data: student, error: studentError } = await supabaseAdmin
-      .from('users')
+      .from('profiles')
       .select('id, role')
       .eq('id', student_id)
       .eq('role', 'STUDENT')
@@ -42,7 +42,7 @@ export async function PUT(
     }
 
     const { data: tutor, error: tutorError } = await supabaseAdmin
-      .from('users')
+      .from('profiles')
       .select('id, role')
       .eq('id', tutor_id)
       .eq('role', 'TUTOR')
@@ -105,7 +105,7 @@ export async function PUT(
       if (hasChanged && newSessionData.student_id) {
         // Récupérer les informations du tuteur pour le message
         const { data: tutorInfo } = await supabaseAdmin
-          .from('users')
+          .from('profiles')
           .select('first_name, last_name')
           .eq('id', newSessionData.tutor_id || oldSessionData.tutor_id)
           .single();

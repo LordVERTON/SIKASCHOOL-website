@@ -1,16 +1,7 @@
 import { NextResponse } from 'next/server';
-import { clearUserSession } from '@/lib/auth-simple';
+import { signOut } from '@/auth';
 
 export async function POST() {
-  try {
-    await clearUserSession();
-    
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Erreur de déconnexion:', error);
-    return NextResponse.json(
-      { error: 'Erreur interne du serveur' },
-      { status: 500 }
-    );
-  }
+  await signOut({ redirect: false });
+  return NextResponse.json({ success: true });
 }

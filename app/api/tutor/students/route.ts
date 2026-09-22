@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { canAccessTutorFeatures } from '@/lib/admin-permissions';
 
@@ -20,7 +20,7 @@ export async function GET() {
         student_id,
         assigned_at,
         notes,
-        users!tutor_student_assignments_student_id_fkey(
+        profiles!tutor_student_assignments_student_id_fkey(
           id,
           first_name,
           last_name,

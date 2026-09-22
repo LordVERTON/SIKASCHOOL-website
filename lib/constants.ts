@@ -52,19 +52,8 @@ export const PROTECTED_ROUTES = {
   '/admin': USER_ROLES.ADMIN
 } as const;
 
-// Configuration des cookies
-export const SESSION_CONFIG = {
-  COOKIE_NAME: 'user-session',
-  MAX_AGE: 60 * 60 * 24 * 7, // 7 jours
-  SECURE: process.env.NODE_ENV === 'production',
-  SAME_SITE: 'lax' as const
-} as const;
-
-// Types de credentials
+// Types des challenges SMS temporaires encore utilisés par la 2FA optionnelle.
 export const CREDENTIAL_TYPES = {
-  PASSWORD: 'password',
-  EMAIL_VERIFICATION: 'email_verification',
-  PASSWORD_RESET: 'password_reset',
   SMS_2FA_ENABLED: 'sms_2fa_enabled',
   SMS_2FA_PHONE: 'sms_2fa_phone',
   SMS_2FA_SETUP: 'sms_2fa_setup',

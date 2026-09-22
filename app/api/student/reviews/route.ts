@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { canAccessStudentFeatures, getEffectiveStudentAccess } from '@/lib/student-access';
 
@@ -42,7 +42,7 @@ export async function GET() {
 
     if (tutorIds.length > 0) {
       const { data: tutors } = await (supabaseAdmin as any)
-        .from('users')
+        .from('profiles')
         .select('id, first_name, last_name')
         .in('id', tutorIds);
 
@@ -110,7 +110,7 @@ export async function POST(request: Request) {
 
     const [{ data: studentUser, error: userError }, { data: studentProfile }] = await Promise.all([
       supabaseAdmin
-        .from('users')
+        .from('profiles')
         .select('id, first_name, last_name, avatar_url')
         .eq('id', session.access.effectiveStudentId)
         .single(),

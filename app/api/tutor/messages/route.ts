@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
             .filter((id: string) => id !== tutorId);
           if (otherIds.length > 0) {
             const { data: users } = await (supabaseAdmin as any)
-              .from('users')
+              .from('profiles')
               .select('id, first_name, last_name, email, avatar_url, role')
               .in('id', otherIds)
               .limit(1);
@@ -106,7 +106,7 @@ export async function GET(request: NextRequest) {
             .single();
           if (otherMsg) {
             const { data: users } = await (supabaseAdmin as any)
-              .from('users')
+              .from('profiles')
               .select('id, first_name, last_name, email, avatar_url, role')
               .eq('id', (otherMsg as any).sender_id)
               .limit(1);

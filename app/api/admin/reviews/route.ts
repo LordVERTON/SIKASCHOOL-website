@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { canAccessAdminFeatures } from '@/lib/admin-permissions';
 import { supabaseAdmin } from '@/lib/supabase';
 
@@ -31,7 +31,7 @@ export async function GET() {
 
     if (userIds.length > 0) {
       const { data: users } = await (supabaseAdmin as any)
-        .from('users')
+        .from('profiles')
         .select('id, first_name, last_name, email, role')
         .in('id', userIds);
 

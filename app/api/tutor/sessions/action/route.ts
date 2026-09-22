@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { canAccessTutorFeatures } from '@/lib/admin-permissions';
 import { sendStudentSessionDecisionEmail } from '@/lib/registration-emails';
@@ -39,12 +39,12 @@ export async function PATCH(request: NextRequest) {
     const { participantsMap } = await getSessionParticipantsMap([sessionId]);
     const participantStudentIds = mergeSessionStudentIds(session as any, participantsMap);
     const { data: studentRows } = await (supabaseAdmin as any)
-      .from('users')
+      .from('profiles')
       .select('id, email, first_name')
       .in('id', participantStudentIds);
     const students = studentRows || [];
     const { data: tutorData } = await (supabaseAdmin as any)
-      .from('users')
+      .from('profiles')
       .select('first_name, last_name')
       .eq('id', user.id)
       .single();

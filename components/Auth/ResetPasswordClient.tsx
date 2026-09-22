@@ -24,8 +24,8 @@ export default function ResetPasswordClient() {
       return;
     }
 
-    if (password.length < 6) {
-      setError("Le mot de passe doit contenir au moins 6 caractères.");
+    if (password.length < 8) {
+      setError("Le mot de passe doit contenir au moins 8 caractères.");
       return;
     }
 
@@ -92,7 +92,7 @@ export default function ResetPasswordClient() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                minLength={6}
+                minLength={8}
                 required
                 className="w-full rounded-md border border-zinc-300 px-4 py-2 text-zinc-900 outline-none transition focus:border-primary dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
               />
@@ -107,7 +107,7 @@ export default function ResetPasswordClient() {
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                minLength={6}
+                minLength={8}
                 required
                 className="w-full rounded-md border border-zinc-300 px-4 py-2 text-zinc-900 outline-none transition focus:border-primary dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
               />

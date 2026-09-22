@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { canAccessAdminFeatures } from '@/lib/admin-permissions';
 import { sendStudentTutorAssignmentEmail } from '@/lib/registration-emails';
 
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 
     // Vérifier que le tuteur existe et a le bon rôle
     const { data: tutor, error: tutorError } = await supabase
-      .from('users')
+      .from('profiles')
       .select('id, email, first_name, last_name, role')
       .eq('id', tutorId)
       .single();
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
 
     // Vérifier que l'étudiant existe et a le bon rôle
     const { data: student, error: studentError } = await supabase
-      .from('users')
+      .from('profiles')
       .select('id, email, first_name, last_name, role')
       .eq('id', studentId)
       .eq('role', 'STUDENT')

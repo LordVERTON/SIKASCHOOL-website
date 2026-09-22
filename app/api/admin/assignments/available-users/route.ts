@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { canAccessAdminFeatures } from '@/lib/admin-permissions';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
       // Pour les tuteurs, inclure les tuteurs normaux + les admins qui peuvent être tuteurs
       // On récupère d'abord tous les tuteurs, puis on ajoute les admins spécifiques
       const { data: tutors, error: tutorsError } = await supabase
-        .from('users')
+        .from('profiles')
         .select(`
           id,
           email,
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       // Récupérer les admins spécifiques qui peuvent être tuteurs
       const adminEmails = ['daniel.verton@sikaschool.com', 'ruudy.mbouza-bayonne@sikaschool.com'];
       const { data: adminTutors, error: adminTutorsError } = await supabase
-        .from('users')
+        .from('profiles')
         .select(`
           id,
           email,
@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
     } else {
       // Pour les étudiants, garder la logique normale
       const { data: users, error } = await supabase
-        .from('users')
+        .from('profiles')
         .select(`
           id,
           email,

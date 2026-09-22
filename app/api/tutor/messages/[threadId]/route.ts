@@ -69,7 +69,7 @@ export async function GET(
     // Récupérer les informations des utilisateurs
     const userIds = [...new Set(messages.map((msg: any) => msg.sender_id))];
     const { data: users, error: usersError } = await (supabaseAdmin as any)
-      .from('users')
+      .from('profiles')
       .select('id, first_name, last_name, email, avatar_url, role')
       .in('id', userIds);
 
@@ -165,7 +165,7 @@ export async function POST(
     if (participants && participants.length > 0) {
       // Récupérer les informations du tuteur
       const { data: tutor, error: tutorError } = await supabaseAdmin
-        .from('users')
+        .from('profiles')
         .select('first_name, last_name')
         .eq('id', tutorId)
         .single();

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { formatHours } from '@/lib/time-utils';
 import { logger } from '@/lib/logger';
@@ -113,12 +113,14 @@ export async function GET() {
     );
 
     // 2. Récupérer les informations des tuteurs
-    const tutorIds = [...new Set(sessions.map((s) => s.tutor_id).filter(Boolean))];
+    const tutorIds = [
+      ...new Set(sessions.map((s) => s.tutor_id).filter((id): id is string => Boolean(id))),
+    ];
     const tutorsMap = new Map<string, DashboardUser>();
 
     if (tutorIds.length > 0) {
       const { data: tutors, error: tutorsError } = await supabaseAdmin
-        .from('users')
+        .from('profiles')
         .select('id, first_name, last_name, avatar_url, email')
         .in('id', tutorIds);
 
@@ -131,7 +133,7 @@ export async function GET() {
 
     // 3. Récupérer les informations de l'étudiant
     const { data: studentProfile, error: studentError } = await supabaseAdmin
-      .from('users')
+      .from('profiles')
       .select(`
         id,
         first_name,

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { canAccessTutorFeatures } from '@/lib/admin-permissions';
 import { getSessionParticipantsMap, mergeSessionStudentIds } from '@/lib/session-participants';
@@ -44,7 +44,7 @@ export async function GET() {
       ...new Set((sessions || []).flatMap((s: any) => mergeSessionStudentIds(s, participantsMap))),
     ];
     const { data: students } = await (supabaseAdmin as any)
-      .from('users')
+      .from('profiles')
       .select('id, first_name, last_name, email')
       .in('id', studentIds);
 
@@ -55,7 +55,7 @@ export async function GET() {
 
     // Récupérer les informations du tuteur
     const { data: tutorInfo } = await (supabaseAdmin as any)
-      .from('users')
+      .from('profiles')
       .select('first_name, last_name, email, created_at')
       .eq('id', tutorId)
       .single();

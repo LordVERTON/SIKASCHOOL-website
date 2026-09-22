@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { canAccessStudentFeatures, getEffectiveStudentAccess } from '@/lib/student-access';
 
@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
     let tutorsMap = new Map<string, any>();
     if (tutorIds.length > 0) {
       const { data: tutors } = await supabaseAdmin
-        .from('users')
+        .from('profiles')
         .select('id, first_name, last_name, avatar_url')
         .in('id', tutorIds);
       tutorsMap = new Map((tutors || []).map((t: any) => [t.id, t]));

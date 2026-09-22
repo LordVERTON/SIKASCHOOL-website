@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { mercureThreadTopic, mercureUserTopic, publishMercureUpdate } from '@/lib/mercure';
 import { canAccessStudentFeatures, getEffectiveStudentAccess } from '@/lib/student-access';
@@ -98,7 +98,7 @@ export async function GET() {
             .filter((id: string) => id !== studentId);
           if (otherIds.length > 0) {
             const { data: users } = await (supabaseAdmin as any)
-              .from('users')
+              .from('profiles')
               .select('id, email, first_name, last_name, avatar_url, role')
               .in('id', otherIds)
               .limit(1);
@@ -116,7 +116,7 @@ export async function GET() {
             .single();
           if (otherMsg) {
             const { data: users } = await (supabaseAdmin as any)
-              .from('users')
+              .from('profiles')
               .select('id, email, first_name, last_name, avatar_url, role')
               .eq('id', (otherMsg as any).sender_id)
               .limit(1);

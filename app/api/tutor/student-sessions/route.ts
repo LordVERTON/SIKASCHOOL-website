@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getSessionParticipantsMap, mergeSessionStudentIds } from '@/lib/session-participants';
 
@@ -72,7 +72,7 @@ export async function GET(req: Request) {
 
     // Récupérer les informations de l'étudiant
     const { data: studentInfo, error: studentError } = await (supabaseAdmin as any)
-      .from('users')
+      .from('profiles')
       .select(`
         id,
         first_name,

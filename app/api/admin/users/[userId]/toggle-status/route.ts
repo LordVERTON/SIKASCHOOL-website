@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserSession } from '@/lib/auth-simple';
-import { supabaseAdmin } from '@/lib/supabase';
+import { getUserSession } from '@/lib/auth';
 import { canAccessAdminFeatures } from '@/lib/admin-permissions';
+import { setUserActive } from '@/lib/user-management';
 
 export async function PATCH(
   request: NextRequest,
@@ -17,21 +17,10 @@ export async function PATCH(
     const { userId } = await params;
     const { is_active } = await request.json();
 
-    // Mettre à jour le statut de l'utilisateur
-    const updateData = {
-      is_active: is_active,
-      updated_at: new Date().toISOString()
-    } as any;
-
-    const { error } = await (supabaseAdmin as any)
-      .from('users')
-      .update(updateData)
-      .eq('id', userId);
-
-    if (error) {
-      console.error('Erreur lors de la mise à jour du statut:', error);
-      return NextResponse.json({ error: 'Failed to update user status' }, { status: 500 });
+    if (typeof is_active !== 'boolean') {
+      return NextResponse.json({ error: 'is_active doit être un booléen' }, { status: 400 });
     }
+    await setUserActive(userId, is_active);
 
     return NextResponse.json({ 
       success: true, 

@@ -103,8 +103,8 @@ export default function SimpleSignin() {
           setError('Le mot de passe est requis');
           return;
         }
-        if (data.password.length < 6) {
-          setError('Le mot de passe doit contenir au moins 6 caractères');
+        if (data.password.length < 8) {
+          setError('Le mot de passe doit contenir au moins 8 caractères');
           return;
         }
         if (data.password !== data.confirmPassword) {

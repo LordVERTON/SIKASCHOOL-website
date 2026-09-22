@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import {
   sendStudentSessionCancelledEmail,
@@ -107,7 +107,7 @@ export async function PATCH(request: NextRequest) {
 
     // Récupérer les noms des utilisateurs pour les notifications
     const { data: users, error: usersError } = await (supabaseAdmin as any)
-      .from('users')
+      .from('profiles')
       .select('id, first_name, last_name, email')
       .in('id', Array.from(userIdsToNotify));
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createLiveKitToken } from "@/lib/livekit";
-import { getUserSession } from "@/lib/auth-simple";
+import { getUserSession } from "@/lib/auth";
 import { buildClassRoomName, resolveLiveClassMembership } from "@/lib/livekit-access";
 
 export const runtime = "nodejs";

@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { canAccessTutorFeatures } from '@/lib/admin-permissions';
 import { TUTOR_SUBJECTS } from '@/lib/tutor-subjects';
-
-const PREFS_CREDENTIAL_TYPE = 'TUTOR_PREFERENCES';
-const NOTIF_CREDENTIAL_TYPE = 'TUTOR_NOTIFICATION_PREFS';
+import { setUserActive } from '@/lib/user-management';
 
 type PreferencesPayload = {
   theme?: 'light' | 'dark' | 'system';
@@ -17,10 +15,11 @@ type NotificationsPayload = {
   sms: boolean;
 };
 
-function parseCredentialValue<T>(raw: string | null | undefined, fallback: T): T {
+function parseSettingValue<T>(raw: unknown, fallback: T): T {
   if (!raw) return fallback;
+  if (typeof raw === 'object') return raw as T;
   try {
-    return JSON.parse(raw) as T;
+    return JSON.parse(String(raw)) as T;
   } catch {
     return fallback;
   }
@@ -36,7 +35,7 @@ export async function GET() {
     const userId = user.id;
     const results = await Promise.all([
       supabaseAdmin
-        .from('users')
+        .from('profiles')
         .select(
           'id, email, first_name, last_name, avatar_url, phone, address, city, postal_code, country, date_of_birth, timezone, language, created_at'
         )
@@ -47,19 +46,10 @@ export async function GET() {
         .select('bio, experience_years, subjects, is_available, hourly_rate_cents')
         .eq('user_id', userId)
         .maybeSingle(),
-      (supabaseAdmin as any)
-        .from('user_credentials')
-        .select('credential_value')
+      supabaseAdmin
+        .from('user_settings')
+        .select('preferences, notifications')
         .eq('user_id', userId)
-        .eq('credential_type', NOTIF_CREDENTIAL_TYPE)
-        .eq('is_active', true)
-        .maybeSingle(),
-      (supabaseAdmin as any)
-        .from('user_credentials')
-        .select('credential_value')
-        .eq('user_id', userId)
-        .eq('credential_type', PREFS_CREDENTIAL_TYPE)
-        .eq('is_active', true)
         .maybeSingle(),
       (supabaseAdmin as any)
         .from('notifications')
@@ -71,9 +61,8 @@ export async function GET() {
     ]);
     const userRes = results[0] as any;
     const tutorRes = results[1] as any;
-    const notifRes = results[2] as any;
-    const prefsRes = results[3] as any;
-    const passwordNotificationsRes = results[4] as any;
+    const settingsRes = results[2] as any;
+    const passwordNotificationsRes = results[3] as any;
 
     if (userRes.error || !userRes.data) {
       return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 404 });
@@ -82,12 +71,12 @@ export async function GET() {
     const defaultNotifications: NotificationsPayload = { email: true, push: true, sms: false };
     const defaultPreferences: PreferencesPayload = { theme: 'system' };
 
-    const notifications = parseCredentialValue<NotificationsPayload>(
-      notifRes.data?.credential_value,
+    const notifications = parseSettingValue<NotificationsPayload>(
+      settingsRes.data?.notifications,
       defaultNotifications
     );
-    const preferences = parseCredentialValue<PreferencesPayload>(
-      prefsRes.data?.credential_value,
+    const preferences = parseSettingValue<PreferencesPayload>(
+      settingsRes.data?.preferences,
       defaultPreferences
     );
 
@@ -153,7 +142,7 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ error: 'Email invalide' }, { status: 400 });
       }
       const { data: emailOwnerRow, error: emailCheckError } = await supabaseAdmin
-        .from('users')
+        .from('profiles')
         .select('id')
         .eq('email', normalizedEmail)
         .maybeSingle();
@@ -166,7 +155,13 @@ export async function PATCH(request: Request) {
       if (emailOwner && emailOwner.id !== userId) {
         return NextResponse.json({ error: 'Cet email est déjà utilisé' }, { status: 409 });
       }
-      userPayload.email = normalizedEmail;
+      const { error: authEmailError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+        email: normalizedEmail,
+        email_confirm: true,
+      });
+      if (authEmailError) {
+        return NextResponse.json({ error: 'Échec de la mise à jour de l’email' }, { status: 500 });
+      }
     }
     if (typeof body.phone === 'string') userPayload.phone = body.phone.trim();
     if (typeof body.address === 'string') userPayload.address = body.address.trim();
@@ -199,7 +194,7 @@ export async function PATCH(request: Request) {
     if (Object.keys(userPayload).length > 0) {
       userPayload.updated_at = new Date().toISOString();
       const { error: userUpdateError } = await (supabaseAdmin as any)
-        .from('users')
+        .from('profiles')
         .update(userPayload)
         .eq('id', userId);
       if (userUpdateError) {
@@ -245,15 +240,12 @@ export async function PATCH(request: Request) {
             ? body.preferences.theme
             : 'system',
       } as PreferencesPayload;
-      await (supabaseAdmin as any).from('user_credentials').upsert(
+      await supabaseAdmin.from('user_settings').upsert(
         {
           user_id: userId,
-          credential_type: PREFS_CREDENTIAL_TYPE,
-          credential_value: JSON.stringify(prefs),
-          is_active: true,
-          updated_at: new Date().toISOString(),
+          preferences: prefs,
         },
-        { onConflict: 'user_id,credential_type' }
+        { onConflict: 'user_id' }
       );
     }
 
@@ -263,15 +255,12 @@ export async function PATCH(request: Request) {
         push: Boolean(body.notifications.push),
         sms: Boolean(body.notifications.sms),
       };
-      await (supabaseAdmin as any).from('user_credentials').upsert(
+      await supabaseAdmin.from('user_settings').upsert(
         {
           user_id: userId,
-          credential_type: NOTIF_CREDENTIAL_TYPE,
-          credential_value: JSON.stringify(notifications),
-          is_active: true,
-          updated_at: new Date().toISOString(),
+          notifications,
         },
-        { onConflict: 'user_id,credential_type' }
+        { onConflict: 'user_id' }
       );
     }
 
@@ -289,15 +278,7 @@ export async function DELETE() {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    const { error } = await (supabaseAdmin as any)
-      .from('users')
-      .update({ is_active: false, updated_at: new Date().toISOString() })
-      .eq('id', user.id);
-
-    if (error) {
-      console.error('Erreur désactivation compte tuteur:', error);
-      return NextResponse.json({ error: 'Impossible de désactiver le compte' }, { status: 500 });
-    }
+    await setUserActive(user.id, false);
 
     return NextResponse.json({ success: true });
   } catch (error) {

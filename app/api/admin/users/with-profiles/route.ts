@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUserSession } from '@/lib/auth-simple';
+import { getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { canAccessAdminFeatures } from '@/lib/admin-permissions';
 
@@ -13,7 +13,7 @@ export async function GET() {
 
     // Récupérer tous les utilisateurs avec leurs profils
     const { data: users, error: usersError } = await supabaseAdmin
-      .from('users')
+      .from('profiles')
       .select('id, email, first_name, last_name, role, is_active, created_at')
       .order('created_at', { ascending: false });
 
