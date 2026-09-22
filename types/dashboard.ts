@@ -5,23 +5,23 @@
 
 export interface DashboardSession {
   id: string;
-  student_id: string;
-  tutor_id: string;
-  subject: string;
+  student_id: string | null;
+  tutor_id: string | null;
+  subject: string | null;
   level: string;
   session_type?: string;
   type?: string;
-  status: string;
+  status: string | null;
   started_at: string | null;
-  completed_at: string | null;
-  duration_minutes: number;
+  ended_at: string | null;
+  duration_minutes: number | null;
   topics_covered?: string[] | string | null;
   homework_assigned?: string | null;
   student_rating?: number | null;
   tutor_rating?: number | null;
   tutor_notes?: string | null;
-  created_at: string;
-  updated_at: string;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export interface SessionParticipantLink {

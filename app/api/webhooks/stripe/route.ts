@@ -177,7 +177,6 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       const invoice = await stripe.invoices.retrieve(session.invoice as string);
       await supabaseAdmin
         .from('payments')
-        // @ts-expect-error types db non régénérés
         .update({
           stripe_invoice_id: invoice.id,
           hosted_invoice_url: invoice.hosted_invoice_url,
@@ -252,7 +251,6 @@ async function handleInvoiceFailed(invoice: Stripe.Invoice) {
   if (!invoice.id) return;
   await supabaseAdmin
     .from('payments')
-    // @ts-expect-error types db non régénérés
     .update({ status: 'FAILED' })
     .eq('stripe_invoice_id', invoice.id);
 }
@@ -296,7 +294,6 @@ async function handleSubscriptionChange(sub: Stripe.Subscription) {
 
   const { error } = await supabaseAdmin
     .from('subscriptions')
-    // @ts-expect-error types db non régénérés
     .upsert(payload, { onConflict: 'stripe_subscription_id' });
 
   if (error) {
@@ -310,7 +307,6 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
 
   await supabaseAdmin
     .from('payments')
-    // @ts-expect-error types db non régénérés
     .update({ status: 'REFUNDED' })
     .eq('stripe_payment_intent', paymentIntent);
 }
@@ -368,7 +364,6 @@ async function upsertPayment(args: UpsertPaymentArgs) {
   if (conflictKey) {
     const { error } = await supabaseAdmin
       .from('payments')
-      // @ts-expect-error types db non régénérés
       .upsert(row, { onConflict: conflictKey });
     if (error) console.error('[webhook] upsert payment failed', error);
     return;
@@ -376,7 +371,6 @@ async function upsertPayment(args: UpsertPaymentArgs) {
 
   const { error } = await supabaseAdmin
     .from('payments')
-    // @ts-expect-error types db non régénérés
     .insert(row);
   if (error) console.error('[webhook] insert payment failed', error);
 }
