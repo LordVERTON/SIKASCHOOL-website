@@ -1,19 +1,21 @@
 # Base Supabase SikaSchool
 
+Référence canonique : [architecture — Supabase](../docs/architecture.md#6-supabase-et-modele-de-donnees), [règles](../docs/Rules.md) et [tâches](../docs/tasks.md). Ce guide opérationnel extérieur est conservé ; aucune commande distante n’a été exécutée pendant la consolidation.
+
 ## Fichiers versionnés
 
-| Fichier / dossier | Rôle |
-|-------------------|------|
-| `migrations/20260101120000_initial_schema.sql` | **Schéma complet** : enums, tables, index, FK, fonctions, triggers, RLS messagerie / FAQ / témoignages, publication Realtime (messages), tables Stripe (`payments`, `student_credits`, …), Sika AI (`ai_tutor_*`). |
-| `migrations/20260912143000_move_users_to_supabase_auth.sql` | Migre les comptes historiques vers `auth.users`, transforme `public.users` en `public.profiles` et supprime les secrets d’authentification du schéma public. |
-| `seed.sql` | **Données de test uniquement** (comptes démo, profils, FAQ, etc.). Aucun DDL. |
-| `config.toml` | Configuration CLI locale (version Postgres, seed, …). |
+| Fichier / dossier                                           | Rôle                                                                                                                                                                                                                                                                      |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `migrations/20260101120000_initial_schema.sql`              | **Baseline historique** (à compléter par toutes les migrations suivantes) : enums, tables, index, FK, fonctions, triggers, RLS messagerie / FAQ / témoignages, publication Realtime (messages), tables Stripe (`payments`, `student_credits`, …), Sika AI (`ai_tutor_*`). |
+| `migrations/20260912143000_move_users_to_supabase_auth.sql` | Migre les comptes historiques vers `auth.users`, transforme `public.users` en `public.profiles` et supprime les secrets d’authentification du schéma public.                                                                                                              |
+| `seed.sql`                                                  | **Données de test uniquement** (comptes démo, profils, FAQ, etc.), avec tables temporaires de préparation ; aucun changement permanent du schéma métier.                                                                                                                  |
+| `config.toml`                                               | Configuration CLI locale (version Postgres, seed, …).                                                                                                                                                                                                                     |
 
 ## Nom du fichier de migration (`20260101120000` et pas `0001`)
 
 La CLI Supabase identifie chaque migration par un préfixe **`YYYYMMDDHHMMSS`** (souvent **14 chiffres**). Les fichiers du type **`0001_initial_schema.sql`** ne suivent pas cette convention et peuvent être **ignorés ou mal ordonnés**.
 
-Ici, **`20260101120000_initial_schema.sql`** est la **migration initiale unique** du dépôt : le préfixe est un **identifiant d’ordre** stable dans Git, pas nécessairement la date réelle de création du projet.
+Ici, **`20260101120000_initial_schema.sql`** est la **baseline initiale** du dépôt : le préfixe est un **identifiant d’ordre** stable dans Git, pas nécessairement la date réelle de création du projet.
 
 Référence : [Database migrations (CLI)](https://supabase.com/docs/guides/cli/local-development#database-migrations).
 
@@ -26,7 +28,7 @@ npm run supabase:reset
 
 `supabase:reset` cible explicitement la base locale : il applique les migrations puis `seed.sql` (voir `[db.seed]` dans `config.toml`). Les données distantes ne sont jamais modifiées.
 
-`.env.development.local` pointe déjà vers l'API locale (`http://127.0.0.1:54321`) et fournit les clés correspondantes ; aucune configuration Supabase manuelle n'est requise. Contrôler les services avec `npm run supabase:status`, les arrêter avec `npm run supabase:stop` et ouvrir Studio sur `http://127.0.0.1:54323`.
+Copier `.env.development.local.example` vers `.env.development.local`, puis vérifier l'URL locale et les clés avec `npm run supabase:status`. Un nouveau clone ne possède pas nécessairement la configuration effective. Contrôler les services avec `npm run supabase:status`, les arrêter avec `npm run supabase:stop` et ouvrir Studio sur `http://127.0.0.1:54323`.
 
 ## Jeu de données de démonstration
 
@@ -34,19 +36,19 @@ npm run supabase:reset
 
 Comptes principaux :
 
-| Rôle | E-mail | Mot de passe | Particularité |
-|---|---|---|---|
-| Admin | `admin@sikaschool.com` | `admin123` | Administration complète |
-| Tuteur | `tutor@sikaschool.com` | `tutor123` | Mathématiques, physique, statistiques |
-| Tuteur | `sophie@sikaschool.com` | `tutor123` | Français, philosophie, histoire-géographie |
-| Tuteur | `karim@sikaschool.com` | `tutor123` | Informatique, algorithmique, économie |
-| Tuteur | `ana@sikaschool.com` | `tutor123` | Anglais, espagnol |
-| Tuteur | `hugo@sikaschool.com` | `tutor123` | SVT, chimie ; marqué indisponible |
-| Élève | `student@sikaschool.com` | `student123` | Terminale, historique pédagogique et financier complet |
-| Élève | `camille@sikaschool.com` | `student123` | Seconde, abonnement en essai |
-| Élève | `ines@sikaschool.com` | `student123` | Licence 1, parcours supérieur |
-| Parent | `parent@sikaschool.com` | `parent123` | Parent de l'élève démo |
-| Parent | `claire@sikaschool.com` | `parent123` | Parent de trois élèves |
+| Rôle   | E-mail                   | Mot de passe | Particularité                                                            |
+| ------ | ------------------------ | ------------ | ------------------------------------------------------------------------ |
+| Admin  | `admin@sikaschool.com`   | `admin123`   | Administration complète                                                  |
+| Tuteur | `tutor@sikaschool.com`   | `tutor123`   | Mathématiques, physique, statistiques                                    |
+| Tuteur | `sophie@sikaschool.com`  | `tutor123`   | Français, philosophie, histoire-géographie                               |
+| Tuteur | `karim@sikaschool.com`   | `tutor123`   | Informatique, algorithmique, économie                                    |
+| Tuteur | `ana@sikaschool.com`     | `tutor123`   | Anglais, espagnol                                                        |
+| Tuteur | `hugo@sikaschool.com`    | `tutor123`   | SVT, chimie ; marqué indisponible                                        |
+| Élève  | `student@sikaschool.com` | `student123` | Terminale, historique pédagogique et financier complet                   |
+| Élève  | `camille@sikaschool.com` | `student123` | Seconde, abonnement en essai                                             |
+| Élève  | `ines@sikaschool.com`    | `student123` | Licence 1, parcours supérieur                                            |
+| Parent | `parent@sikaschool.com`  | `parent123`  | Parent de l'élève démo                                                   |
+| Parent | `claire@sikaschool.com`  | `parent123`  | Trois liens dans le seed ; le helper applicatif ne résout que le premier |
 
 Les autres comptes sont listés en tête de [`seed.sql`](./seed.sql). Le compte `inactive@sikaschool.com` est volontairement désactivé afin de tester les filtres et le refus de connexion.
 
@@ -88,11 +90,11 @@ npx supabase db push
 
 ### Cas problématique — Remote contient des versions absentes du dépôt
 
-Après une **fusion** des migrations en un seul fichier, la table distante **`supabase_migrations.schema_migrations`** peut encore lister d’anciennes versions (`20240601000000`, `20251007110000`, …) alors que le dépôt ne contient plus que **`20260101120000_initial_schema.sql`**. La CLI signale alors un décalage entre Local et Remote.
+Après une **fusion** des migrations en un seul fichier, la table distante **`supabase_migrations.schema_migrations`** peut encore lister d’anciennes versions (`20240601000000`, `20251007110000`, …) alors que leurs fichiers ont été consolidés dans la baseline **`20260101120000_initial_schema.sql`** (le dépôt actuel contient 14 migrations). La CLI signale alors un décalage entre Local et Remote.
 
 **Recommandation** : pour du dev/staging, créer un **nouveau projet Supabase**, `link`, puis `db push`.
 
-**Sinon, sur le projet existant** (production ou non) :
+**Sinon, sur le projet existant**, seulement après autorisation explicite et comparaison du schéma réel ; `repair` modifie l’historique, sans rollback SQL. Ne pas rejouer la baseline sur une base existante à l’aveugle :
 
 1. **Sauvegarder** la base (dashboard Supabase ou dump).
 2. Contrôler :  
@@ -101,17 +103,17 @@ Après une **fusion** des migrations en un seul fichier, la table distante **`su
    `npx supabase migration repair <version> --status reverted --linked --yes`  
    → supprime l’entrée d’historique **sans** rollback SQL (le schéma existant reste en place).
 4. Puis au choix :
-   - **`npx supabase db push --yes`** — applique la migration locale `20260101120000` (DDL largement idempotent), ou  
+   - **`npx supabase db push --yes`** — applique les migrations locales en attente ; inspecter leur effet et tester une restauration avant tout usage distant, ou
    - **`npx supabase migration repair 20260101120000 --status applied --linked --yes`** — enregistre cette version comme déjà appliquée **sans** rejouer le fichier (uniquement si le schéma distant est déjà identique au fichier fusionné).
 
 Référence : [`supabase migration repair`](https://supabase.com/docs/reference/cli/supabase-migration-repair).
 
 ## Workflow dev vs prod
 
-| Environnement | Commandes typiques |
-|---------------|-------------------|
-| **Développement local** | `npm run supabase:start` → `npm run supabase:reset` (migrations + `seed.sql`) → Next.js charge automatiquement l’URL et les clés locales. |
-| **Production** | Projet Supabase Cloud : `npx supabase link` + `npx supabase db push` — **sans** seed ; données réelles uniquement. |
+| Environnement           | Commandes typiques                                                                                                                            |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Développement local** | `npm run supabase:start` → `npm run supabase:reset` (migrations + `seed.sql`) → Next.js charge les variables locales préalablement vérifiées. |
+| **Production**          | Projet Supabase Cloud : `npx supabase link` + `npx supabase db push` — **sans** seed ; données réelles uniquement.                            |
 
 ## `db pull`
 

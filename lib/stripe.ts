@@ -30,7 +30,7 @@ export const stripe: Stripe = apiKey
 export function assertStripeConfigured(): void {
   if (!stripe) {
     throw new Error(
-      'Stripe non configuré : ajoute STRIPE_SECRET_KEY dans .env.local (voir docs/STRIPE_SETUP.md)'
+      'Stripe non configuré : ajoute STRIPE_SECRET_KEY dans .env.local (voir docs/architecture.md#stripe)'
     );
   }
 }

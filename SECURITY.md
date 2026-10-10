@@ -1,85 +1,25 @@
 # Security Policy
 
-## Security Measures Implemented
+L'architecture de sécurité et ses limites sont décrites dans [architecture](docs/architecture.md#securite), les exigences dans [Rules](docs/Rules.md) et les corrections dans [tasks](docs/tasks.md). État documentaire : 10 octobre 2026 ; aucun audit de production ni test d'intrusion effectué lors de cette consolidation.
 
-### 1. Input Validation & Sanitization
-- Email validation with regex patterns
-- String sanitization to prevent XSS attacks
-- Input length limits and type checking
-- Tutor ID validation against whitelist
+## Mécanismes présents
 
-### 2. Security Headers
-- Content Security Policy (CSP)
-- X-Frame-Options: DENY
-- X-Content-Type-Options: nosniff
-- X-XSS-Protection: 1; mode=block
-- Referrer-Policy: strict-origin-when-cross-origin
-- HSTS in production
+- Supabase Auth pour l'identité, Auth.js pour la session ; contrôles de rôle/propriété dans les routes, à uniformiser.
+- PostgreSQL RLS et privilèges limités ; les routes service role doivent assurer leur propre autorisation.
+- Validation Zod ou manuelle selon endpoint, TypeScript strict, ErrorBoundary et helpers logger/storage.
+- Webhook Stripe avec vérification de signature sur body brut. L'idempotence des crédits n'est pas garantie actuellement.
+- `next.config.js` : X-Frame-Options SAMEORIGIN, X-Content-Type-Options nosniff, Referrer-Policy origin-when-cross-origin, X-XSS-Protection et X-DNS-Prefetch-Control ; pas de CSP/HSTS explicite. Les en-têtes déployés restent à vérifier.
 
-### 3. TypeScript Configuration
-- Strict mode enabled
-- Strict null checks
-- Force consistent casing in file names
-- No implicit any types
+## Limites prioritaires
 
-### 4. Error Handling
-- Global ErrorBoundary component
-- Secure logging with sensitive data redaction
-- Proper error messages without information leakage
+La présence de ces mécanismes ne prouve pas une protection complète. La 2FA du login custom n'est pas imposée dans le fournisseur Credentials ; la liaison parent par e-mail, les mutations publiques lead/update-status et les écritures de crédits exigent des corrections prioritaires. Les détails et critères restent dans les références ci-dessus, sans duplication du backlog.
 
-### 5. Storage Security
-- Safe localStorage operations with error handling
-- Server-side rendering compatibility
-- Input validation before storage
-
-### 6. Dependencies
-- Regular security audits with `npm audit`
-- ESLint security plugin
-- Up-to-date dependencies
+`npm run security:check` lance `npm audit`. Les nombres de vulnérabilités de septembre sont historiques ; aucun résultat actuel n'est revendiqué ici. Le plugin ESLint security est installé mais non activé dans la configuration actuelle. Les logs console et validations d'environnement ne garantissent pas une redaction ou couverture exhaustive.
 
 ## Reporting Security Vulnerabilities
 
-If you discover a security vulnerability, please report it to:
-- Email: security@sikaschool.com
-- Please include:
-  - Description of the vulnerability
-  - Steps to reproduce
-  - Potential impact
-  - Suggested fix (if any)
+Contact conservé du dépôt : security@sikaschool.com (délivrabilité non testée pendant cette mission). Fournir description, étapes minimales, impact potentiel et suggestion, sans données personnelles, secret ou preuve exploitable publiée dans une issue publique.
 
-## Security Best Practices
+## Pratiques et entretien
 
-### For Developers
-1. Always validate and sanitize user inputs
-2. Use TypeScript strict mode
-3. Run security audits regularly
-4. Keep dependencies updated
-5. Follow the principle of least privilege
-6. Log security events appropriately
-
-### For Deployment
-1. Use HTTPS in production
-2. Set secure environment variables
-3. Enable security headers
-4. Monitor for security issues
-5. Regular security updates
-
-## Security Checklist
-
-- [x] Input validation implemented
-- [x] Security headers configured
-- [x] Error handling in place
-- [x] TypeScript strict mode enabled
-- [x] ESLint security rules configured
-- [x] Secure logging implemented
-- [x] ErrorBoundary component added
-- [x] Accessibility features implemented
-- [x] Image optimization configured
-- [x] Environment variables validation
-
-## Regular Security Tasks
-
-1. **Weekly**: Run `npm audit` and fix vulnerabilities
-2. **Monthly**: Update dependencies
-3. **Quarterly**: Security code review
-4. **Annually**: Penetration testing (when applicable)
+Valider côté serveur, protéger rôle et propriété, utiliser HTTPS, garder les secrets hors Git/client/logs et vérifier les dépendances. Le calendrier historique recommande audit hebdomadaire, revue de dépendances mensuelle, revue de code sécurité trimestrielle et test d'intrusion annuel lorsque pertinent ; il s'agit d'une recommandation d'exploitation, pas d'activités attestées. Programmer ces contrôles avec responsables et preuves dans tasks/memory.
