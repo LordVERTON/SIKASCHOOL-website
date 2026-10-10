@@ -40,12 +40,30 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = authData.user.id;
-    const { data: profile } = await supabaseAdmin
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('first_name, last_name, role, is_active')
       .eq('id', userId)
-      .single();
-    if (!profile?.is_active) {
+      .maybeSingle();
+    if (profileError) {
+      console.error('[auth/login] Profile lookup failed', {
+        userId,
+        code: profileError.code,
+        message: profileError.message,
+      });
+      return NextResponse.json(
+        { error: 'Service de connexion temporairement indisponible. Veuillez réessayer plus tard.' },
+        { status: 503 },
+      );
+    }
+    if (!profile) {
+      console.error('[auth/login] Missing application profile', { userId });
+      return NextResponse.json(
+        { error: 'Profil utilisateur introuvable. Veuillez contacter le support.' },
+        { status: 403 },
+      );
+    }
+    if (!profile.is_active) {
       return NextResponse.json({ error: 'Compte désactivé' }, { status: 403 });
     }
     if (await isSms2faEnabled(userId)) {

@@ -3,6 +3,7 @@
 const nextConfig = {
   reactStrictMode: true,
   allowedDevOrigins: ["172.20.10.3"],
+  allowedDevOrigins: ["172.0.0.1"],
   poweredByHeader: false,
   compress: true,
   images: {
