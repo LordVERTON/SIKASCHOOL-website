@@ -220,6 +220,7 @@ Tables centrales : `users`, `students`, `tutors`, `sessions`, `notifications`, `
 
 ## Documentation
 
+- [docs/roadmap.md](docs/roadmap.md) — Backlog d'exécution canonique, incluant les demandes du 17 octobre 2026
 - [docs/SIKA_AI_TUTOR.md](docs/SIKA_AI_TUTOR.md) — Sika AI  
 - [docs/LIVEKIT_SETUP.md](docs/LIVEKIT_SETUP.md) — LiveKit  
 - [docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md) — Pointeur Supabase  
