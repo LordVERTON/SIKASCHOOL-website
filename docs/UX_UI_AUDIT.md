@@ -4,7 +4,7 @@ _Audit du code au 12 septembre 2026. Aucune interface ni logique produit n'a ét
 
 ## Rôle de ce document
 
-Ce document est la **source de vérité des constats visibles par l'utilisateur** : contenu, navigation, conversion, interface, responsive et accessibilité. Il décrit le pourquoi et l'impact UX. Les vulnérabilités, couches applicatives et contrôles de données sont détaillés uniquement dans [TECHNICAL_AUDIT.md](TECHNICAL_AUDIT.md) ; les diagrammes de parcours uniquement dans [WORKFLOWS.md](WORKFLOWS.md) ; la liste de travail priorisée uniquement dans [ROADMAP.md](ROADMAP.md).
+Ce document est la **source de vérité des constats visibles par l'utilisateur** : contenu, navigation, conversion, interface, responsive et accessibilité. Il décrit le pourquoi et l'impact UX. Les vulnérabilités, couches applicatives et contrôles de données sont détaillés uniquement dans [TECHNICAL_AUDIT.md](TECHNICAL_AUDIT.md) ; les diagrammes de parcours uniquement dans [WORKFLOWS.md](WORKFLOWS.md) ; la liste de travail priorisée uniquement dans [roadmap.md](roadmap.md).
 
 ## Résumé exécutif
 
@@ -340,4 +340,4 @@ _Référence : WCAG 2.2 — Focus Appearance, Focus Not Obscured, Name/Role/Valu
 
 - Le hero est déjà explicite, mais sa description mêle « votre enfant » et « votre parcours » : choisir une cible par bloc.
 - L'offre de rentrée, son -15 % et le libellé « Promo de rentrée » sont codés dans `StagePromo`, `Pricing`, traductions et lead. Les passer dans une configuration de campagne datée avec fallback neutre.
-- L'ancienne documentation `docs/UX_UI_ROADMAP.md` contient des statuts `[x]` qui ne concordent pas toujours avec le rendu actuel (par exemple les prix de `components/Pricing/index.tsx`). `ROADMAP.md` est désormais la référence de priorisation ; ne pas interpréter une case historique comme une validation de recette.
+- L'ancienne documentation `docs/UX_UI_ROADMAP.md` contient des statuts `[x]` qui ne concordent pas toujours avec le rendu actuel (par exemple les prix de `components/Pricing/index.tsx`). `roadmap.md` est désormais la référence de priorisation ; ne pas interpréter une case historique comme une validation de recette.

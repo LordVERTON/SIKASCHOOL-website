@@ -2,7 +2,7 @@
 
 ## Rôle de ce document
 
-Ce document complète `docs/workflows/` en étant l'**index visuel des parcours** : acteurs, étapes, états et frontières entre workflows. Il ne répète pas les constats ni les solutions détaillées : chaque écart renvoie à son ID dans les audits. L'ordre d'implémentation et les critères de recette contractuels restent dans [ROADMAP.md](ROADMAP.md).
+Ce document complète `docs/workflows/` en étant l'**index visuel des parcours** : acteurs, étapes, états et frontières entre workflows. Il ne répète pas les constats ni les solutions détaillées : chaque écart renvoie à son ID dans les audits. L'ordre d'implémentation et les critères de recette contractuels restent dans [roadmap.md](roadmap.md).
 
 ## Réservation d'une première séance
 
@@ -44,7 +44,7 @@ flowchart LR
   G --> H[Confirmation + prochaine étape]
 ```
 
-**Décisions métier à valider :** durée de hold, attribution « meilleur tuteur » ou choix explicite, délai de confirmation tuteur, données nécessaires à l'essai, politique d'annulation. Les critères de recette sont centralisés dans `ROADMAP.md` (TECH-001 à TECH-003 et UX-003).
+**Décisions métier à valider :** durée de hold, attribution « meilleur tuteur » ou choix explicite, délai de confirmation tuteur, données nécessaires à l'essai, politique d'annulation. Les critères de recette sont centralisés dans `roadmap.md` (TECH-001 à TECH-003 et UX-003).
 
 ## Achat et crédits Stripe
 
@@ -72,7 +72,7 @@ sequenceDiagram
 | --- | --- |
 | Comparaison publique des offres | `UX-002` dans `UX_UI_AUDIT.md` |
 | Idempotence et atomicité crédits | `TECH-002` dans `TECHNICAL_AUDIT.md` |
-| Transition séance/consommation | tâche « Formaliser les transitions » de Phase 4 dans `ROADMAP.md` |
+| Transition séance/consommation | tâche « Formaliser les transitions » de Phase 4 dans `roadmap.md` |
 
 ### Workflow recommandé
 
@@ -85,7 +85,7 @@ flowchart TD
   E --> F[200]
 ```
 
-Les critères de recette paiement sont centralisés dans `ROADMAP.md` sous TECH-002.
+Les critères de recette paiement sont centralisés dans `roadmap.md` sous TECH-002.
 
 ## Authentification et autorisation
 
@@ -123,8 +123,8 @@ stateDiagram-v2
 
 ### Référence d'implémentation
 
-La formalisation des transitions est une tâche unique de Phase 4 dans `ROADMAP.md`; le choix d'un service et d'une machine d'états légère est motivé dans `DESIGN_PATTERNS.md`. Ne pas créer une seconde spécification dans ce document.
+La formalisation des transitions est une tâche unique de Phase 4 dans `roadmap.md`; le choix d'un service et d'une machine d'états légère est motivé dans `DESIGN_PATTERNS.md`. Ne pas créer une seconde spécification dans ce document.
 
 ## Feedback et observabilité transverses
 
-Références : `A11Y-002` pour les états UI et `TECH-011` pour les événements, logs et corrélation. Les définitions d'événements et critères d'acceptation ne figurent que dans `ROADMAP.md`.
+Références : `A11Y-002` pour les états UI et `TECH-011` pour les événements, logs et corrélation. Les définitions d'événements et critères d'acceptation ne figurent que dans `roadmap.md`.

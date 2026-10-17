@@ -4,7 +4,7 @@ _Périmètre : dépôt local au 12 septembre 2026, lecture du code et exécution
 
 ## Rôle de ce document
 
-Ce document est la **source de vérité des constats d'implémentation** : sécurité, données, API, architecture, qualité et exploitation. Il ne redéfinit ni la hiérarchie de page, ni les règles de contenu ou de design : celles-ci sont dans [UX_UI_AUDIT.md](UX_UI_AUDIT.md). Les cartes d'états et d'acteurs sont dans [WORKFLOWS.md](WORKFLOWS.md), les choix de patterns dans [DESIGN_PATTERNS.md](DESIGN_PATTERNS.md) et l'ordre d'exécution dans [ROADMAP.md](ROADMAP.md).
+Ce document est la **source de vérité des constats d'implémentation** : sécurité, données, API, architecture, qualité et exploitation. Il ne redéfinit ni la hiérarchie de page, ni les règles de contenu ou de design : celles-ci sont dans [UX_UI_AUDIT.md](UX_UI_AUDIT.md). Les cartes d'états et d'acteurs sont dans [WORKFLOWS.md](WORKFLOWS.md), les choix de patterns dans [DESIGN_PATTERNS.md](DESIGN_PATTERNS.md) et l'ordre d'exécution dans [roadmap.md](roadmap.md).
 
 ## Vue d'ensemble
 

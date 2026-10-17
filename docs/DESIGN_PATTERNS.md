@@ -2,7 +2,7 @@
 
 ## Rôle de ce document
 
-Ce document ne crée pas de tickets supplémentaires. Il explique les **choix structurels** utiles aux tickets existants : pourquoi un service, une machine d'états ou une primitive UI est justifié, et où s'arrêter pour éviter le sur-engineering. Les problèmes factuels restent dans les audits et les tâches actionnables restent dans [ROADMAP.md](ROADMAP.md).
+Ce document ne crée pas de tickets supplémentaires. Il explique les **choix structurels** utiles aux tickets existants : pourquoi un service, une machine d'états ou une primitive UI est justifié, et où s'arrêter pour éviter le sur-engineering. Les problèmes factuels restent dans les audits et les tâches actionnables restent dans [roadmap.md](roadmap.md).
 
 ## Patterns déjà présents
 

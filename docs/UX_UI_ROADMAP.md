@@ -1,5 +1,7 @@
 # Feuille de route UX/UI — SikaSchool
 
+> Archive historique conservée avec ses cases et son contexte d'origine. Le seul backlog d'exécution à maintenir est [roadmap.md](roadmap.md) ; les lots ci-dessous ne constituent pas une roadmap parallèle ni une preuve de recette actuelle.
+
 > Statut : planification. Ce document décrit des lots à valider avant toute implémentation ; il ne constitue pas un ordre d’exécution automatique.
 
 ## Garde-fous
