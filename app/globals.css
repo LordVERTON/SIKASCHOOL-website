@@ -13,9 +13,9 @@
 
 @theme {
   --font-*: initial;
-  --font-inter: var(--font-sika-body), Arial, sans-serif;
+  --font-inter: var(--font-sika-body), Georgia, serif;
   --font-primary: var(--font-sika-display), 'Arial Black', sans-serif;
-  --font-secondary: var(--font-sika-body), Arial, sans-serif;
+  --font-secondary: var(--font-sika-body), Georgia, serif;
 
   --color-current: currentColor;
   --color-transparent: transparent;
@@ -258,7 +258,7 @@ pre {
 
 /* SIKASCHOOL V2: public-site typography; existing utility names stay compatible. */
 .sika-site {
-  font-family: var(--font-sika-body), Arial, sans-serif;
+  font-family: var(--font-sika-body), Georgia, serif;
   color: var(--sika-text);
   background: var(--sika-brand-white);
   --sika-heading-color: var(--sika-brand-blue);

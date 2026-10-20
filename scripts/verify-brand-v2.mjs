@@ -104,7 +104,7 @@ try {
       assert.equal(state.main, 1, `${path}: main landmark count`);
       assert.equal(state.overflow, false, `${path}: overflow at ${width}px`);
       assert.equal(state.blue.toLowerCase(), '#1e3a8a');
-      assert.match(state.bodyFont.toLowerCase(), /poppins/);
+      assert.match(state.bodyFont.toLowerCase(), /sourcehanserif/);
       if (state.headingFont) {
         assert.match(state.headingFont.toLowerCase(), /sensawild/);
       }

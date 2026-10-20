@@ -1,6 +1,5 @@
 import "./globals.css";
 import localFont from "next/font/local";
-import { Inter } from "next/font/google";
 
 const sensaWild = localFont({
   src: "../public/fonts/sensa-wild-fill.woff2",
@@ -12,10 +11,14 @@ const sensaWild = localFont({
   adjustFontFallback: false,
 });
 
-const inter = Inter({
-  subsets: ["latin"],
+const sourceHanSerif = localFont({
+  src: "../public/fonts/source-han-serif-jp-variable.woff2",
   variable: "--font-sika-body",
+  weight: "200 900",
+  style: "normal",
   display: "swap",
+  fallback: ["Georgia", "Times New Roman", "serif"],
+  adjustFontFallback: false,
 });
 
 export default function RootLayout({
@@ -26,7 +29,7 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${sensaWild.variable} ${inter.variable}`}
+      className={`${sensaWild.variable} ${sourceHanSerif.variable}`}
       suppressHydrationWarning
     >
       <body className="dark:bg-black">
