@@ -1,32 +1,43 @@
-@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&display=swap');
 @import 'tailwindcss';
 
 @custom-variant dark (&:is(.dark *));
 
+:root {
+  --sika-brand-blue: #1e3a8a;
+  --sika-brand-orange: #ffbc58;
+  --sika-brand-white: #ffffff;
+  --sika-surface-muted: #f0f1f5;
+  --sika-blue-hover: #172e6e;
+  --sika-text: #26324b;
+}
+
 @theme {
   --font-*: initial;
-  --font-inter: Inter, sans-serif;
+  --font-inter: var(--font-sika-body), Arial, sans-serif;
+  --font-primary: var(--font-sika-display), 'Arial Black', sans-serif;
+  --font-secondary: var(--font-sika-body), Arial, sans-serif;
 
   --color-current: currentColor;
   --color-transparent: transparent;
   --color-stroke: #eeeeee;
   --color-strokedark: #2d2f40;
   --color-hoverdark: #252a42;
-  --color-titlebg: #adfff8;
-  --color-titlebg2: #ffeac2;
+  --color-titlebg: var(--sika-brand-orange);
+  --color-titlebg2: var(--sika-brand-orange);
   --color-titlebgdark: #46495a;
   --color-btndark: #292e45;
   --color-white: #ffffff;
   --color-black: #181c31;
   --color-blackho: #2c3149;
   --color-blacksection: #1c2136;
-  --color-primary: #006bff;
-  --color-primaryho: #0063ec;
-  --color-meta: #20c5a8;
-  --color-waterloo: #757693;
-  --color-manatee: #999aa1;
+  --color-primary: var(--sika-brand-blue);
+  --color-primaryho: var(--sika-blue-hover);
+  --color-brand-orange: var(--sika-brand-orange);
+  --color-meta: var(--sika-brand-orange);
+  --color-waterloo: #525d73;
+  --color-manatee: #b6bdcc;
   --color-alabaster: #fbfbfb;
-  --color-zumthor: #edf5ff;
+  --color-zumthor: var(--sika-surface-muted);
   --color-socialicon: #d1d8e0;
 
   --text-metatitle: 12px, 20px;
@@ -103,10 +114,7 @@
 }
 
 @utility dropdown {
-  @apply -left-7.5 mt-2 hidden min-w-max flex-col gap-4 rounded-md border border-stroke bg-white px-8 py-5 shadow-solid-13 duration-300 ease-in dark:border-strokedark dark:bg-black xl:invisible xl:absolute
-    xl:mt-0 xl:flex xl:w-[250px] xl:translate-y-10 xl:opacity-0
-    xl:before:absolute xl:before:-top-1.5 xl:before:left-10 xl:before:h-3 xl:before:w-3 xl:before:rotate-45 xl:before:border-l xl:before:border-t xl:before:border-stroke xl:before:bg-white xl:group-hover:visible xl:group-hover:translate-y-6.5 
-    xl:group-hover:opacity-100 xl:dark:before:border-strokedark xl:dark:before:bg-black;
+  @apply border-stroke shadow-solid-13 dark:border-strokedark xl:before:border-stroke xl:dark:before:border-strokedark -left-7.5 mt-2 hidden min-w-max flex-col gap-4 rounded-md border bg-white px-8 py-5 duration-300 ease-in xl:invisible xl:absolute xl:mt-0 xl:flex xl:w-[250px] xl:translate-y-10 xl:opacity-0 xl:group-hover:visible xl:group-hover:translate-y-6.5 xl:group-hover:opacity-100 xl:before:absolute xl:before:-top-1.5 xl:before:left-10 xl:before:h-3 xl:before:w-3 xl:before:rotate-45 xl:before:border-t xl:before:border-l xl:before:bg-white dark:bg-black xl:dark:before:bg-black;
 }
 
 @utility no-scrollbar {
@@ -127,10 +135,10 @@
   /* third-party libraries CSS */
 
   .testimonial-01 .swiper-pagination-bullet {
-    @apply h-2.5 w-2.5 bg-stroke opacity-100;
+    @apply bg-stroke h-2.5 w-2.5 opacity-100;
   }
   .testimonial-01 .swiper-pagination-bullet-active {
-    @apply w-5 rounded-full bg-primary;
+    @apply bg-primary w-5 rounded-full;
   }
 
   .testimonial-01 .swiper-pagination {
@@ -144,7 +152,13 @@
 
 @layer base {
   body {
-    @apply relative z-1 font-inter text-regular font-normal text-waterloo dark:text-manatee;
+    @apply font-inter text-regular text-waterloo dark:text-manatee relative z-1 font-normal;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-sika-display), 'Arial Black', sans-serif;
+    font-weight: 400;
+    font-synthesis: none;
   }
 
   :where(a, button, input, select, textarea, [tabindex]):focus-visible {
@@ -166,11 +180,11 @@
 }
 
 .blog-details-docs {
-  @apply rounded-lg border border-white p-7.5 shadow-solid-3 transition-all dark:border-strokedark  dark:bg-blacksection xl:p-12.5;
+  @apply shadow-solid-3 dark:border-strokedark dark:bg-blacksection rounded-lg border border-white p-7.5 transition-all xl:p-12.5;
 }
 
 .blog-details p {
-  @apply mb-8 text-base leading-relaxed text-titlebgdark dark:text-waterloo;
+  @apply text-titlebgdark dark:text-waterloo mb-8 text-base leading-relaxed;
 }
 
 .blog-details p strong {
@@ -178,64 +192,528 @@
 }
 .blog-details h3 strong,
 .blog-details h3 {
-  @apply mb-10 text-xl font-semibold! leading-tight text-black dark:text-white sm:text-2xl sm:leading-tight lg:text-xl lg:leading-tight xl:text-2xl xl:leading-tight;
+  @apply mb-10 text-xl leading-tight font-semibold! text-black sm:text-2xl sm:leading-tight lg:text-xl lg:leading-tight xl:text-2xl xl:leading-tight dark:text-white;
 }
 
 .blog-details h4 strong,
 .blog-details h4 {
-  @apply text-xl font-semibold! leading-tight text-black dark:text-white sm:text-2xl sm:leading-tight lg:text-xl lg:leading-tight xl:text-2xl xl:leading-tight;
+  @apply text-xl leading-tight font-semibold! text-black sm:text-2xl sm:leading-tight lg:text-xl lg:leading-tight xl:text-2xl xl:leading-tight dark:text-white;
 }
 
 .blog-details h5 strong,
 .blog-details h5 {
-  @apply mb-3 text-lg font-semibold! leading-tight text-black dark:text-white sm:text-xl;
+  @apply mb-3 text-lg leading-tight font-semibold! text-black sm:text-xl dark:text-white;
 }
 
 .blog-details h1 {
-  @apply mb-4 text-3xl font-bold! leading-tight! text-black dark:text-white sm:text-4xl md:text-[45px] lg:text-4xl xl:text-[45px];
+  @apply mb-4 text-3xl leading-tight! font-bold! text-black sm:text-4xl md:text-[45px] lg:text-4xl xl:text-[45px] dark:text-white;
 }
 .blog-details h2 strong,
 .blog-details h2 {
-  @apply mb-4 text-[26px] font-bold! leading-tight! text-black dark:text-white sm:text-3xl md:text-4xl;
+  @apply mb-4 text-[26px] leading-tight! font-bold! text-black sm:text-3xl md:text-4xl dark:text-white;
 }
 
 .blog-details ul,
 .blog-details ol {
-  @apply mb-10 list-inside list-disc text-titlebgdark;
+  @apply text-titlebgdark mb-10 list-inside list-disc;
 }
 
 .blog-details li,
 .blog-details li {
-  @apply mb-2 text-base text-titlebgdark dark:text-waterloo;
+  @apply text-titlebgdark dark:text-waterloo mb-2 text-base;
 }
 
 .blog-details blockquote {
-  @apply relative z-10 mb-10 overflow-hidden rounded-xs bg-manatee p-8 text-center text-base font-medium italic text-black dark:bg-titlebgdark md:py-9 lg:px-10;
+  @apply bg-manatee dark:bg-titlebgdark relative z-10 mb-10 overflow-hidden rounded-xs p-8 text-center text-base font-medium text-black italic md:py-9 lg:px-10;
 }
 
 .blog-details blockquote::after {
-  content: "";
-  @apply absolute bottom-0 right-0 h-20 w-20 bg-[url(/images/blog/quote-shape-2.svg)] bg-contain bg-right-bottom bg-no-repeat;
+  content: '';
+  @apply absolute right-0 bottom-0 h-20 w-20 bg-[url(/images/blog/quote-shape-2.svg)] bg-contain bg-right-bottom bg-no-repeat;
 }
 
 .blog-details blockquote::before {
-  content: "";
-  @apply absolute left-0 top-0 h-[106px] w-[140px] bg-[url(/images/blog/quote-shape-1.svg)] bg-contain bg-left-top bg-no-repeat dark:bg-[url(/images/blog/quote-shape-1.svg)];
+  content: '';
+  @apply absolute top-0 left-0 h-[106px] w-[140px] bg-[url(/images/blog/quote-shape-1.svg)] bg-contain bg-left-top bg-no-repeat dark:bg-[url(/images/blog/quote-shape-1.svg)];
 }
 
 pre {
-  @apply relative mb-2 rounded-lg bg-strokedark px-4 py-2;
+  @apply bg-strokedark relative mb-2 rounded-lg px-4 py-2;
 }
 .prism-copy-button {
-  @apply absolute right-2 top-2 h-[26px] rounded-sm bg-white px-4 text-primary;
+  @apply text-primary absolute top-2 right-2 h-[26px] rounded-sm bg-white px-4;
 }
 
 .active-tab {
-  @apply bg-stroke text-black dark:bg-blackho dark:text-white;
+  @apply bg-stroke dark:bg-blackho text-black dark:text-white;
 }
 
-/* Handwritten font utility */
+/* Keep the existing handwritten utility aligned with the primary brand font. */
 .font-handwritten {
-  font-family: 'Caveat', cursive;
+  font-family: var(--font-sika-display), 'Arial Black', sans-serif;
+  font-weight: 400;
+  font-synthesis: none;
   letter-spacing: 0.5px;
+}
+
+/* SIKASCHOOL V2: public-site typography; existing utility names stay compatible. */
+.sika-site {
+  font-family: var(--font-sika-body), Arial, sans-serif;
+  color: var(--sika-text);
+  background: var(--sika-brand-white);
+  --sika-heading-color: var(--sika-brand-blue);
+  --sika-card: var(--sika-brand-white);
+  --sika-surface: var(--sika-surface-muted);
+  --sika-border: #d5d9e3;
+}
+.dark .sika-site {
+  color: #d7dce8;
+  background: #181c31;
+  --sika-heading-color: #ffffff;
+  --sika-card: #1c2136;
+  --sika-surface: #252a42;
+  --sika-border: #46495a;
+}
+.dark .sika-site :where(.text-primary, .hover\:text-primary:hover) {
+  /* Keep legacy public links legible on dark surfaces without changing blue button backgrounds. */
+  color: var(--sika-brand-orange);
+}
+.sika-site :where(h1, h2, h3, h4) {
+  color: var(--sika-heading-color);
+}
+.sika-site :where(input, select, textarea, button) {
+  font-family: inherit;
+}
+.sika-site
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--sika-heading-color) !important;
+  outline-offset: 4px !important;
+}
+.sika-site .sika-display {
+  font-family: var(--font-sika-display), 'Arial Black', sans-serif;
+  font-weight: 400;
+  font-synthesis: none;
+  text-transform: uppercase;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+.sika-container {
+  width: min(100% - 2.5rem, 80rem);
+  margin-inline: auto;
+}
+.sika-section {
+  padding-block: clamp(3.5rem, 7vw, 7rem);
+}
+.sika-site main :where(section[id], div[id]) {
+  scroll-margin-top: 7rem;
+}
+.sika-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.sika-section-title {
+  max-width: 56rem;
+  font-size: clamp(1.9rem, 4.2vw, 3.5rem);
+}
+.sika-lead {
+  max-width: 40rem;
+  font-size: clamp(1rem, 1.3vw, 1.125rem);
+  line-height: 1.8;
+}
+.sika-highlight {
+  color: var(--sika-brand-blue);
+  background: var(--sika-brand-orange);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  padding-inline: 0.08em;
+}
+.sika-button {
+  display: inline-flex;
+  min-height: 3rem;
+  max-width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1.4rem;
+  border: 1px solid transparent;
+  border-radius: 0.4rem;
+  background: var(--sika-brand-orange);
+  color: var(--sika-brand-blue);
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.5;
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+.sika-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 0 var(--sika-brand-blue);
+}
+.sika-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.sika-button-secondary {
+  border-color: var(--sika-border);
+  color: var(--sika-heading-color);
+  background: transparent;
+}
+.sika-button-blue {
+  background: var(--sika-brand-blue);
+  color: white;
+}
+.sika-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid var(--sika-border, #d5d9e3);
+  border-radius: 0.75rem;
+  background: var(--sika-card, white);
+}
+.sika-field {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid var(--sika-border, #d5d9e3);
+  border-radius: 0.4rem;
+  color: inherit;
+  background: var(--sika-card, white);
+}
+.sika-field[aria-invalid='true'] {
+  border-color: #b91c1c;
+}
+.sika-field:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.sika-alert {
+  padding: 1rem;
+  border: 1px solid;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.7;
+}
+.sika-alert-error {
+  color: #991b1b;
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+.sika-alert-success {
+  color: #166534;
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+.sika-alert-info {
+  color: var(--sika-brand-blue);
+  background: #eff6ff;
+  border-color: #93c5fd;
+}
+.dark .sika-alert-error {
+  color: #fecaca;
+  background: #3b1d2a;
+  border-color: #b45464;
+}
+.dark .sika-alert-success {
+  color: #bbf7d0;
+  background: #17352d;
+  border-color: #47866a;
+}
+.dark .sika-alert-info {
+  color: #dbeafe;
+  background: #1e304d;
+  border-color: #6484b8;
+}
+.sika-dialog {
+  position: fixed;
+  inset: 0;
+  width: min(48rem, calc(100% - 2rem));
+  max-width: none;
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+  padding: clamp(1.25rem, 4vw, 2rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--sika-border, #d5d9e3);
+  border-radius: 0.75rem;
+  color: inherit;
+  background: var(--sika-card, white);
+  box-shadow: 0 24px 80px #0004;
+}
+.dark .sika-dialog {
+  background: var(--sika-card, #1c2136);
+  color: #d7dce8;
+}
+.sika-dialog::backdrop {
+  background: #0c1533b3;
+}
+.sika-mobile-menu {
+  width: min(28rem, 100%);
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  border-radius: 0;
+}
+.sika-nav-link[aria-current] {
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.4em;
+}
+.sika-spinner {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: sika-spin 800ms linear infinite;
+}
+@keyframes sika-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.sika-text-link {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--sika-heading-color);
+  font-weight: 700;
+  text-underline-offset: 0.3em;
+}
+.sika-text-link:hover {
+  text-decoration: underline;
+}
+.sika-hero {
+  padding-top: clamp(8.5rem, 12vw, 11rem);
+  padding-bottom: 3rem;
+}
+.sika-hero-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  align-items: center;
+  gap: 3rem;
+  margin-top: 2rem;
+}
+.sika-hero-title {
+  font-size: clamp(2.45rem, 5.3vw, 4.75rem);
+}
+.sika-hero-visual {
+  position: relative;
+  min-width: 0;
+  padding: 1rem 0 1.5rem 1rem;
+}
+.sika-hero-photo {
+  position: relative;
+  aspect-ratio: 1.1;
+  overflow: hidden;
+  border-radius: 42% 42% 0.5rem 0.5rem;
+  background: var(--sika-surface);
+  border: 8px solid var(--sika-brand-blue);
+}
+.sika-hero-note {
+  position: absolute;
+  z-index: 1;
+  right: 0.25rem;
+  top: -1rem;
+  padding: 0.5rem 1rem;
+  background: var(--sika-brand-orange);
+  color: var(--sika-brand-blue);
+  transform: rotate(5deg);
+  font-weight: 700;
+}
+.sika-hero-note span {
+  display: inline-block;
+  font-size: 2rem;
+}
+.sika-hero-caption {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  position: relative;
+  margin: -2rem 1rem 0 -1rem;
+  padding: 1.25rem;
+  background: var(--sika-brand-blue);
+  color: white;
+  border-radius: 0.4rem;
+}
+.sika-caption-symbol {
+  color: var(--sika-brand-orange);
+  font-size: 2.5rem;
+}
+.sika-subject-bar {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  align-items: center;
+  gap: 2rem;
+  padding: 1.75rem 2rem;
+  margin-top: 3rem;
+  background: var(--sika-surface);
+  border-top: 3px solid var(--sika-brand-blue);
+}
+.sika-subject-select {
+  width: 100%;
+  min-width: 8rem;
+  min-height: 3rem;
+  padding: 0.65rem;
+  border: 1px solid var(--sika-border);
+  border-radius: 0.4rem;
+  background: var(--sika-card);
+  color: inherit;
+}
+.sika-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: 2rem;
+  margin-top: 3rem;
+}
+.sika-steps li {
+  border-top: 1px solid var(--sika-border);
+  padding-top: 1.5rem;
+}
+.sika-step-number {
+  display: block;
+  color: var(--sika-heading-color);
+  font-family: var(--font-sika-display), sans-serif;
+  font-size: 3.5rem;
+  line-height: 1;
+  letter-spacing: 0;
+}
+.sika-step-number::after {
+  content: '.';
+  color: var(--sika-brand-orange);
+}
+.sika-identity {
+  background: var(--sika-brand-blue);
+  color: white;
+}
+.sika-identity .sika-display {
+  color: white;
+  font-size: clamp(1.65rem, 7vw, 6rem);
+}
+.sika-identity .sika-display span {
+  display: block;
+}
+.sika-identity .sika-display span:nth-child(2) {
+  color: var(--sika-brand-orange);
+}
+.sika-identity-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  align-items: end;
+  gap: 3rem;
+}
+.sika-tutor-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 4rem;
+  align-items: start;
+}
+.sika-tutor-portraits {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.sika-tutor-portraits figure:nth-child(2) {
+  padding-top: 3rem;
+}
+.sika-quote {
+  padding-left: 1.5rem;
+  border-left: 4px solid var(--sika-brand-orange);
+}
+.sika-reviews {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr));
+  gap: 3rem;
+  margin-top: 3rem;
+}
+.sika-reviews figure {
+  padding-top: 1.5rem;
+  border-top: 2px solid var(--sika-border);
+}
+.sika-reviews blockquote {
+  font-size: clamp(1.125rem, 1.8vw, 1.5rem);
+  line-height: 1.7;
+  color: var(--sika-heading-color);
+}
+.sika-reviews figure:first-child {
+  grid-row: span 2;
+}
+.sika-reviews figure:first-child blockquote {
+  font-size: clamp(1.4rem, 2.5vw, 2.125rem);
+}
+.sika-final-cta {
+  background: var(--sika-surface);
+  border-top: 1px solid var(--sika-border);
+}
+.sika-final-cta .sika-display {
+  max-width: 65rem;
+  font-size: clamp(2rem, 5vw, 4.5rem);
+}
+@media (max-width: 900px) {
+  .sika-hero-grid,
+  .sika-tutor-grid,
+  .sika-identity-grid,
+  .sika-subject-bar {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  .sika-hero-visual {
+    max-width: 34rem;
+    width: 100%;
+    margin-inline: auto;
+  }
+  .sika-hero-title {
+    max-width: 42rem;
+    font-size: clamp(1.85rem, 7.5vw, 4.75rem);
+  }
+  .sika-subject-bar {
+    padding: 1.5rem;
+  }
+  .sika-steps {
+    gap: 1.5rem;
+  }
+}
+@media (max-width: 600px) {
+  .sika-steps,
+  .sika-reviews {
+    grid-template-columns: 1fr;
+  }
+  .sika-steps li {
+    display: grid;
+    grid-template-columns: 3.5rem 1fr;
+    gap: 1rem;
+  }
+  .sika-step-number {
+    font-size: 2.75rem;
+  }
+  .sika-subject-bar .sika-button {
+    width: 100%;
+  }
+  .sika-subject-bar .sika-subject-select {
+    min-width: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sika-site *,
+  .sika-site *::before,
+  .sika-site *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+  .sika-site .sika-button:hover {
+    transform: none;
+  }
 }

@@ -51,21 +51,15 @@ const AboutPage = () => {
     }
   ];
 
-  const schoolLogos = [
-    { id: 'polytechnique', name: 'Polytechnique', src: '/images/logo/École_polytechnique_logo.png' },
-    { id: 'sorbonne', name: 'Sorbonne', src: '/images/logo/Sorbonne_logo.png' },
-    { id: 'stanford', name: 'Stanford', src: '/images/logo/Stanford Logo_0.png' },
-    { id: 'insa', name: 'INSA', src: '/images/logo/insa-logo.png' },
-  ];
-
   return (
     <>
       {/* <!-- ===== About Page Start ===== --> */}
-      <section className="overflow-hidden pb-20 pt-15 lg:pb-25 xl:pb-30">
+      <section className="overflow-hidden pb-20 pt-36 lg:pb-25 xl:pb-30">
         <div className="mx-auto max-w-c-1315 px-4 md:px-8 xl:px-0">
           {/* <!-- Section Title Start --> */}
           <div className="animate_top mx-auto text-center">
             <SectionHeader
+              headingLevel="h1"
               headerInfo={{
                 title: `Qui sommes nous ?`,
                 subtitle: `On ne naît pas excellent, on le devient !`,
@@ -82,33 +76,6 @@ const AboutPage = () => {
             <p className="text-lg text-waterloo dark:text-manatee">
               Ingénieurs passionnés par l'enseignement et soucieux de transmettre, nous mettons les nouvelles technologies au service d'une pédagogie humaine, moderne et efficace.
             </p>
-          </div>
-
-          {/* School Logos */}
-          <div className="mb-16 flex flex-wrap justify-center gap-8">
-            {schoolLogos.map((logo) => (
-              <div key={logo.id} className="flex items-center justify-center rounded-lg border border-stroke bg-white p-6 shadow-sm dark:border-strokedark dark:bg-blacksection">
-                <div className="h-16 w-32 rounded flex items-center justify-center bg-gray-50 dark:bg-gray-800">
-                  <Image
-                    src={logo.src}
-                    alt={logo.name}
-                    width={128}
-                    height={64}
-                    className="max-h-16 max-w-[128px] object-contain"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      const parent = e.currentTarget.parentElement;
-                      if (parent && !parent.querySelector('span')) {
-                        const span = document.createElement('span');
-                        span.className = 'text-xs text-gray-500 dark:text-gray-400';
-                        span.textContent = logo.name;
-                        parent.appendChild(span);
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
           </div>
 
           {/* Pedagogy Section */}

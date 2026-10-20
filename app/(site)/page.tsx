@@ -1,31 +1,28 @@
-import { Metadata } from "next";
-import Hero from "@/components/Hero";
-import About from "@/components/About";
-import FunFact from "@/components/FunFact";
-import Pricing from "@/components/Pricing";
-import Contact from "@/components/Contact";
-import Testimonial from "@/components/Testimonial";
-import StagePromo from "@/components/StagePromo";
-import FAQ from "@/components/FAQ";
+import { Metadata } from 'next';
+import Hero from '@/components/Hero';
+import Pricing from '@/components/Pricing';
+import Contact from '@/components/Contact';
+import Testimonial from '@/components/Testimonial';
+import FAQ from '@/components/FAQ';
+import Method from '@/components/Homepage/Method';
+import Identity from '@/components/Homepage/Identity';
+import Tutors from '@/components/Homepage/Tutors';
+import CTA from '@/components/CTA';
 
 export const metadata: Metadata = {
-  title: "SikaSchool - Cours particuliers et accompagnement scolaire",
+  title: 'SikaSchool - Cours particuliers et accompagnement scolaire',
   description:
-    "Comprendre, Progresser, Réussir. Professeurs certifiés et étudiants des meilleures écoles. Séance d'essai gratuite.",
+    'Cours particuliers en ligne du collège au supérieur. Comprendre vos cours, travailler votre méthode et progresser avec un tuteur. Première séance gratuite.',
 };
 
 export default function Home() {
   return (
-    <main>
+    <>
       <Hero />
       <Testimonial />
-      <StagePromo />
-      <div id="about">
-        <About />
-      </div>
-      <div id="how-it-works">
-        <FunFact />
-      </div>
+      <Method />
+      <Identity />
+      <Tutors />
       <div id="pricing">
         <Pricing />
       </div>
@@ -33,6 +30,7 @@ export default function Home() {
       <div id="contact">
         <Contact />
       </div>
-    </main>
+      <CTA />
+    </>
   );
 }

@@ -19,6 +19,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "type-check": "tsc --noEmit",
+    "test:ux": "node --test scripts/payments-catalog.test.mjs",
     "security:audit": "npm audit",
     "security:fix": "npm audit fix",
     "security:check": "node scripts/security-check.js",

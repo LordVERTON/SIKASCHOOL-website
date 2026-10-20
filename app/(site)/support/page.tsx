@@ -1,17 +1,23 @@
-import React from "react";
-import Contact from "@/components/Contact";
-import { Metadata } from "next";
+import React from 'react';
+import Contact from '@/components/Contact';
+import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: "Support Page - Solid SaaS Boilerplate",
+  title: 'Contact et accompagnement | SIKASCHOOL',
 
   // other metadata
-  description: "This is Support page for Solid Pro"
+  description:
+    'Contactez SIKASCHOOL pour vos questions sur les cours particuliers en ligne et votre accompagnement.',
 };
 
 const SupportPage = () => {
   return (
-    <div className="pb-20 pt-40">
+    <div className="pt-40 pb-20">
+      <div className="sika-container">
+        <h1 className="sika-display sika-section-title">
+          Parlons de votre accompagnement.
+        </h1>
+      </div>
       <Contact />
     </div>
   );

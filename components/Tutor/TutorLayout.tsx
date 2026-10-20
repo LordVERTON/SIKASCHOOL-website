@@ -469,7 +469,7 @@ export default function TutorLayout({ children }: TutorLayoutProps) {
           },
           {
             href: "/tutor/eleves",
-            label: "Eleves",
+            label: "Élèves",
             icon: (
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 11a4 4 0 1 0-8 0"/><path d="M4 21a8 8 0 0 1 16 0"/><path d="M19 8v4M21 10h-4"/></svg>
             ),

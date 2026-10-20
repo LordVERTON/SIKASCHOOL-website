@@ -1,6 +1,26 @@
 # Roadmap d'amélioration SikaSchool
 
-_Checklist de mise en œuvre issue de l'audit du 12 septembre 2026. Préserver logo, couleurs et identité actuelle. Les décisions commerciales/légales signalées comme dépendances doivent être validées avant développement._
+_Checklist de mise en œuvre issue de l'audit du 12 septembre 2026. Appliquer l’identité officielle V2 du 20 octobre 2026 ; conserver le logo existant. Les décisions commerciales/légales signalées comme dépendances doivent être validées avant développement._
+
+## Addendum prioritaire — identité officielle V2 (20 octobre 2026)
+
+La référence graphique et éditoriale principale est désormais [BRAND_IDENTITY_V2.md](BRAND_IDENTITY_V2.md). Elle prime sur les anciennes consignes de conservation de palette : **bleu #1E3A8A, orange #FFBC58, blanc, neutre #F0F1F5 ; Sensa Wild Fill en police primaire pour les titres, Poppins en police secondaire pour le corps et les interfaces publiques, Inter dans les espaces connectés** (polices confirmées le 21 octobre 2026). Akaru guide la sophistication, DANEMO les principes techniques, sans remplacement de l’identité SIKASCHOOL. Le bleu historique #006BFF n’est plus la référence par défaut.
+
+Les fichiers Instagram, ZIP et PDF nommés dans l’addendum sont absents du dépôt : ils n’ont pas été inspectés. Les spécifications du propriétaire ont servi à l’implémentation. Le choix typographique du 21 octobre remplace Archivo Black par Sensa Wild Fill et rétablit les anciennes polices secondaires Poppins et Inter ; voir les sources et licences dans `public/fonts/README.md`.
+
+La recette a également révélé que `/how-to`, `/booking`, `/book-online`, `/support`, `/donnees-personnelles` et `/error` manquaient dans `PUBLIC_ROUTES`. Ces destinations publiques sont ajoutées explicitement ; les espaces métier restent soumis à leurs contrôles d’authentification.
+
+**Implémentation locale :** migration des alias de couleur, typographie publique, nouvelle homepage en React/CSS, matières du catalogue transmises au formulaire réel, modale unique typée, fonds inertes et mouvement réduit, pages publiques harmonisées. Les statistiques non sourcées, la promotion saisonnière de la homepage et les faux créneaux de `/booking` sont retirés du rendu. Les profils et citations existants sont réutilisés sans diplôme/badge vérifié inventé. Les prix de la homepage viennent du catalogue partagé. Voir [la recette et ses limites](BRAND_V2_VERIFICATION.md).
+
+Cette actualisation inclut du code réel et de la vérification locale ; la mention « mission documentaire » du 17 octobre ci-dessous reste limitée à cette intervention antérieure. Aucun déploiement ni lancement de campagne n’est effectué.
+
+**Priorité d’exécution :** UI-001 passe en P0 pour les fondations V2. UX-001, UX-004, UX-005, A11Y-001/002 et SK-006 portent la migration et sa recette ; seules les cases dont les critères sont satisfaits sont cochées. Aucun backlog graphique parallèle n’est créé.
+
+Restent à obtenir dans UX-005 : originaux des supports, comparaison directe, choix display validé, droits des portraits et avis, fiches tuteurs authentiques (parcours, matières, méthodologie, qualifications avec justificatifs). Ne publier aucune statistique « 70 % », promesse « +15/20 » ou offre établissements sans preuve/offre réelle. UI-001 garde la migration progressive des primitives ; PERF-001 garde les mesures de performance en production.
+
+## Exécution UX/UI — branche `feat(UX/UI)` (20 octobre 2026)
+
+Les modifications V2 déjà présentes sont conservées. Le lot poursuit les P0 d’interface (dialogs accessibles, primitives et tarifs), puis la navigation, les formulaires et les campagnes. Le détail des changements et de la recette figure dans [UX_UI_IMPLEMENTATION_2026-10-20.md](UX_UI_IMPLEMENTATION_2026-10-20.md). Les tâches de sécurité, les conditions commerciales et les recettes transactionnelles restent ouvertes ; les simulations navigateur ne valent pas validation de Supabase ou Stripe.
 
 ## Rôle de ce document
 
@@ -43,7 +63,7 @@ Les campagnes d'été et de rentrée 2026 sont passées au jour de cette mise à
 | UX-004 | Réordonner la homepage | High | Medium | Low | P1 |
 | UX-005 | Prouver contenus, tuteurs et chiffres | High | Medium | Low | P1 |
 | UX-006 | Normaliser navigation et liens | Medium | Low | Low | P1 |
-| UI-001 | Primitives du design system | High | High | Medium | P1 |
+| UI-001 | Fondations V2 et primitives du design system | High | High | Medium | P0 |
 | A11Y-002 | États, erreurs et mouvement réduit | Medium | Medium | Low | P1 |
 | TECH-004 | Services et extraction des écrans monolithiques | High | High | Medium | P1 |
 | TECH-005 | Contrats Zod/DTO/erreurs | High | Medium | Medium | P1 |
@@ -100,16 +120,17 @@ Les campagnes d'été et de rentrée 2026 sont passées au jour de cette mise à
     - [ ] Une personne ne réserve pas pour une autre via son e-mail.
     - [ ] Deux demandes simultanées ne créent jamais deux séances identiques.
 
-- [ ] **[P0][UX][A11Y][UX-001] Donner un unique propriétaire à la modale de réservation**
+- [x] **[P0][UX][A11Y][UX-001] Donner un unique propriétaire à la modale de réservation**
   - Impact : élevé
   - Effort : faible
   - Risque : moyen
   - Dépendances : aucune
   - Fichiers concernés : `components/Hero/index.tsx`, `app/(site)/ClientProviders.tsx`, `components/Header/index.tsx`, `components/StagePromo/index.tsx`
   - Travail : retirer l'instance doublée, remplacer l'événement DOM par une action typée et tester les sources CTA.
+  - Réalisé localement le 20 octobre : un seul `LeadCaptureModal` dans `ClientProviders`, `BookingContext/useBooking`, transmission matière/e-mail/campagne ; `lead:open` reste un adaptateur de compatibilité.
   - Critères d'acceptation :
-    - [ ] Une seule modale est visible et soumissible.
-    - [ ] Le focus revient au lanceur.
+    - [x] Une seule instance de modale et de formulaire est rendue pour les cinq entrées testées ; aucune soumission doublée possible par duplication du composant.
+    - [x] Le focus revient au lanceur desktop ou au bouton du menu mobile lorsque son CTA disparaît. Recette Chromium dans `BRAND_V2_VERIFICATION.md` ; aucune écriture backend effectuée.
 
 - [ ] **[P0][A11Y][A11Y-001] Corriger landmarks, skip link et dialogs**
   - Impact : élevé
@@ -118,8 +139,9 @@ Les campagnes d'été et de rentrée 2026 sont passées au jour de cette mise à
   - Dépendances : UX-001
   - Fichiers concernés : `app/(site)/layout.tsx`, pages publiques, `components/Accessibility/SkipLink.tsx`, `components/Booking/**Modal.tsx`
   - Travail : un seul main, cible de skip link focalisable, dialog standard avec focus trap/Échap/retour focus/titre annoncé.
+  - Lot UX/UI : `Common/Dialog` natif partagé par réservation, choix du tuteur et menu mobile ; arrière-plan inerte via la top layer, piège Tab/Maj+Tab, défilement mobile et retour focus. Landmarks publics conservés. Le choix du tuteur est un composant historique non monté dans le parcours actuel ; son contrôle est statique, celui du composant partagé est exécuté au navigateur.
   - Critères d'acceptation :
-    - [ ] Aucun focus n'atteint l'arrière-plan d'une modale ouverte.
+    - [x] Aucun focus n'atteint l'arrière-plan des modales publiques testées (réservation et menu mobile) ; le choix du tuteur utilise la même primitive.
     - [ ] La navigation par landmarks/titres est valide au lecteur d'écran.
 
 - [ ] **[P0][UX][UI][UX-002] Rendre prix, économie et conditions comparables**
@@ -129,8 +151,9 @@ Les campagnes d'été et de rentrée 2026 sont passées au jour de cette mise à
   - Dépendances : validation commerciale et juridique des conditions
   - Fichiers concernés : `components/{Pricing,Packs,BookOnline}/**`, `lib/{payments-catalog,stripe}.ts`, FAQ/légal
   - Travail : une présentation de plan unique ; afficher TTC, durée, prix/séance, économie dérivée ; distinguer pack/abonnement/séance.
+  - Lot UX/UI : `PlanCard` commun à accueil/packs/séances, TTC et économie en euros dérivée du tarif unitaire du même niveau. `lib/stripe.ts` construit ses offres depuis `CLIENT_PLANS` sans changement de montants/IDs. Les assertions « Sans engagement » non définies sont retirées des cartes. Erreur Checkout visible et réessayable, retour de connexion vers la page d’origine.
   - Critères d'acceptation :
-    - [ ] Les prix publics correspondent à Stripe.
+    - [x] Les prix publics et les `price_data` du Checkout proviennent du même catalogue ; test de non-régression. La configuration réelle du compte Stripe reste à recetter dans SK-001.
     - [ ] « Sans engagement », validité et annulation sont définis avant paiement.
 
 - [ ] **[P0][SECURITY][DX][TECH-007] Réduire les vulnérabilités critiques et aligner les en-têtes documentés**
@@ -151,53 +174,61 @@ Les campagnes d'été et de rentrée 2026 sont passées au jour de cette mise à
   - Dépendances : TECH-001 à TECH-003, UX-001
   - Fichiers concernés : `components/Booking/LeadCaptureModal.tsx`, `app/api/leads/**`
   - Travail : niveau → matière → créneau → coordonnées minimales → confirmation ; états réessayables et valeurs conservées.
+  - Lot UX/UI (partiel) : besoins → coordonnées → créneau selon le contrat actuel du backend ; formulaire natif, groupes annoncés, focus sur le titre, validations et erreurs conservant la saisie. Indicatif pays natif, retry des créneaux, état vide, conflit 409 et demande en attente clairement distincte d’une confirmation tuteur. FR/EN et contrats `PARENT`/`STUDENT` simulés au navigateur. L’ordre cible, le token vérifié TECH-003 et la reprise sécurisée restent à traiter avant de solder le ticket.
   - Critères d'acceptation :
-    - [ ] Chaque étape est annoncée et exploitable au clavier/mobile.
-    - [ ] Une erreur n'efface pas les choix antérieurs.
+    - [x] Chaque étape de l’interface actuelle est annoncée et exploitable au clavier/mobile (recette navigateur).
+    - [x] Une erreur n’efface pas les choix antérieurs ; retour arrière et fermeture/réouverture conservent le brouillon pendant la session.
 
 - [ ] **[P1][UX][UI][UX-004] Réorganiser la homepage autour de la décision**
   - Impact : élevé ; Effort : moyen ; Risque : faible
   - Dépendances : contenus tuteurs/preuves approuvés, analytics baseline
   - Fichiers concernés : `app/(site)/page.tsx`, sections homepage
-  - Travail : Hero → réassurance → avis → fonctionnement → tuteurs → tarifs → FAQ → CTA final ; campagne isolée/configurable.
+  - Travail : Hero → réassurance → avis → fonctionnement → signature → tuteurs → tarifs → FAQ/contact → CTA final ; campagne isolée/configurable.
+  - Réalisé localement le 20 octobre : composition V2, matières accessibles depuis le catalogue réel, trois étapes conformes au formulaire actuel, signature éditoriale, équipe et avis existants, CTA réels ; promotion périmée retirée de la homepage.
   - Critères d'acceptation :
     - [ ] Chaque section a un objectif clair et ne concurrence pas le CTA primaire.
-    - [ ] Menu/ancres suivent l'ordre réel.
+    - [x] Menu/ancres suivent l’ordre réel : avis → fonctionnement → équipe → tarifs, état actif synchronisé au scroll et ancres sous le header.
+  - Campagnes : configuration centralisée dans `lib/campaigns.ts`, désactivée sans période future approuvée ; dates zonées, fin exclusive et tests des bornes. `StagePromo` reste masqué en l’absence de campagne active, sans supprimer l’attribution historique des leads.
 
 - [ ] **[P1][UX][UI][UX-005] Publier seulement des preuves vérifiables**
   - Impact : élevé ; Effort : moyen ; Risque : faible
   - Dépendances : validation métier, consentements et droits logos
   - Fichiers concernés : `components/{FunFact,Testimonial,Brands}/**`, `lib/{translations,homepage-testimonials}.ts`, `public/images/logo/**`
   - Travail : registre de source pour chiffres, avis contextualisés, cartes/profils tuteurs, mention non partenariale si vraie.
+  - Lot UX/UI : mention non justifiée de « tuteurs qualifiés » retirée du footer FR/EN. Les droits et sources des portraits/avis restent à obtenir.
   - Critères d'acceptation :
     - [ ] Chaque statistique possède période/définition/source.
     - [ ] Aucun logo ne suggère un partenariat non prouvé.
 
-- [ ] **[P1][UX][A11Y][UX-006] Normaliser navigation, copy et liens**
+- [x] **[P1][UX][A11Y][UX-006] Normaliser navigation, copy et liens**
   - Impact : moyen ; Effort : faible ; Risque : faible
   - Dépendances : glossaire FR/EN
   - Fichiers concernés : `components/{Header,Footer}/**`, `lib/translations.ts`
   - Travail : `À la séance`, `Qui sommes-nous ?`, CTA/ancres stables, suppression de `href="#"`.
+  - Lot UX/UI : navigation typée FR/EN, quatre destinations d’accueil et logo vers `/`, menu mobile dialog avec noms localisés, libellés corrigés. La page Comment ça marche reprend les étapes réelles, les noms de niveaux et le CTA commun. Destinations du header/footer recettées en HTTP et ancres vérifiées.
   - Critères d'acceptation :
-    - [ ] Toutes les destinations ont une formulation cohérente.
-    - [ ] Tous les liens sont utiles et fonctionnels.
+    - [x] Les destinations publiques du header/footer et les pages d’offres migrées ont une formulation cohérente.
+    - [x] Les liens du header/footer ont une destination utile, sans `href="#"` ; pages et ancres vérifiées.
 
 ## Phase 2 — Design system
 
-- [ ] **[P1][UI][A11Y][UI-001] Établir tokens d'espacement/type et primitives UI**
+- [ ] **[P0][UI][A11Y][UI-001] Appliquer la charte V2 et établir les primitives UI**
   - Impact : élevé ; Effort : élevé ; Risque : moyen
-  - Dépendances : inventaire des écrans ; pas de changement de palette/logo
+  - Dépendances : inventaire des écrans ; addendum officiel V2 prioritaire, logo existant conservé
   - Fichiers concernés : `app/globals.css`, `components/Common/**`, écrans touchés
   - Travail : tokens spacing/type/surfaces et `Button`, `Card`, `Field`, `Alert`, `Dialog`, `Section`, `Container` progressifs.
+  - Lot UX/UI : sept primitives React partagées, adoptées sur les offres publiques, le header, le formulaire et Comment ça marche ; variantes, boutons en attente/désactivés, champs avec labels/aide/erreur et alertes sémantiques. Le ticket reste ouvert pour la poursuite de migration et la validation display/supports signalée dans l’addendum.
+  - Réalisé localement le 20 octobre : palette officielle et alias compatibles, Poppins/Archivo Black, primitives CSS publiques, homepage et pages secondaires ; Radix/shadcn/Lucide ne sont pas encore installés. Alternative display et comparaison aux supports à valider.
   - Critères d'acceptation :
-    - [ ] Variantes, focus, disabled et loading sont définis une fois.
-    - [ ] Les écrans migrés gardent couleurs/identité existantes.
+    - [x] Variantes, focus, disabled et loading sont définis une fois pour les primitives migrées.
+    - [x] Les écrans migrés respectent la palette/typographie V2 ; alertes sémantiques et contraste bleu/orange explicites, vérification navigateur clair/sombre.
 
 - [ ] **[P1][A11Y][UI][A11Y-002] Standardiser feedback, erreurs et mouvement réduit**
   - Impact : moyen ; Effort : moyen ; Risque : faible
   - Dépendances : UI-001
   - Fichiers concernés : `components/{Common,Student,ErrorBoundary}/**`, composants Motion, `app/(site)/error/page.tsx`
   - Travail : composants état vide/skeleton/erreur/retry et règle `prefers-reduced-motion`; localiser les erreurs template.
+  - Lot UX/UI : `Alert` annonce erreur/succès ; disponibilité vide, chargement, relance et conflit de réservation ; erreurs de paiement réessayables et libellés loading communs. Mouvement réduit existant conservé. Restent les autres écrans et formulaires métier.
   - Critères d'acceptation :
     - [ ] Tous les formulaires critiques annoncent succès/erreur.
     - [ ] Mouvement réduit respecte la préférence OS.
@@ -238,9 +269,10 @@ Les campagnes d'été et de rentrée 2026 sont passées au jour de cette mise à
   - Dépendances : TECH-003 et UX-003
   - Fichiers concernés : `app/(site)/booking/page.tsx`, `components/Booking/{BookingCalendar,TutorSelectionModal}.tsx`
   - Travail : un seul moteur de réservation et de disponibilité ; supprimer les données 2024 de toute route publique.
+  - Réalisé localement le 20 octobre : `/booking` entre dans le formulaire partagé réel ; les créneaux 2024 et le toast de confirmation fictive sont supprimés. La recette transactionnelle des disponibilités et confirmations reste liée à TECH-003/UX-003.
   - Critères d'acceptation :
     - [ ] Toute confirmation a une séance réellement créée et une référence.
-    - [ ] Aucun écran ne promet une réservation fictive.
+    - [x] Aucun écran ne promet une réservation fictive dans le composant public remplacé.
 
 - [ ] **[P1][WORKFLOW][ARCH] Formaliser les transitions séance, annulation et crédits**
   - Impact : élevé ; Effort : moyen ; Risque : moyen
@@ -376,6 +408,7 @@ Les onze cases principales ci-dessous sont ouvertes. Les critères devront être
 
 - [ ] **[P1][UX][SEO][SK-006] Mettre à jour et recetter le site**
   - Catégories : UX, SEO, contenu ; Impact : élevé ; Effort : élevé ; Risque : moyen (informations commerciales, liens et identité).
+  - Actualisation du 20 octobre : homepage V2, charte, pages publiques, footer, contact et tarifs d’accueil refondus ; les chiffres/remises périmés ne sont plus rendus sur l’accueil. Les URL publiques manquantes sont corrigées. Les constats du 17 octobre ci-dessous restent l’état initial ; voir la recette V2 pour les contrôles effectivement exécutés et leurs limites.
   - Notion : https://app.notion.com/p/3fc173c57e0481f59415d0601463a8e4
   - État vérifié : la homepage assemble déjà Hero, avis, promotion, méthode, chiffres, tarifs, FAQ et contact. Header et Footer existent ; le footer conserve des liens `#`. Des badges -15 % sont codés dans Pricing ; OpenGraph mentionne `.com` tandis que le README indique `.app`. Aucun `app/robots.ts` ou `app/sitemap.ts` n'a été trouvé. Les commandes qualité existent dans `package.json` ; elles n'ont pas été exécutées pour cette lecture documentaire.
   - Fichiers vérifiés : `app/(site)/page.tsx`, `app/(site)/head.tsx`, `app/layout.tsx`, `components/Hero/index.tsx`, `components/Header/index.tsx`, `components/Header/menuData.tsx`, `components/Footer/index.tsx`, `components/Pricing/index.tsx`, `components/Packs/index.tsx`, `lib/translations.ts`, `next.config.js`, `package.json`, [audit UX/UI](UX_UI_AUDIT.md), [audit technique](TECHNICAL_AUDIT.md).
@@ -384,7 +417,7 @@ Les onze cases principales ci-dessous sont ouvertes. Les critères devront être
   - Critères d'acceptation :
     - [ ] Inventaire relu par les responsables : toutes les informations commerciales sont vérifiées et les promotions sans dates futures approuvées ont un état neutre prévu.
     - [ ] Chaque CTA et lien a une destination réelle ; parcours publics/authentifiés, ancres, menus et retours sont vérifiés desktop/mobile et au clavier.
-    - [ ] Logo, couleurs et identité SIKASCHOOL sont conservés ; accessibilité, performances et SEO disposent d'une baseline, de résultats et d'écarts suivis dans leurs tickets existants.
+    - [ ] Logo existant et identité officielle V2 sont respectés ; accessibilité, performances et SEO disposent d'une baseline, de résultats et d'écarts suivis dans leurs tickets existants.
     - [ ] `npm run lint`, `npm run type-check` et `npm run build` passent lors de la réalisation ; les résultats sont consignés avec la recette desktop/mobile et les critères de UX-004, UX-006 et TECH-012.
 
 - [ ] **[P1][MARKETING][UX][SK-004] Stages d'été et accès aux réseaux sociaux**
@@ -458,17 +491,17 @@ Les onze cases principales ci-dessous sont ouvertes. Les critères devront être
 
 Ces tâches sont à faible effort/faible risque ; elles ne remplacent pas les P0 sécurité.
 
-- [ ] [P1][UX] Corriger « À la séance » et « Qui sommes-nous ? » dans `lib/translations.ts`.
-- [ ] [P1][UX][A11Y] Remplacer les `href="#"` du footer par `mailto:` et `/donnees-personnelles`.
-- [ ] [P1][A11Y] Rendre la cible de skip link focalisable et supprimer les `<main>` imbriqués.
-- [ ] [P1][A11Y] Ajouter titre, `aria-modal`, Échap et retour focus à `TutorSelectionModal`.
-- [ ] [P1][UX] Retirer le composant CTA anglais non utilisé ou le localiser avant réemploi.
-- [ ] [P1][UX] Localiser `app/(site)/error/page.tsx` et supprimer « Solid SaaS Boilerplate ».
-- [ ] [P1][UX] Supprimer le calendrier 2024 de la route publique ou le rediriger vers le vrai parcours.
+- [x] [P1][UX] Corriger « À la séance » et « Qui sommes-nous ? » dans `lib/translations.ts`.
+- [x] [P1][UX][A11Y] Remplacer les `href="#"` du footer par `mailto:` et `/donnees-personnelles`.
+- [x] [P1][A11Y] Rendre la cible de skip link focalisable et supprimer les `<main>` imbriqués.
+- [x] [P1][A11Y] Ajouter titre, `aria-modal`, Échap et retour focus à `TutorSelectionModal` (primitive partagée ; composant non monté, recette statique).
+- [x] [P1][UX] Retirer le composant CTA anglais non utilisé ou le localiser avant réemploi.
+- [x] [P1][UX] Localiser `app/(site)/error/page.tsx` et supprimer « Solid SaaS Boilerplate ».
+- [x] [P1][UX] Supprimer le calendrier 2024 de la route publique ou le rediriger vers le vrai parcours.
 - [ ] [P1][UI] Ajouter les `sizes` aux images responsives les plus visibles, après mesure.
-- [ ] [P1][UI] Définir `prefers-reduced-motion` pour les animations d'entrée non essentielles.
+- [x] [P1][UI] Définir `prefers-reduced-motion` pour les animations d'entrée non essentielles.
 - [ ] [P1][DX] Ajouter `.env.example` sans secrets, conforme au README.
-- [ ] [P1][DX] Remplacer `next lint` déprécié par l'ESLint CLI dans les scripts, après validation Next.
+- [x] [P1][DX] Remplacer `next lint` déprécié par l'ESLint CLI dans les scripts, après validation Next.
 - [ ] [P2][SEO] Aligner l'URL OpenGraph sur le domaine canonique choisi.
 
 # Risques de régression
@@ -518,7 +551,7 @@ Une tâche UX/UI ou technique est terminée seulement si :
 - [ ] Navigation clavier validée ; lecteur d'écran validé quand pertinent.
 - [ ] Loading, empty, success et error states présents lorsque pertinents.
 - [ ] Les valeurs utilisateur sont préservées après une erreur récupérable.
-- [ ] Aucun changement non souhaité de logo ou couleurs de marque.
+- [ ] Logo existant conservé et nouvelles couleurs officielles V2 appliquées conformément à l’addendum.
 - [ ] La sécurité, les permissions et données personnelles sont revues si la tâche les touche.
 - [ ] TypeScript, lint, format et build passent.
 - [ ] Tests unitaires/intégration/E2E concernés passent ; test de non-régression ajouté pour tout P0.

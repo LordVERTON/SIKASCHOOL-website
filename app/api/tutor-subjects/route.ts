@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await (supabaseAdmin as any)
       .from('tutors')
       .select('subjects, profiles!inner(is_active)')
-      .eq('users.is_active', true);
+      .eq('profiles.is_active', true);
 
     if (error) {
       if (isSupabaseUnreachableError(error)) {

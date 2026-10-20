@@ -1,14 +1,17 @@
-import { useTheme } from "next-themes";
-import Image from "next/image";
+import { useTheme } from 'next-themes';
+import Image from 'next/image';
+import { useLanguage } from '@/context/LanguageContext';
 
 const ThemeToggler = () => {
   const { theme, setTheme } = useTheme();
+  const { language } = useLanguage();
 
   return (
     <button
       type="button"
-      aria-label="theme toggler"
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+      aria-label={language === 'fr' ? 'Thème sombre' : 'Dark theme'}
+      aria-pressed={theme === 'dark'}
+      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
       className="bg-gray-2 dark:bg-dark-bg relative mr-1.5 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-black transition-all hover:shadow-sm dark:text-white"
     >
       <Image

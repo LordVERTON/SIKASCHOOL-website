@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         {
           ok: false,
-          message: 'Echec envoi email test',
+          message: 'Échec envoi e-mail test',
           resendError: error,
         },
         { status: 502 }

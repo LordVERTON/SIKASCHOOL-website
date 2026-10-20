@@ -48,7 +48,7 @@ const FAQ = () => {
       {/* <!-- ===== FAQ Start ===== --> */}
       <section id="faq" className="overflow-hidden pb-20 pt-8 lg:pb-25 xl:pb-30" aria-labelledby="faq-title">
         <div className="relative mx-auto max-w-c-1235 px-4 md:px-8 xl:px-0">
-          <div className="absolute -bottom-16 -z-1 h-full w-full">
+          <div className="absolute inset-x-0 -bottom-16 -z-1 h-full">
             <Image
               fill
               src="/images/shape/shape-dotted-light.svg"
@@ -84,7 +84,7 @@ const FAQ = () => {
               <span className="font-medium uppercase text-black dark:text-white">
                 {t.faq.eyebrow}
               </span>
-              <h2 id="faq-title" className="relative mb-6 text-3xl font-bold text-black dark:text-white xl:text-hero">
+              <h2 id="faq-title" className="sika-display sika-section-title relative mb-6">
                 {t.faq.title}
               </h2>
               <p className="max-w-md">Retrouvez les informations essentielles pour choisir votre accompagnement en toute confiance.</p>

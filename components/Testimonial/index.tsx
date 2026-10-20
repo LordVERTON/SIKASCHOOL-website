@@ -1,133 +1,45 @@
-"use client";
-import SectionHeader from "../Common/SectionHeader";
+'use client';
 
-import { Autoplay, Pagination } from "swiper/modules";
-import "swiper/css";
-import "swiper/css/navigation";
-import "swiper/css/pagination";
-import { Swiper, SwiperSlide } from "swiper/react";
+import { useLanguage } from '@/context/LanguageContext';
+import { brandCopy } from '@/lib/brand-copy';
+import { homepageTestimonials } from '@/lib/homepage-testimonials';
 
-import { motion } from "framer-motion";
-import SingleTestimonial from "./SingleTestimonial";
-import { useLanguage } from "@/context/LanguageContext";
-import { useState, useEffect } from "react";
+// Preserve the existing published words; omit stock avatars and numerical outcomes.
+const reviews = homepageTestimonials.filter(review =>
+  [1, 3, 4].includes(review.id)
+);
 
-interface Testimonial {
-  id: string;
-  name: string;
-  role: string;
-  content: string;
-  rating: number;
-  avatar: string;
-}
-
-const Testimonial = () => {
-  const { t } = useLanguage();
-  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchTestimonials = async () => {
-      try {
-        const response = await fetch('/api/testimonials');
-        if (response.ok) {
-          const data = await response.json();
-          setTestimonials(data);
-        } else {
-          console.error('Erreur lors du chargement des témoignages');
-        }
-      } catch (error) {
-        console.error('Erreur lors du chargement des témoignages:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTestimonials();
-  }, []);
-
+export default function Testimonial() {
+  const { language } = useLanguage();
+  const copy = brandCopy[language].testimonials;
   return (
-    <>
-      <section>
-        <div className="mx-auto max-w-c-1315 px-4 md:px-8 xl:px-0">
-          {/* <!-- Section Title Start --> */}
-          <div className="animate_top mx-auto text-center">
-            <SectionHeader
-              headerInfo={{
-                title: t.testimonials.title,
-                subtitle: t.testimonials.subtitle,
-                description: `Des retours positifs et des familles satisfaites`,
-              }}
-            />
-          </div>
-          {/* <!-- Section Title End --> */}
+    <section
+      id="reviews"
+      className="sika-section bg-zumthor dark:bg-blacksection"
+      aria-labelledby="reviews-title"
+    >
+      <div className="sika-container">
+        <p className="sika-eyebrow">{copy.eyebrow}</p>
+        <h2 id="reviews-title" className="sika-display sika-section-title mt-4">
+          {copy.title}
+        </h2>
+        <div className="sika-reviews">
+          {reviews.map(review => (
+            <figure key={review.id}>
+              <blockquote lang="fr">{review.content}</blockquote>
+              <figcaption className="mt-6">
+                <p className="font-bold">{review.name}</p>
+                <p className="text-sm" lang="fr">
+                  {review.role}
+                </p>
+              </figcaption>
+            </figure>
+          ))}
         </div>
-
-        <motion.div
-          variants={{
-            hidden: {
-              opacity: 0,
-              y: -20,
-            },
-
-            visible: {
-              opacity: 1,
-              y: 0,
-            },
-          }}
-          initial="hidden"
-          whileInView="visible"
-          transition={{ duration: 1, delay: 0.1 }}
-          viewport={{ once: true }}
-          className="animate_top mx-auto mt-15 max-w-c-1235 px-4 md:px-8 xl:mt-20 xl:px-0"
-        >
-          {/* <!-- Slider main container --> */}
-          <div className="swiper testimonial-01 mb-20 pb-22.5">
-            {/* <!-- Additional required wrapper --> */}
-            <Swiper
-              spaceBetween={50}
-              slidesPerView={2}
-              autoplay={{
-                delay: 2500,
-                disableOnInteraction: false,
-              }}
-              pagination={{
-                clickable: true,
-              }}
-              modules={[Autoplay, Pagination]}
-              breakpoints={{
-                // when window width is >= 640px
-                0: {
-                  slidesPerView: 1,
-                },
-                // when window width is >= 768px
-                768: {
-                  slidesPerView: 2,
-                },
-              }}
-            >
-              {loading ? (
-                <SwiperSlide>
-                  <div className="p-6 text-center">Chargement des témoignages...</div>
-                </SwiperSlide>
-              ) : (
-                testimonials.map((review) => (
-                  <SwiperSlide key={review?.id}>
-                    <SingleTestimonial review={{
-                      ...review,
-                      id: parseInt(review?.id || '0'),
-                      image: review?.avatar || '/images/user/user-01.png',
-                      designation: (review as any)?.role || 'Utilisateur'
-                    }} />
-                  </SwiperSlide>
-                ))
-              )}
-            </Swiper>
-          </div>
-        </motion.div>
-      </section>
-    </>
+        <p className="mt-10 max-w-3xl text-sm leading-relaxed">
+          {copy.description}
+        </p>
+      </div>
+    </section>
   );
-};
-
-export default Testimonial;
+}

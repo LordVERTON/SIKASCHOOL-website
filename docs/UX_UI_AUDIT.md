@@ -1,5 +1,7 @@
 # Audit UX/UI — SikaSchool
 
+> **Actualisation V2 — 20 octobre 2026 :** cet audit décrit l’état de septembre. La nouvelle palette officielle remplace la recommandation historique de conserver les couleurs. La homepage, la modale unique, les landmarks publics et `/booking` ont depuis évolué ; voir [BRAND_IDENTITY_V2.md](BRAND_IDENTITY_V2.md) et [la recette locale](BRAND_V2_VERIFICATION.md). Les constats historiques ci-dessous ne valent pas constat du code actuel.
+
 _Audit du code au 12 septembre 2026. Aucune interface ni logique produit n'a été modifiée dans le cadre de cet audit._
 
 ## Rôle de ce document

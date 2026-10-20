@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function DonneesPersonnellesPage() {
   return (
-    <main className="min-h-screen bg-whiten py-16 text-black dark:bg-blacksection dark:text-white">
+    <div className="min-h-screen bg-white pb-16 pt-36 text-black dark:bg-blacksection dark:text-white">
       <div className="mx-auto max-w-4xl px-6">
         <header className="mb-12">
           <p className="text-sm uppercase tracking-wide text-primary">Politique de confidentialité</p>
@@ -135,7 +135,7 @@ export default function DonneesPersonnellesPage() {
           </article>
         </section>
       </div>
-    </main>
+    </div>
   );
 }
 

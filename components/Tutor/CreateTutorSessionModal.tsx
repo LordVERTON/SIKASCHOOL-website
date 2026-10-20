@@ -55,7 +55,7 @@ export default function CreateTutorSessionModal({
       }
 
       const data = await res.json().catch(() => ({}));
-      setError(data.error || "Erreur lors de la creation de la seance");
+      setError(data.error || "Erreur lors de la création de la séance");
     } catch {
       setError("Erreur de connexion");
     } finally {
@@ -70,7 +70,7 @@ export default function CreateTutorSessionModal({
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-black dark:text-white">Creer une seance</h3>
+          <h3 className="text-lg font-semibold text-black dark:text-white">Créer une séance</h3>
           <button
             type="button"
             aria-label="Fermer"
@@ -85,10 +85,10 @@ export default function CreateTutorSessionModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-black dark:text-white">Eleves</label>
+            <label className="mb-1 block text-sm font-medium text-black dark:text-white">Élèves</label>
             {students.length === 0 ? (
               <div className="rounded-lg border border-stroke bg-gray-50 px-3 py-2 text-sm text-waterloo dark:border-strokedark dark:bg-gray-800 dark:text-manatee">
-                Aucun eleve assigne pour le moment.
+                Aucun élève assigné pour le moment.
               </div>
             ) : (
               <select
@@ -111,19 +111,19 @@ export default function CreateTutorSessionModal({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-black dark:text-white">Matiere</label>
+            <label className="mb-1 block text-sm font-medium text-black dark:text-white">Matière</label>
             <input
               type="text"
               value={formData.subject}
               onChange={(event) => setFormData({ ...formData, subject: event.target.value })}
               className="w-full rounded-lg border border-stroke bg-transparent px-3 py-2 text-sm dark:border-strokedark"
-              placeholder="Mathematiques, physique..."
+              placeholder="Mathématiques, physique..."
               required
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-black dark:text-white">Duree</label>
+            <label className="mb-1 block text-sm font-medium text-black dark:text-white">Durée</label>
             <select
               value={formData.duration}
               onChange={(event) => setFormData({ ...formData, duration: Number(event.target.value) })}
@@ -203,7 +203,7 @@ export default function CreateTutorSessionModal({
               disabled={saving || students.length === 0}
               className="flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
             >
-              {saving ? "Creation..." : "Creer"}
+              {saving ? "Création..." : "Créer"}
             </button>
           </div>
         </form>

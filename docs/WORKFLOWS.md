@@ -6,16 +6,22 @@ Ce document complète `docs/workflows/` en étant l'**index visuel des parcours*
 
 ## Réservation d'une première séance
 
+Actualisation du 20 octobre 2026 : les entrées publiques utilisent `BookingContext/useBooking` et une seule modale dans `ClientProviders`. La sélection de matière du hero est transmise au formulaire ; `/booking` ouvre ce même parcours réel. `lead:open` subsiste uniquement comme adaptateur de compatibilité. Voir la [charte V2](BRAND_IDENTITY_V2.md) et la [recette](BRAND_V2_VERIFICATION.md).
+
+Suite sur `feat(UX/UI)` : le formulaire présente successivement besoins, coordonnées et créneau. Retour arrière, fermeture/réouverture pendant la session et erreurs réseau conservent le brouillon. Une inscription reçue ne vaut pas réservation ; après la demande de créneau, la confirmation du tuteur reste attendue. La [recette UX/UI](UX_UI_IMPLEMENTATION_2026-10-20.md) simule les écritures API : elle ne valide pas les garanties transactionnelles du backend.
+
 ### Workflow actuel
 
 ```mermaid
 flowchart LR
-  A[Homepage / Header / Promo] --> B[LeadCaptureModal]
-  B --> C[Niveau + matière + coordonnées]
+  A[Homepage / Header / Contact / Booking] --> X[BookingContext unique]
+  X --> B[LeadCaptureModal]
+  B --> C1[Étape 1 : niveau + matière + objectifs]
+  C1 --> C[Étape 2 : coordonnées]
   C --> D[POST /api/leads]
   D --> E[Compte créé ou modifié]
   E --> F[GET créneaux par matière]
-  F --> G[Créneau et tuteur proposés]
+  F --> G[Étape 3 : créneau et tuteur proposés]
   G --> H[POST first-session-slots]
   H --> I[Assignation + séance TRIAL PENDING]
   I --> J[Notifications / e-mail]
@@ -25,8 +31,8 @@ flowchart LR
 
 | Écart | Source de détail |
 | --- | --- |
-| Deux points de contrôle de modale | `UX-001` dans `UX_UI_AUDIT.md` |
-| Étapes/formulaire trop chargés | `UX-003` dans `UX_UI_AUDIT.md` |
+| Duplication de modale supprimée localement ; recette et compatibilité | `UX-001` dans `roadmap.md` |
+| Étapes découpées localement ; ordre cible et reprise sécurisée à compléter | `UX-003` dans `roadmap.md` |
 | Compte existant modifiable par lead | `TECH-001` dans `TECHNICAL_AUDIT.md` |
 | Preuve d'identité et concurrence de créneau | `TECH-003` dans `TECHNICAL_AUDIT.md` |
 | Calendrier public de démonstration | `TECH-008` dans `TECHNICAL_AUDIT.md` |
@@ -53,7 +59,7 @@ flowchart LR
 ```mermaid
 sequenceDiagram
   actor U as Élève/Parent
-  participant UI as Packs / À la carte
+  participant UI as Packs / À la séance
   participant API as Checkout
   participant S as Stripe
   participant WH as Webhook

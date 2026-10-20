@@ -1,5 +1,7 @@
 # Patterns d'architecture — SikaSchool
 
+> **Actualisation V2 — 20 octobre 2026 :** appliquer [BRAND_IDENTITY_V2.md](BRAND_IDENTITY_V2.md). `BookingContext/useBooking` est désormais le contrôleur typé unique de la modale publique ; l’événement DOM historique reste uniquement un adaptateur de compatibilité. Les constats de duplication ci-dessous décrivent l’état initial. Les primitives CSS `sika-*` couvrent les compositions éditoriales, et les contrôles natifs couvrent la sélection de matière.
+
 ## Rôle de ce document
 
 Ce document ne crée pas de tickets supplémentaires. Il explique les **choix structurels** utiles aux tickets existants : pourquoi un service, une machine d'états ou une primitive UI est justifié, et où s'arrêter pour éviter le sur-engineering. Les problèmes factuels restent dans les audits et les tâches actionnables restent dans [roadmap.md](roadmap.md).

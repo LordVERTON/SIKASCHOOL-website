@@ -7,6 +7,8 @@
 .vscode
 # testing
 /coverage
+/artifacts/brand-v2/
+/artifacts/ux-roadmap/
 
 # next.js
 /.next/
