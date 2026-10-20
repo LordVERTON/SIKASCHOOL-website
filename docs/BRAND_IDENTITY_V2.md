@@ -33,11 +33,12 @@ En thème sombre, les textes/liens publics hérités portant `text-primary` util
 
 ## Typographie et licences
 
-- Police primaire : **Sensa Wild Fill**, pour les titres et les accents graphiques, en graisse 400 sans gras synthétique.
-- Police secondaire : retour à **Poppins** pour le corps, les formulaires et les interfaces publiques, en graisses 400/500/600/700 ; **Inter** dans les espaces connectés.
-- Choix confirmé le 21 octobre 2026 : Sensa Wild Fill remplace Archivo Black pour les titres ; les anciennes polices secondaires sont rétablies à la demande du propriétaire.
-- Chargement de Sensa Wild Fill via `next/font/local`, de Poppins et Inter via `next/font/google`, avec `display: swap`. Next.js héberge les fichiers avec le site ; le navigateur ne contacte pas Google Fonts.
-- Sensa Wild Fill est proposé gratuitement par [Fontfabric](https://www.fontfabric.com/fonts/sensa/) ; son [EULA pour les polices gratuites](https://www.fontfabric.com/fontfabric-commercial-eula-for-free-fonts/) autorise l’intégration web. Poppins et Inter sont distribués sous SIL OFL 1.1. Source Sensa et licence : [`public/fonts/README.md`](../public/fonts/README.md).
+- Display : **Archivo Black**, alternative provisoire libre à Horizon retenue lors de la refonte V2. Ce choix n’est pas une validation de l’équivalence avec Horizon.
+- Titres secondaires : **Poppins Bold**.
+- Corps et UI : **Poppins Regular**, avec poids 500/600/700 selon l’usage. Les espaces connectés utilisent **Inter**.
+- Chargement public via `next/font/google`, `display: swap`, hébergement des ressources générées par Next.js.
+- Archivo Black, Poppins et Inter sont distribuées sous SIL Open Font License 1.1 : [Archivo Black](https://github.com/google/fonts/blob/main/ofl/archivoblack/OFL.txt), [Poppins](https://github.com/google/fonts/blob/main/ofl/poppins/OFL.txt), [Inter](https://github.com/google/fonts/blob/main/ofl/inter/OFL.txt).
+- La branche `test-ui` rétablit la typographie initiale de la refonte V2, avant les essais Sensa Wild Fill et Source Han Serif. Le nom « Horizon Bold » seul ne permet pas d’identifier sa licence web ; aucun fichier Horizon n’est embarqué.
 
 Les capitales sont appliquées en CSS uniquement aux grands titres éditoriaux (`sika-display`) et aux courts surtitres. Champs, longs paragraphes et contenus fonctionnels restent en casse normale. Les tailles utilisent `clamp()`, les largeurs de lecture sont limitées, les retours se répartissent avec `text-wrap: balance` et `overflow-wrap`. Aucun mot long ne doit déborder à 320 px ou au zoom.
 

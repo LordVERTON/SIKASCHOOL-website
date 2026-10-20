@@ -6,9 +6,9 @@ Plateforme de cours particuliers (**Next.js 16**, **React 19**, **TypeScript**) 
 
 ## Identité visuelle V2
 
-**Variante de comparaison `test-ui`** : Sensa Wild Fill en primaire et Source Han Serif en secondaire, sur le site et les espaces connectés. La version Poppins/Inter décrite ci-dessous reste sur `feat(UX/UI)`. [Comparer les deux branches](docs/TYPOGRAPHY_COMPARISON.md).
+**Version initiale de la refonte V2 sur `test-ui`** : Archivo Black pour les grands titres, Poppins pour les textes du site et Inter dans les espaces connectés. La variante Sensa Wild Fill reste sur `feat(UX/UI)`. [Comparer les deux branches](docs/TYPOGRAPHY_COMPARISON.md).
 
-La [charte officielle SIKASCHOOL V2](docs/BRAND_IDENTITY_V2.md) prime sur les hypothèses graphiques historiques : bleu profond `#1E3A8A`, orange `#FFBC58`, Sensa Wild Fill en police primaire, Poppins en police secondaire sur le site public et Inter dans les espaces connectés. Les fichiers de polices sont servis par le site. La homepage et les pages publiques utilisent ces fondations, avec une réservation partagée et un catalogue de matières réel. [Roadmap courante](docs/roadmap.md) · [Recette et limites](docs/BRAND_V2_VERIFICATION.md).
+La [charte officielle SIKASCHOOL V2](docs/BRAND_IDENTITY_V2.md) prime sur les hypothèses graphiques historiques : bleu profond `#1E3A8A`, orange `#FFBC58`, Poppins et display expressif Archivo Black. La homepage et les pages publiques utilisent ces fondations, avec une réservation partagée et un catalogue de matières réel. [Roadmap courante](docs/roadmap.md) · [Recette et limites](docs/BRAND_V2_VERIFICATION.md).
 
 ## Fonctionnalités (résumé)
 

@@ -69,7 +69,7 @@ try {
           .fontFamily,
         headingFont: (() => {
           const heading = document.querySelector(
-            '.sika-site :is(h1, h2, h3, h4, h5, h6)'
+            '.sika-site .sika-display'
           );
           return heading ? getComputedStyle(heading).fontFamily : null;
         })(),
@@ -104,9 +104,9 @@ try {
       assert.equal(state.main, 1, `${path}: main landmark count`);
       assert.equal(state.overflow, false, `${path}: overflow at ${width}px`);
       assert.equal(state.blue.toLowerCase(), '#1e3a8a');
-      assert.match(state.bodyFont.toLowerCase(), /sourcehanserif/);
+      assert.match(state.bodyFont.toLowerCase(), /poppins/);
       if (state.headingFont) {
-        assert.match(state.headingFont.toLowerCase(), /sensawild/);
+        assert.match(state.headingFont.toLowerCase(), /archivo.*black/);
       }
       report.pages.push({ path, width, theme: 'light', ...state });
       if (

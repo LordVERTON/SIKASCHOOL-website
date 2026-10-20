@@ -2,7 +2,7 @@
 
 Date : **20 octobre 2026**. Référence : [charte V2](BRAND_IDENTITY_V2.md). Cette recette porte sur le frontend local, sans déploiement.
 
-Mise à jour typographique du **21 octobre 2026**, branche `feat(UX/UI)` : Sensa Wild Fill remplace Archivo Black pour les titres. Après un essai de Source Han Serif, le propriétaire a demandé de rétablir **Poppins** pour les textes et interfaces publiques et **Inter** dans les espaces connectés. Sensa Wild Fill reste chargée via `next/font/local` ; Poppins et Inter sont hébergées par Next.js via `next/font/google`. Les contrôles initiaux sur la variante Sensa/Source Han avaient réussi (52 rendus et 5 ouvertures du formulaire). Les détails ci-dessous décrivent la recette initiale du 20 octobre.
+Sur `test-ui`, le propriétaire a demandé de revenir à la typographie initiale de la refonte V2 : **Archivo Black** pour les grands titres, **Poppins** pour les textes et titres secondaires du site, **Inter** dans les espaces connectés. La branche `feat(UX/UI)` conserve Sensa Wild Fill. Les détails ci-dessous décrivent la recette initiale du 20 octobre.
 
 ## Périmètre et méthode
 
@@ -42,7 +42,7 @@ Si Playwright est installé ailleurs dans l’environnement, passer son chemin `
 ## Limites explicites
 
 - Les originaux Instagram/ZIP/PDF sont absents ; aucune comparaison visuelle directe ne peut être revendiquée.
-- Le choix provisoire Archivo Black de la recette initiale a été remplacé le 21 octobre par Sensa Wild Fill, conformément au choix du propriétaire ; sources et licences dans `public/fonts/README.md`.
+- Archivo Black reste une alternative provisoire, sans validation de correspondance exacte avec Horizon. La licence web de la police Horizon du PDF absent n’est pas établie.
 - La disponibilité de Supabase est intermittente dans cet environnement. Les endpoints existants peuvent servir leur catalogue/FAQ de repli. Une réponse 200 de repli n’établit pas l’accès à des tuteurs réellement disponibles.
 - Aucun compte, lead, réservation, paiement ou message n’a été créé. La soumission du formulaire, l’attribution réelle d’un créneau, les e-mails et Stripe ne sont pas validés par cette recette d’interface.
 - Les témoignages et portraits sont ceux du dépôt existant ; leurs justificatifs et autorisations ne sont pas ajoutés par cette intervention. Aucune qualification vérifiée n’est affirmée.

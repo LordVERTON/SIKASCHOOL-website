@@ -1,25 +1,7 @@
 import "./globals.css";
-import localFont from "next/font/local";
+import { Inter } from "next/font/google";
 
-const sensaWild = localFont({
-  src: "../public/fonts/sensa-wild-fill.woff2",
-  variable: "--font-sika-display",
-  weight: "400",
-  style: "normal",
-  display: "swap",
-  fallback: ["Arial Black", "Arial", "sans-serif"],
-  adjustFontFallback: false,
-});
-
-const sourceHanSerif = localFont({
-  src: "../public/fonts/source-han-serif-jp-variable.woff2",
-  variable: "--font-sika-body",
-  weight: "200 900",
-  style: "normal",
-  display: "swap",
-  fallback: ["Georgia", "Times New Roman", "serif"],
-  adjustFontFallback: false,
-});
+const inter = Inter({ subsets: ["latin"] });
 
 export default function RootLayout({
   children,
@@ -27,12 +9,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html
-      lang="fr"
-      className={`${sensaWild.variable} ${sourceHanSerif.variable}`}
-      suppressHydrationWarning
-    >
-      <body className="dark:bg-black">
+    <html lang="fr" suppressHydrationWarning>
+      <body className={`dark:bg-black ${inter.className}`}>
         {children}
       </body>
     </html>

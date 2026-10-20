@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&display=swap');
 @import 'tailwindcss';
 
 @custom-variant dark (&:is(.dark *));
@@ -13,9 +14,7 @@
 
 @theme {
   --font-*: initial;
-  --font-inter: var(--font-sika-body), Georgia, serif;
-  --font-primary: var(--font-sika-display), 'Arial Black', sans-serif;
-  --font-secondary: var(--font-sika-body), Georgia, serif;
+  --font-inter: Inter, sans-serif;
 
   --color-current: currentColor;
   --color-transparent: transparent;
@@ -155,12 +154,6 @@
     @apply font-inter text-regular text-waterloo dark:text-manatee relative z-1 font-normal;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-sika-display), 'Arial Black', sans-serif;
-    font-weight: 400;
-    font-synthesis: none;
-  }
-
   :where(a, button, input, select, textarea, [tabindex]):focus-visible {
     outline: 3px solid var(--color-primary) !important;
     outline-offset: 3px !important;
@@ -248,17 +241,15 @@ pre {
   @apply bg-stroke dark:bg-blackho text-black dark:text-white;
 }
 
-/* Keep the existing handwritten utility aligned with the primary brand font. */
+/* Handwritten font utility */
 .font-handwritten {
-  font-family: var(--font-sika-display), 'Arial Black', sans-serif;
-  font-weight: 400;
-  font-synthesis: none;
+  font-family: 'Caveat', cursive;
   letter-spacing: 0.5px;
 }
 
 /* SIKASCHOOL V2: public-site typography; existing utility names stay compatible. */
 .sika-site {
-  font-family: var(--font-sika-body), Georgia, serif;
+  font-family: var(--font-sika-body), Arial, sans-serif;
   color: var(--sika-text);
   background: var(--sika-brand-white);
   --sika-heading-color: var(--sika-brand-blue);
@@ -292,10 +283,9 @@ pre {
 .sika-site .sika-display {
   font-family: var(--font-sika-display), 'Arial Black', sans-serif;
   font-weight: 400;
-  font-synthesis: none;
   text-transform: uppercase;
-  line-height: 1.15;
-  letter-spacing: 0.01em;
+  line-height: 1.08;
+  letter-spacing: -0.045em;
   overflow-wrap: anywhere;
   text-wrap: balance;
 }
@@ -588,7 +578,7 @@ pre {
   font-family: var(--font-sika-display), sans-serif;
   font-size: 3.5rem;
   line-height: 1;
-  letter-spacing: 0;
+  letter-spacing: -0.06em;
 }
 .sika-step-number::after {
   content: '.';
