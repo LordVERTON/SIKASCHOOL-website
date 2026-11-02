@@ -32,10 +32,12 @@ export async function GET(request: NextRequest) {
   const includeCatalog = request.nextUrl.searchParams.get('includeCatalog') === 'true';
 
   try {
-    const { data, error } = await (supabaseAdmin as any)
+    // Follow the FK column: its target is users in the legacy schema and
+    // profiles after the Supabase Auth migration. The alias keeps the filter stable.
+    const { data, error } = await supabaseAdmin
       .from('tutors')
-      .select('subjects, profiles!inner(is_active)')
-      .eq('profiles.is_active', true);
+      .select('subjects, account:user_id!inner(is_active)')
+      .eq('account.is_active', true);
 
     if (error) {
       if (isSupabaseUnreachableError(error)) {
@@ -44,7 +46,7 @@ export async function GET(request: NextRequest) {
       throw error;
     }
 
-    const taughtSubjects = (data || []).flatMap((row: any) =>
+    const taughtSubjects = (data || []).flatMap(row =>
       Array.isArray(row.subjects) ? row.subjects : []
     );
 
