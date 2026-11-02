@@ -2,11 +2,12 @@
 export const brandCopy = {
   fr: {
     hero: {
-      eyebrow: 'SIKASCHOOL · Cours particuliers en ligne',
+      eyebrow: 'Cours particuliers en ligne',
+      levels: 'Du collège au supérieur',
       title: 'Le déclic pour',
       accent: 'progresser.',
       description:
-        'Du collège au supérieur, avancez avec un tuteur qui vous aide à comprendre vos cours, travailler votre méthode et prendre confiance.',
+        'Un tuteur à votre écoute, des cours adaptés à vos besoins. Reprenez les bases, travaillez votre méthode et avancez à votre rythme.',
       reassurance:
         'Une première séance gratuite pour faire le point sur vos besoins.',
       note: 'À votre rythme !',
@@ -14,11 +15,37 @@ export const brandCopy = {
         'Une élève échange devant son ordinateur, cahier ouvert sur le bureau.',
       caption: 'Un écran. Un échange. Un déclic.',
       captionDetail: 'Des cours en visio, une pédagogie humaine.',
-      subjectPrompt: 'Tu galères en… ?',
+      subjectPrompt: 'Une matière à débloquer ?',
       subjectHelp: 'Commençons par la matière qui vous pose question.',
       subjectLabel: 'Votre matière',
       subjectPlaceholder: 'Choisir une matière',
       subjectCta: 'Faire le premier pas',
+      otherSubjects: 'Toutes les matières',
+      moreSubjects: 'Autres matières',
+      noSubject: 'Je choisirai plus tard',
+    },
+    reassurance: {
+      label: 'Un accompagnement qui part de vous',
+      items: [
+        {
+          title: 'Vos besoins d’abord',
+          description:
+            'Votre niveau, vos difficultés et vos objectifs comme point de départ.',
+        },
+        {
+          title: 'En ligne, en direct',
+          description: 'Un échange avec un tuteur, depuis votre ordinateur.',
+        },
+        {
+          title: 'La matière qui compte',
+          description:
+            'Choisissez votre matière dans notre catalogue de cours.',
+        },
+        {
+          title: 'Une première rencontre',
+          description: 'Une séance gratuite pour faire le point ensemble.',
+        },
+      ],
     },
     method: {
       eyebrow: 'Comment ça marche',
@@ -52,7 +79,7 @@ export const brandCopy = {
       eyebrow: 'L’humain au cœur du cours',
       title: 'Des personnes, avant des profils.',
       description:
-        'Découvrez l’équipe et les approches pédagogiques déjà présentées sur SIKASCHOOL. L’écoute et la compréhension guident chaque échange.',
+        'Derrière chaque cours, une personne avec qui poser vos questions, reprendre les bases et construire votre méthode.',
       adviceTitle: 'Le conseil de Walid',
       advice:
         'La patience et l’écoute nous permettent de redonner confiance à l’étudiant, de raviver son intérêt pour la matière et de l’aider à exploiter pleinement son potentiel.',
@@ -60,7 +87,24 @@ export const brandCopy = {
       role: 'Tuteur',
       parentTitle: 'Parents, parlons accompagnement.',
       parentDescription:
-        'La première séance permet d’échanger sur les difficultés, les objectifs et la manière de travailler. Une occasion de poser vos questions avant de choisir une formule.',
+        'La première séance est un temps d’échange sur les difficultés et les objectifs de votre enfant. Le tuteur l’écoute, reprend avec lui les points qui bloquent et l’aide à travailler sa méthode. Ces besoins guident ensuite l’accompagnement. Vous pouvez poser vos questions avant de choisir une formule.',
+      principles: [
+        {
+          title: 'Écouter',
+          description:
+            'Comprendre les difficultés avant de proposer une façon de travailler.',
+        },
+        {
+          title: 'Expliquer',
+          description:
+            'Reprendre les bases et faire le lien entre cours et exercices.',
+        },
+        {
+          title: 'Accompagner',
+          description:
+            'Adapter le travail aux objectifs et au rythme de l’élève.',
+        },
+      ],
     },
     testimonials: {
       eyebrow: 'Leurs mots, leur expérience',
@@ -78,11 +122,12 @@ export const brandCopy = {
   },
   en: {
     hero: {
-      eyebrow: 'SIKASCHOOL · Online tutoring',
+      eyebrow: 'Online tutoring',
+      levels: 'From middle school to higher education',
       title: 'Find your way',
       accent: 'forward.',
       description:
-        'From middle school to higher education, work with a tutor to understand your lessons, develop your study skills and build confidence.',
+        'A tutor who listens. Lessons shaped around your needs. Revisit the basics, develop your study skills and move forward at your own pace.',
       reassurance: 'A free first session to discuss your learning needs.',
       note: 'At your own pace!',
       imageAlt:
@@ -94,6 +139,32 @@ export const brandCopy = {
       subjectLabel: 'Your subject',
       subjectPlaceholder: 'Choose a subject',
       subjectCta: 'Take the first step',
+      otherSubjects: 'All subjects',
+      moreSubjects: 'Other subjects',
+      noSubject: 'I’ll choose later',
+    },
+    reassurance: {
+      label: 'Support that starts with you',
+      items: [
+        {
+          title: 'Your needs first',
+          description:
+            'Your level, challenges and goals are our starting point.',
+        },
+        {
+          title: 'Online, in real time',
+          description: 'Talk to a tutor directly from your computer.',
+        },
+        {
+          title: 'The subject you need',
+          description: 'Choose your subject from our lesson catalogue.',
+        },
+        {
+          title: 'A first conversation',
+          description:
+            'A free session to discuss your learning needs together.',
+        },
+      ],
     },
     method: {
       eyebrow: 'How it works',
@@ -127,7 +198,7 @@ export const brandCopy = {
       eyebrow: 'People at the heart of learning',
       title: 'People before profiles.',
       description:
-        'Discover the team and teaching approaches already presented on SIKASCHOOL. Listening and understanding guide each conversation.',
+        'Behind each lesson is a person to ask questions, revisit the basics with and help you build your study skills.',
       adviceTitle: 'Walid’s teaching advice',
       advice:
         'Patience and listening help students rebuild confidence, rediscover their interest in a subject and develop their full potential.',
@@ -135,7 +206,22 @@ export const brandCopy = {
       role: 'Tutor',
       parentTitle: 'Parents, let’s talk about support.',
       parentDescription:
-        'The first session is a chance to discuss challenges, goals and ways of working. Ask your questions before choosing a plan.',
+        'The first session is a conversation about your child’s challenges and goals. The tutor listens, revisits difficult topics with them and helps them develop their study skills. Those needs guide the support that follows. Ask your questions before choosing a plan.',
+      principles: [
+        {
+          title: 'Listen',
+          description:
+            'Understand the challenges before suggesting ways of working.',
+        },
+        {
+          title: 'Explain',
+          description: 'Revisit the basics and connect lessons with practice.',
+        },
+        {
+          title: 'Support',
+          description: 'Adapt the work to the student’s goals and pace.',
+        },
+      ],
     },
     testimonials: {
       eyebrow: 'Their words, their experience',

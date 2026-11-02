@@ -15,7 +15,7 @@ export default function Testimonial() {
   return (
     <section
       id="reviews"
-      className="sika-section bg-zumthor dark:bg-blacksection"
+      className="sika-section"
       aria-labelledby="reviews-title"
     >
       <div className="sika-container">

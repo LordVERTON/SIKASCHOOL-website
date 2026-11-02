@@ -2,6 +2,10 @@
 
 _Checklist de mise en œuvre issue de l'audit du 12 septembre 2026. Appliquer l’identité officielle V2 du 20 octobre 2026 ; conserver le logo existant. Les décisions commerciales/légales signalées comme dépendances doivent être validées avant développement._
 
+**SIKASCHOOL V2.1 — Optimisation UX/UI et conversion — 21 octobre 2026**
+
+Évolution locale sur `feat(UX/UI)`, depuis `799d9dc` : Hero clarifié, sélection de matières issue du catalogue API, bande de réassurance, parcours Hero → réassurance → méthode → tuteurs → avis → signature → tarifs → FAQ → contact → CTA, cartes tuteurs réutilisables et FAQ intégrée aux primitives V2. Les changements et leur recette sont suivis dans UX-004, UX-005, UI-001, A11Y-002, SK-006 et PERF-001 ci-dessous. Le contrôleur de réservation, les tarifs et les mécanismes d’autorisation sont conservés ; aucune fusion ni publication.
+
 ## Addendum prioritaire — identité officielle V2 (20 octobre 2026)
 
 La référence graphique et éditoriale principale est désormais [BRAND_IDENTITY_V2.md](BRAND_IDENTITY_V2.md). Elle prime sur les anciennes consignes de conservation de palette : **bleu #1E3A8A, orange #FFBC58, blanc, neutre #F0F1F5 ; Sensa Wild Fill en police primaire pour les titres, Poppins en police secondaire pour le corps et les interfaces publiques, Inter dans les espaces connectés** (polices confirmées le 21 octobre 2026). Akaru guide la sophistication, DANEMO les principes techniques, sans remplacement de l’identité SIKASCHOOL. Le bleu historique #006BFF n’est plus la référence par défaut.
@@ -185,9 +189,16 @@ Les campagnes d'été et de rentrée 2026 sont passées au jour de cette mise à
   - Fichiers concernés : `app/(site)/page.tsx`, sections homepage
   - Travail : Hero → réassurance → avis → fonctionnement → signature → tuteurs → tarifs → FAQ/contact → CTA final ; campagne isolée/configurable.
   - Réalisé localement le 20 octobre : composition V2, matières accessibles depuis le catalogue réel, trois étapes conformes au formulaire actuel, signature éditoriale, équipe et avis existants, CTA réels ; promotion périmée retirée de la homepage.
+  - Lot V2.1 du 21 octobre : service et niveaux explicites dans le Hero, accompagnement adapté aux besoins, essai gratuit et hiérarchie CTA ; `Reassurance` factuelle, ordre narratif demandé réellement appliqué, alternance blanc/neutre/bleu et ancres header/footer synchronisées. Les quatre premières matières disponibles sont des raccourcis, sans affirmation de popularité ; toutes les autres restent accessibles. Une seule valeur radio est transmise à `useBooking`, avec choix différé autorisé.
+  - Recette V2.1 :
+    - [x] Un H1, offre/niveaux/essai visibles, CTA de réservation distinct du lien vers les tarifs, FR/EN.
+    - [x] Dix sections dans l’ordre cible, sans duplication ; quatre ancres desktop/mobile et état actif cohérents.
+    - [x] Sept largeurs 320/375/390/430/768/1024/1440 px, clair/sombre et FR/EN, sans défilement horizontal ; zoom 200 %.
+    - [x] Réservation depuis Hero, matière, header, CTA final et menu mobile : modale unique, préremplissage, Échap et retour du focus.
+    - [ ] Évaluer la compréhension et la conversion auprès des familles ; aucune hausse de conversion mesurée à ce stade.
   - Critères d'acceptation :
-    - [ ] Chaque section a un objectif clair et ne concurrence pas le CTA primaire.
-    - [x] Menu/ancres suivent l’ordre réel : avis → fonctionnement → équipe → tarifs, état actif synchronisé au scroll et ancres sous le header.
+    - [x] Chaque section a un objectif clair et ne concurrence pas le CTA primaire, vérifié visuellement sur la V2.1 ; son effet sur la conversion reste à mesurer.
+    - [x] Menu/ancres suivent l’ordre réel V2.1 : fonctionnement → équipe → avis → tarifs, état actif synchronisé au scroll et ancres sous le header. L’ordre V2 antérieur était avis → fonctionnement → équipe → tarifs.
   - Campagnes : configuration centralisée dans `lib/campaigns.ts`, désactivée sans période future approuvée ; dates zonées, fin exclusive et tests des bornes. `StagePromo` reste masqué en l’absence de campagne active, sans supprimer l’attribution historique des leads.
 
 - [ ] **[P1][UX][UI][UX-005] Publier seulement des preuves vérifiables**
@@ -196,6 +207,13 @@ Les campagnes d'été et de rentrée 2026 sont passées au jour de cette mise à
   - Fichiers concernés : `components/{FunFact,Testimonial,Brands}/**`, `lib/{translations,homepage-testimonials}.ts`, `public/images/logo/**`
   - Travail : registre de source pour chiffres, avis contextualisés, cartes/profils tuteurs, mention non partenariale si vraie.
   - Lot UX/UI : mention non justifiée de « tuteurs qualifiés » retirée du footer FR/EN. Les droits et sources des portraits/avis restent à obtenir.
+  - Lot V2.1 : `TutorCard` avec portraits, identités et rôle déjà présents dans `components/AboutPage/index.tsx`, sans diplôme, matière individuelle ni certification inférés. Citation exacte de Walid conservée en français et identifiée comme telle en EN ; principes documentés d’écoute, explication et adaptation, et encart parents sur la première séance et le rôle du tuteur.
+  - Sources et validations V2.1 :
+    - [x] Droits des portraits de **Ruudy Mbouza-Bayonne et Walid Lakas** confirmés explicitement par le propriétaire dans cette session du 21 octobre 2026. Cette confirmation ne vaut pas autorisation des autres portraits ni des témoignages.
+    - [ ] Valider avec chaque tuteur sa fiche : matières, niveaux, parcours, qualifications et justificatifs, expérience datée, méthodologie individuelle, citation et traduction approuvées. **Bloquant pour enrichir les cartes** ; aucun champ fictif n’est rendu.
+    - [ ] Obtenir les sources originales, consentements, dates et contexte de publication des témoignages existants ; aucune nouvelle note ni preuve sociale ajoutée.
+    - [ ] Faire relire les réponses dynamiques de `/api/faqs` et son repli historique (diplômes/sélection et annulation) par le responsable métier : données conservées sans nouvelle promesse ni modification d’API, mais leur approbation n’est pas démontrée par une réponse HTTP 200.
+    - [x] Intégration mobile des deux portraits inspectée, cartes lisibles, aucun faux badge ni lien vers une fiche inexistante. Relecture métier des profils détaillés toujours bloquée ci-dessus.
   - Critères d'acceptation :
     - [ ] Chaque statistique possède période/définition/source.
     - [ ] Aucun logo ne suggère un partenariat non prouvé.
@@ -219,6 +237,10 @@ Les campagnes d'été et de rentrée 2026 sont passées au jour de cette mise à
   - Travail : tokens spacing/type/surfaces et `Button`, `Card`, `Field`, `Alert`, `Dialog`, `Section`, `Container` progressifs.
   - Lot UX/UI : sept primitives React partagées, adoptées sur les offres publiques, le header, le formulaire et Comment ça marche ; variantes, boutons en attente/désactivés, champs avec labels/aide/erreur et alertes sémantiques. Le ticket reste ouvert pour la poursuite de migration et la validation display/supports signalée dans l’addendum.
   - Réalisé localement le 20 octobre : palette officielle et alias compatibles, Poppins/Archivo Black, primitives CSS publiques, homepage et pages secondaires ; Radix/shadcn/Lucide ne sont pas encore installés. Alternative display et comparaison aux supports à valider.
+  - Lot V2.1 : Sensa/Poppins conservées, `AccordionItem` accessible sans dépendance supplémentaire, FAQ sans pointillés ni ombres du template, `TutorCard`, `SubjectPicker` à radios natifs et `Reassurance`. Tokens V2 réutilisés pour surfaces, bordures, rayons, sélection, survol et focus ; bouton primaire d’au moins 48 px. Image Hero identique et optimisée par `next/image`, prop `preload` remplaçant `priority` dépréciée dans Next 16.
+  - Recette V2.1 :
+    - [x] FAQ, cartes et matières cohérentes en clair/sombre et FR/EN aux sept largeurs ; aucune décoration historique dans la FAQ.
+    - [x] Les titres éditoriaux sont en Sensa, le contenu en Poppins et les libellés fonctionnels restent lisibles ; aucun mot du Hero coupé maladroitement.
   - Critères d'acceptation :
     - [x] Variantes, focus, disabled et loading sont définis une fois pour les primitives migrées.
     - [x] Les écrans migrés respectent la palette/typographie V2 ; alertes sémantiques et contraste bleu/orange explicites, vérification navigateur clair/sombre.
@@ -229,6 +251,12 @@ Les campagnes d'été et de rentrée 2026 sont passées au jour de cette mise à
   - Fichiers concernés : `components/{Common,Student,ErrorBoundary}/**`, composants Motion, `app/(site)/error/page.tsx`
   - Travail : composants état vide/skeleton/erreur/retry et règle `prefers-reduced-motion`; localiser les erreurs template.
   - Lot UX/UI : `Alert` annonce erreur/succès ; disponibilité vide, chargement, relance et conflit de réservation ; erreurs de paiement réessayables et libellés loading communs. Mouvement réduit existant conservé. Restent les autres écrans et formulaires métier.
+  - Lot V2.1 : boutons d’accordéon avec titres, `aria-expanded`/`aria-controls` et régions nommées ; Entrée/Espace, flèches, Début/Fin ; radios natifs avec légende, focus visible sur la carte et coche en plus de la couleur. FAQ utile pendant le chargement, délai d’expiration, réponse vide/invalide/erreur → repli traduit et relance. Les réponses de l’API, actuellement sans métadonnée de langue, restent en français avec `lang="fr"` et avertissement explicite en EN ; aucune traduction prétendue.
+  - Recette V2.1 :
+    - [x] Clavier FAQ et radios, focus visible, états sélectionnés/ouverts et panneaux associés validés.
+    - [x] Réseau lent, erreur HTTP, réponse vide/invalide, repli EN et reprise après relance simulés au navigateur.
+    - [x] Réduction du mouvement contrôlée au navigateur, sans transition sur les nouvelles cartes de matières.
+    - [ ] Effectuer une recette avec lecteur d’écran réel ; les assertions DOM/clavier ne la remplacent pas.
   - Critères d'acceptation :
     - [ ] Tous les formulaires critiques annoncent succès/erreur.
     - [ ] Mouvement réduit respecte la préférence OS.
@@ -299,6 +327,10 @@ Les campagnes d'été et de rentrée 2026 sont passées au jour de cette mise à
   - Dépendances : environnement production/preview instrumenté
   - Fichiers concernés : `next.config.js`, hero/avis/images, futur monitoring
   - Travail : mesurer LCP/CLS/INP, tailles/sizes, images distantes et préférences reduced motion.
+  - Lot V2.1 : même fichier Hero, dimensions réservées, `sizes` conservé et préchargement Next 16 ; portraits dimensionnés et chargés à la demande. Aucun ajout de bibliothèque ; `Reassurance` utilise le contexte de langue existant, `TutorCard` n’ajoute aucun état. Observer LCP/CLS en laboratoire sur le build local avant les captures, avec conditions et limites consignées dans SK-006 ; ces valeurs ne prouvent ni p75 RUM ni INP en production.
+  - Mesures V2.1 :
+    - [x] LCP/CLS locaux consignés : LCP observé 120–232 ms, CLS maximal 0,042, sur localhost sans throttling et cache réchauffé, avant les captures. Même image Hero ; aucune nouvelle image dans la réassurance. Ces mesures courtes ne valent pas audit CWV ni comparaison de performances avant/après ; voir `BRAND_V2_VERIFICATION.md`.
+    - [ ] Comparer en preview instrumentée à conditions identiques, puis mesurer LCP/CLS/INP p75 et vérifier les budgets existants avant clôture.
   - Critères d'acceptation :
     - [ ] LCP ≤ 2,5 s, CLS ≤ 0,1, INP ≤ 200 ms au p75 quand RUM disponible.
 
@@ -409,6 +441,12 @@ Les onze cases principales ci-dessous sont ouvertes. Les critères devront être
 - [ ] **[P1][UX][SEO][SK-006] Mettre à jour et recetter le site**
   - Catégories : UX, SEO, contenu ; Impact : élevé ; Effort : élevé ; Risque : moyen (informations commerciales, liens et identité).
   - Actualisation du 20 octobre : homepage V2, charte, pages publiques, footer, contact et tarifs d’accueil refondus ; les chiffres/remises périmés ne sont plus rendus sur l’accueil. Les URL publiques manquantes sont corrigées. Les constats du 17 octobre ci-dessous restent l’état initial ; voir la recette V2 pour les contrôles effectivement exécutés et leurs limites.
+  - Lot V2.1 du 21 octobre : recette étendue dans `scripts/verify-brand-v2.mjs` et sélecteurs actualisés dans `scripts/verify-ux-roadmap.mjs`. Captures/rapports locaux dans `artifacts/v2.1/`, ignorés par Git ; comparaison au commit `799d9dc`, aucun lead/e-mail/paiement réel ni écriture Supabase pendant la recette. Les résultats finaux sont ajoutés à `BRAND_V2_VERIFICATION.md`.
+  - Recette V2.1 :
+    - [x] `npm run type-check`, `npm run lint` et `npm run build` terminés avec succès sous Node 24 ; build de 99 pages avec un worker local (`CIRCLE_NODE_TOTAL=2`), sans modification de la configuration de déploiement.
+    - [x] Script V2 étendu : 56 rendus publics, puis reprise des interactions et matrice homepage de 28 combinaisons ; liens, réservation, FAQ, zoom et absence d’erreur JavaScript. `verify-ux-roadmap.mjs` : 36 contrôles supplémentaires, écritures interceptées, dont parent/élève FR/EN, reprise/conflit de créneau et erreur Checkout.
+    - [x] Comparaison avant/après et inspection réelle des captures desktop/mobile : copie isolée du commit `799d9dc` avec Sensa/Poppins, puis build V2.1 ; Hero, portraits, FAQ et surfaces inspectés, transition tuteurs/avis différenciée et chargement des portraits hors écran ajouté au script de capture. Détails et chemins dans `BRAND_V2_VERIFICATION.md`.
+    - [ ] Revue commerciale des réponses FAQ et preuves sociales par leurs responsables ; preview Vercel de référence accessible et contrôlée.
   - Notion : https://app.notion.com/p/3fc173c57e0481f59415d0601463a8e4
   - État vérifié : la homepage assemble déjà Hero, avis, promotion, méthode, chiffres, tarifs, FAQ et contact. Header et Footer existent ; le footer conserve des liens `#`. Des badges -15 % sont codés dans Pricing ; OpenGraph mentionne `.com` tandis que le README indique `.app`. Aucun `app/robots.ts` ou `app/sitemap.ts` n'a été trouvé. Les commandes qualité existent dans `package.json` ; elles n'ont pas été exécutées pour cette lecture documentaire.
   - Fichiers vérifiés : `app/(site)/page.tsx`, `app/(site)/head.tsx`, `app/layout.tsx`, `components/Hero/index.tsx`, `components/Header/index.tsx`, `components/Header/menuData.tsx`, `components/Footer/index.tsx`, `components/Pricing/index.tsx`, `components/Packs/index.tsx`, `lib/translations.ts`, `next.config.js`, `package.json`, [audit UX/UI](UX_UI_AUDIT.md), [audit technique](TECHNICAL_AUDIT.md).

@@ -206,7 +206,7 @@ try {
     const fr = language === 'fr';
     if (startsEmpty) state.availableSlots = [];
     await page.goto(baseUrl);
-    await page.locator('#hero-subject').selectOption('Mathématiques');
+    await page.getByRole('radio', { name: 'Mathématiques', exact: true }).check();
     await page.locator('.sika-hero-grid .sika-button').first().click();
     const dialog = page.getByRole('dialog');
     await dialog.waitFor({ state: 'visible' });
@@ -410,9 +410,9 @@ try {
     .locator('header nav a')
     .evaluateAll(links => links.map(link => link.getAttribute('href')));
   assert.deepEqual(links, [
-    '/#reviews',
     '/#how-it-works',
     '/#tutors',
+    '/#reviews',
     '/#pricing',
   ]);
   report.checks.push({ type: 'homepage-navigation-order-and-active-section' });

@@ -6,12 +6,14 @@ import { useLanguage } from '@/context/LanguageContext';
 import LanguageSelector from '@/components/LanguageSelector';
 
 export default function Footer() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const links = [
     { href: '/', label: t.nav.home },
-    { href: '/how-to', label: t.nav.howItWorks },
-    { href: '/about', label: t.nav.aboutUs },
-    { href: '/packs', label: t.nav.sessionPacks },
+    { href: '/#how-it-works', label: t.nav.howItWorks },
+    { href: '/#tutors', label: t.nav.tutors },
+    { href: '/#reviews', label: t.nav.reviews },
+    { href: '/#pricing', label: t.hero.secondaryButton },
+    { href: '/#faq', label: 'FAQ' },
     { href: '/book-online', label: t.nav.perSession },
   ];
   return (
@@ -19,7 +21,12 @@ export default function Footer() {
       <div className="sika-container">
         <div className="grid gap-10 md:grid-cols-[1.2fr_1fr_1fr]">
           <div className="min-w-0">
-            <Link href="/" aria-label="SIKASCHOOL — Accueil">
+            <Link
+              href="/"
+              aria-label={
+                language === 'fr' ? 'SIKASCHOOL — Accueil' : 'SIKASCHOOL — Home'
+              }
+            >
               <Image
                 src="/images/logo/logo-light.svg"
                 alt=""

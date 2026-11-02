@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import walidPortrait from "@/public/images/team/walid.jpg";
 import SectionHeader from "../Common/SectionHeader";
 
 const AboutPage = () => {
@@ -13,7 +14,7 @@ const AboutPage = () => {
     {
       id: 2,
       name: "Walid Lakas",
-      image: "/images/team/walid.jpg", 
+      image: walidPortrait.src,
       role: "Tuteur"
     },
     {

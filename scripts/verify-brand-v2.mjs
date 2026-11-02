@@ -9,7 +9,7 @@ const require = createRequire(
 );
 const { chromium } = require('playwright');
 const baseUrl = process.argv[2] || 'http://localhost:3100';
-const output = resolve('artifacts/brand-v2');
+const output = resolve('artifacts/v2.1/after');
 await mkdir(output, { recursive: true });
 const browser = await chromium.launch({ headless: true });
 const report = {
@@ -21,6 +21,12 @@ const report = {
   errors: [],
 };
 const context = await browser.newContext({ reducedMotion: 'reduce' });
+// This recipe must never submit a real lead, email or payment.
+await context.route('**/api/**', route =>
+  ['GET', 'HEAD', 'OPTIONS'].includes(route.request().method())
+    ? route.continue()
+    : route.abort('blockedbyclient')
+);
 const page = await context.newPage();
 page.on('pageerror', error => report.errors.push(error.stack || error.message));
 
@@ -41,7 +47,9 @@ try {
     '/auth/reset-password',
   ];
   for (const path of process.argv.includes('--booking-only') ? [] : paths) {
-    for (const width of [320, 768, 1440]) {
+    for (const width of path === '/'
+      ? [320, 375, 390, 430, 768, 1024, 1440]
+      : [320, 768, 1440]) {
       await page.setViewportSize({ width, height: 1000 });
       const response = await page.goto(baseUrl + path, {
         waitUntil: 'load',
@@ -156,12 +164,21 @@ try {
       note: 'Request timed out; UI fallback catalog checked independently.',
     };
   }
-  const select = page.locator('#hero-subject');
-  const chosenSubject = await select
-    .locator('option')
-    .nth(1)
-    .getAttribute('value');
-  await select.selectOption(chosenSubject);
+  const select = page.locator('input[name="hero-subject"]').first();
+  // The initial local catalogue can be replaced by the API after hydration.
+  // Wait for that replacement before choosing an entry by position.
+  if (Array.isArray(report.api.subjects?.subjects)) {
+    await page.waitForFunction(expected => {
+      const values = [
+        ...document.querySelectorAll('input[name="hero-subject"]'),
+      ]
+        .map(input => input.value)
+        .filter(Boolean);
+      return JSON.stringify(values) === JSON.stringify(expected);
+    }, report.api.subjects.subjects);
+  }
+  const chosenSubject = await select.getAttribute('value');
+  await select.check();
   const launches = [
     {
       label: 'hero with subject',
@@ -170,7 +187,7 @@ try {
     },
     {
       label: 'subject CTA',
-      locator: page.locator('.sika-subject-bar button'),
+      locator: page.locator('[data-subject-booking]'),
       subject: true,
     },
     {
@@ -328,6 +345,7 @@ try {
     htmlLang: 'en',
     zoom200: true,
   };
+  await verifyHomepageV21();
   assert.equal(
     report.errors.length,
     0,
@@ -352,4 +370,376 @@ try {
     JSON.stringify(report, null, 2)
   );
   await browser.close();
+}
+
+async function verifyHomepageV21() {
+  report.v21 = { matrix: [], checks: [], metrics: [] };
+  // These are controlled browser fixtures, never published site content.
+  const catalog = [
+    'Mathématiques',
+    'Physiques',
+    'Sciences de l’ingénieur',
+    'Français',
+    'Chimie',
+    'Méthodologie',
+  ];
+  const faqs = [
+    {
+      id: 71,
+      quest: 'Comment fonctionne une séance ?',
+      ans: 'Après réservation, l’élève retrouve la séance dans son calendrier et rejoint le cours depuis son espace.',
+    },
+    {
+      id: 85,
+      quest: 'Quels niveaux sont proposés ?',
+      ans: 'Collège, lycée et supérieur.',
+    },
+    {
+      id: 92,
+      quest: 'Comment contacter le support ?',
+      ans: 'Depuis la page de contact.',
+    },
+  ];
+  const fixture = await browser.newContext({ reducedMotion: 'reduce' });
+  await fixture.route('**/api/**', route => {
+    const request = route.request();
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method()))
+      return route.abort('blockedbyclient');
+    const path = new URL(request.url()).pathname;
+    if (path === '/api/tutor-subjects')
+      return route.fulfill({ json: { subjects: catalog } });
+    if (path === '/api/faqs') return route.fulfill({ json: faqs });
+    return route.continue();
+  });
+  const target = await fixture.newPage();
+  target.on('pageerror', error => report.errors.push(error.message));
+  await target.addInitScript(() => {
+    window.__sikaMetrics = { lcp: null, cls: 0 };
+    new PerformanceObserver(list => {
+      for (const entry of list.getEntries())
+        window.__sikaMetrics.lcp = entry.startTime;
+    }).observe({ type: 'largest-contentful-paint', buffered: true });
+    new PerformanceObserver(list => {
+      for (const entry of list.getEntries())
+        if (!entry.hadRecentInput) window.__sikaMetrics.cls += entry.value;
+    }).observe({ type: 'layout-shift', buffered: true });
+  });
+  for (const language of ['fr', 'en']) {
+    await target.addInitScript(
+      lang => localStorage.setItem('language', lang),
+      language
+    );
+    for (const width of [320, 375, 390, 430, 768, 1024, 1440]) {
+      await target.setViewportSize({ width, height: 900 });
+      await target.goto(baseUrl, { waitUntil: 'load' });
+      await target.waitForFunction(
+        lang => document.documentElement.lang === lang,
+        language
+      );
+      await target.locator('#faq [data-accordion-trigger]').first().waitFor();
+      await target.waitForFunction(() =>
+        document
+          .querySelector('#faq [data-accordion-trigger]')
+          ?.textContent.includes('Comment fonctionne une séance')
+      );
+      await target.evaluate(() => document.fonts.ready);
+      await target.waitForTimeout(250);
+      report.v21.metrics.push({
+        language,
+        width,
+        ...(await target.evaluate(() => window.__sikaMetrics)),
+      });
+      // Load below-the-fold portraits before full-page captures. Metrics above
+      // deliberately describe the initial viewport, before this scroll.
+      await target.evaluate(async () => {
+        for (let y = 0; y < document.body.scrollHeight; y += 700) {
+          window.scrollTo(0, y);
+          await new Promise(done => setTimeout(done, 25));
+        }
+        window.scrollTo(0, 0);
+      });
+      await target.waitForFunction(() =>
+        [...document.querySelectorAll('.sika-tutor-photo img')].every(
+          img => img.complete && img.naturalWidth > 0
+        )
+      );
+      for (const dark of [false, true]) {
+        await target.evaluate(
+          value => document.documentElement.classList.toggle('dark', value),
+          dark
+        );
+        const state = await target.evaluate(() => ({
+          overflow: document.documentElement.scrollWidth > innerWidth + 1,
+          h1: document.querySelectorAll('h1').length,
+          sections: [
+            ...document.querySelectorAll(
+              'main > section, main > div > section'
+            ),
+          ].map(el => el.getAttribute('aria-labelledby') || el.id),
+          motionReduced: matchMedia('(prefers-reduced-motion: reduce)').matches,
+          imageLoaded:
+            document.querySelector('.sika-hero-photo img')?.naturalWidth > 0,
+          ctaHeight: document
+            .querySelector('.sika-hero-actions button')
+            .getBoundingClientRect().height,
+          radioTransition: getComputedStyle(
+            document.querySelector('.sika-subject-chip')
+          ).transitionDuration,
+        }));
+        assert.equal(
+          state.overflow,
+          false,
+          `V2.1 ${language}/${width}/${dark}: overflow`
+        );
+        assert.equal(state.h1, 1);
+        assert.equal(state.imageLoaded, true);
+        assert.ok(state.ctaHeight >= 48);
+        assert.equal(state.motionReduced, true);
+        assert.equal(state.radioTransition, '0s');
+        assert.deepEqual(state.sections, [
+          'hero-title',
+          'reassurance',
+          'method-title',
+          'tutors-title',
+          'reviews-title',
+          'identity-title',
+          'pricing-title',
+          'faq-title',
+          'contact-title',
+          'final-cta-title',
+        ]);
+        report.v21.matrix.push({
+          language,
+          width,
+          theme: dark ? 'dark' : 'light',
+          ...state,
+        });
+        await target.screenshot({
+          path: `${output}/home-${language}-${width}-${dark ? 'dark' : 'light'}.png`,
+          fullPage: true,
+        });
+      }
+    }
+  }
+  // Return to FR for interaction assertions, with the real catalogue spelling.
+  await target.evaluate(() => localStorage.setItem('language', 'fr'));
+  await target.goto(baseUrl);
+  // The last init script sets EN, so switch through the actual language control.
+  await target.getByRole('button', { name: 'Select language' }).click();
+  await target.getByRole('button', { name: /Français/ }).click();
+  await target.waitForFunction(() => document.documentElement.lang === 'fr');
+  await target.evaluate(() =>
+    document.documentElement.classList.remove('dark')
+  );
+  await target.setViewportSize({ width: 1440, height: 1000 });
+  const radios = target.locator('input[name="hero-subject"]');
+  assert.equal(await radios.count(), catalog.length + 1);
+  assert.deepEqual(
+    await radios.evaluateAll(nodes =>
+      nodes.map(node => node.value).filter(Boolean)
+    ),
+    catalog
+  );
+  await target
+    .getByRole('radio', { name: 'Mathématiques', exact: true })
+    .check();
+  await target.keyboard.press('ArrowRight');
+  assert.equal(
+    await target
+      .getByRole('radio', { name: 'Physiques', exact: true })
+      .isChecked(),
+    true
+  );
+  await target.getByRole('button', { name: /Autres matières/ }).click();
+  await target.getByRole('radio', { name: 'Chimie', exact: true }).check();
+  assert.equal(
+    await target.locator('input[name="hero-subject"]:checked').count(),
+    1
+  );
+  await target.locator('[data-subject-booking]').click();
+  const dialog = target.getByRole('dialog');
+  await dialog.waitFor();
+  assert.equal(await dialog.count(), 1);
+  await target.waitForFunction(() =>
+    [...document.querySelectorAll('dialog select')].some(
+      el => el.value === 'Chimie'
+    )
+  );
+  await target.keyboard.press('Escape');
+  await dialog.waitFor({ state: 'detached' });
+  assert.equal(
+    await target
+      .locator('[data-subject-booking]')
+      .evaluate(el => el === document.activeElement),
+    true
+  );
+  await target
+    .getByRole('radio', { name: 'Je choisirai plus tard', exact: true })
+    .check();
+  await target.locator('.sika-hero-actions button').click();
+  await dialog.waitFor();
+  await target.keyboard.press('Escape');
+  await dialog.waitFor({ state: 'detached' });
+  report.v21.checks.push(
+    'API catalogue, all subjects, native arrow keys, one checked state, Chimie prefill, optional subject, single dialog, Escape and focus restoration'
+  );
+
+  const questions = target.locator('#faq [data-accordion-trigger]');
+  await questions.first().focus();
+  await target.keyboard.press('Enter');
+  assert.equal(await questions.first().getAttribute('aria-expanded'), 'true');
+  const panelId = await questions.first().getAttribute('aria-controls');
+  assert.equal(
+    await target.locator(`[id="${panelId}"]`).innerText(),
+    faqs[0].ans
+  );
+  await target.keyboard.press('Space');
+  assert.equal(await questions.first().getAttribute('aria-expanded'), 'false');
+  await target.keyboard.press('ArrowDown');
+  assert.equal(
+    await questions.nth(1).evaluate(el => el === document.activeElement),
+    true
+  );
+  await target.keyboard.press('ArrowUp');
+  assert.equal(
+    await questions.first().evaluate(el => el === document.activeElement),
+    true
+  );
+  await target.keyboard.press('End');
+  assert.equal(
+    await questions.last().evaluate(el => el === document.activeElement),
+    true
+  );
+  await target.keyboard.press('Home');
+  assert.equal(
+    await questions.first().evaluate(el => el === document.activeElement),
+    true
+  );
+  report.v21.checks.push(
+    'FAQ: API answer preserved, Enter, Space, Up/Down, Home/End, expanded and labelled panel'
+  );
+
+  for (const width of [390, 1440]) {
+    await target.setViewportSize({ width, height: 900 });
+    for (const id of ['how-it-works', 'tutors', 'reviews', 'pricing']) {
+      if (width < 1280)
+        await target.getByRole('button', { name: 'Ouvrir le menu' }).click();
+      const nav =
+        width < 1280
+          ? target.locator('#mobile-navigation')
+          : target.locator('header');
+      await nav.locator(`a[href="/#${id}"]`).click();
+      await target.waitForFunction(
+        section =>
+          document
+            .querySelector(`header a[href="/#${section}"]`)
+            ?.getAttribute('aria-current') === 'location',
+        id
+      );
+      const top = await target
+        .locator(`#${id}`)
+        .evaluate(el => el.getBoundingClientRect().top);
+      assert.ok(top >= 70 && top <= 180, `${width}/${id}: anchor top ${top}`);
+    }
+  }
+  report.v21.checks.push(
+    'Desktop/mobile navigation: all four anchors, header clearance and active section'
+  );
+  const publicLinks = await target
+    .locator('header a, footer a')
+    .evaluateAll(nodes => nodes.map(node => node.getAttribute('href')));
+  for (const href of new Set(publicLinks)) {
+    assert.ok(href && href !== '#');
+    if (!href.startsWith('/')) continue;
+    const url = new URL(href, baseUrl);
+    if (url.hash) assert.equal(await target.locator(url.hash).count(), 1, href);
+    assert.equal((await fixture.request.get(url.href)).status(), 200, href);
+  }
+  report.v21.checks.push('Header/footer links and unique anchor destinations');
+  await fixture.close();
+
+  // Slow, unavailable, empty and malformed FAQ responses all retain useful content.
+  for (const mode of ['slow', 'error', 'empty', 'malformed']) {
+    const fallbackContext = await browser.newContext({
+      viewport: { width: 390, height: 900 },
+      reducedMotion: 'reduce',
+    });
+    let recover = false;
+    await fallbackContext.addInitScript(() =>
+      localStorage.setItem('language', 'en')
+    );
+    await fallbackContext.route('**/api/**', async route => {
+      if (route.request().method() !== 'GET')
+        return route.abort('blockedbyclient');
+      const path = new URL(route.request().url()).pathname;
+      if (path === '/api/tutor-subjects')
+        return route.fulfill({ json: { subjects: catalog } });
+      if (path !== '/api/faqs') return route.continue();
+      if (recover) return route.fulfill({ json: faqs });
+      if (mode === 'slow') {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        return route.fulfill({ json: faqs });
+      }
+      return route.fulfill({
+        status: mode === 'error' ? 503 : 200,
+        json: mode === 'empty' ? [] : { unexpected: true },
+      });
+    });
+    const fallbackPage = await fallbackContext.newPage();
+    fallbackPage.on('pageerror', error => report.errors.push(error.message));
+    await fallbackPage.goto(baseUrl);
+    if (mode === 'slow') {
+      assert.ok(
+        (await fallbackPage.locator('#faq [data-accordion-trigger]').count()) >=
+          3
+      );
+      await fallbackPage
+        .getByRole('button', { name: faqs[0].quest, exact: true })
+        .waitFor();
+    } else {
+      await fallbackPage
+        .getByRole('button', { name: 'Try again', exact: true })
+        .waitFor();
+      assert.equal(
+        await fallbackPage
+          .locator('#faq .sika-accordion-item')
+          .first()
+          .getAttribute('lang'),
+        'en'
+      );
+      await fallbackPage
+        .locator('#faq [data-accordion-trigger]')
+        .first()
+        .click();
+      assert.equal(
+        await fallbackPage
+          .locator('#faq [data-accordion-trigger]')
+          .first()
+          .getAttribute('aria-expanded'),
+        'true'
+      );
+      recover = true;
+      await fallbackPage
+        .getByRole('button', { name: 'Try again', exact: true })
+        .click();
+      await fallbackPage
+        .getByRole('button', { name: faqs[0].quest, exact: true })
+        .waitFor();
+    }
+    assert.match(
+      await fallbackPage.locator('#faq [role="status"]').innerText(),
+      /available in French/
+    );
+    assert.equal(
+      await fallbackPage
+        .locator('#faq .sika-accordion-item')
+        .first()
+        .getAttribute('lang'),
+      'fr'
+    );
+    report.v21.checks.push(
+      `FAQ ${mode}: content accessible, EN fallback or French notice, retry/recovery`
+    );
+    await fallbackContext.close();
+  }
 }

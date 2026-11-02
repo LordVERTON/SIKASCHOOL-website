@@ -48,3 +48,6 @@ supabase/.branches/
 
 # TypeScript incremental
 tsconfig.tsbuildinfo
+
+# Local visual verification captures and reports
+/artifacts/

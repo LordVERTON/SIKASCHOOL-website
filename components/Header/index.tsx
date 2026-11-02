@@ -27,7 +27,7 @@ export default function Header() {
     if (pathname !== '/') return;
     let frame = 0;
     const update = () => {
-      const ids = ['reviews', 'how-it-works', 'tutors', 'pricing'];
+      const ids = ['how-it-works', 'tutors', 'reviews', 'pricing'];
       let current = '';
       for (const id of ids) {
         if (

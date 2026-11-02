@@ -8,6 +8,7 @@ import Method from '@/components/Homepage/Method';
 import Identity from '@/components/Homepage/Identity';
 import Tutors from '@/components/Homepage/Tutors';
 import CTA from '@/components/CTA';
+import Reassurance from '@/components/Homepage/Reassurance';
 
 export const metadata: Metadata = {
   title: 'SikaSchool - Cours particuliers et accompagnement scolaire',
@@ -19,10 +20,11 @@ export default function Home() {
   return (
     <>
       <Hero />
-      <Testimonial />
+      <Reassurance />
       <Method />
-      <Identity />
       <Tutors />
+      <Testimonial />
+      <Identity />
       <div id="pricing">
         <Pricing />
       </div>

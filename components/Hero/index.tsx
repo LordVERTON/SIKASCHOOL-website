@@ -7,6 +7,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useBooking } from '@/context/BookingContext';
 import { TUTOR_SUBJECTS } from '@/lib/tutor-subjects';
 import { brandCopy } from '@/lib/brand-copy';
+import SubjectPicker from './SubjectPicker';
 
 export default function Hero() {
   const { language, t } = useLanguage();
@@ -29,7 +30,9 @@ export default function Hero() {
           data.subjects.length &&
           data.subjects.every(item => typeof item === 'string' && item.trim())
         ) {
-          setSubjects(data.subjects);
+          const available = [...new Set(data.subjects as string[])];
+          setSubjects(available);
+          setSubject(current => (available.includes(current) ? current : ''));
         }
       } catch {
         // The shared booking catalog remains usable when offline.
@@ -42,16 +45,19 @@ export default function Hero() {
   return (
     <section className="sika-hero" aria-labelledby="hero-title">
       <div className="sika-container">
-        <p className="sika-eyebrow">{copy.hero.eyebrow}</p>
         <div className="sika-hero-grid">
           <div className="min-w-0">
+            <p className="sika-eyebrow sika-hero-eyebrow">
+              {copy.hero.eyebrow}
+            </p>
             <h1 id="hero-title" className="sika-display sika-hero-title">
               {copy.hero.title}
               <br />
               <span className="sika-highlight">{copy.hero.accent}</span>
             </h1>
-            <p className="sika-lead mt-7">{copy.hero.description}</p>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <p className="sika-hero-levels">{copy.hero.levels}</p>
+            <p className="sika-lead mt-4">{copy.hero.description}</p>
+            <div className="sika-hero-actions mt-7 flex flex-wrap gap-3">
               <button
                 type="button"
                 className="sika-button"
@@ -60,11 +66,16 @@ export default function Hero() {
                 {t.hero.reserveButton}
                 <span aria-hidden="true">↗</span>
               </button>
-              <Link href="/packs" className="sika-button sika-button-secondary">
+              <Link
+                href="/#pricing"
+                className="sika-button sika-button-secondary"
+              >
                 {t.hero.secondaryButton}
               </Link>
             </div>
-            <p className="mt-4 text-sm">{copy.hero.reassurance}</p>
+            <p className="sika-hero-reassurance mt-4 text-sm">
+              <span aria-hidden="true">✓</span> {copy.hero.reassurance}
+            </p>
           </div>
           <figure className="sika-hero-visual">
             <div className="sika-hero-note" aria-hidden="true">
@@ -75,7 +86,7 @@ export default function Hero() {
                 src="/images/wix/test.jpg"
                 alt={copy.hero.imageAlt}
                 fill
-                priority
+                preload
                 sizes="(max-width: 900px) 90vw, 42vw"
                 className="object-cover object-[65%_center]"
               />
@@ -96,31 +107,17 @@ export default function Hero() {
             <p className="sika-eyebrow">{copy.hero.subjectPrompt}</p>
             <p className="mt-1 text-sm">{copy.hero.subjectHelp}</p>
           </div>
-          <div className="flex min-w-0 flex-wrap items-end gap-3">
-            <div className="min-w-0 flex-1">
-              <label
-                htmlFor="hero-subject"
-                className="mb-2 block text-sm font-semibold"
-              >
-                {copy.hero.subjectLabel}
-              </label>
-              <select
-                id="hero-subject"
-                value={subject}
-                onChange={event => setSubject(event.target.value)}
-                className="sika-subject-select"
-              >
-                <option value="">{copy.hero.subjectPlaceholder}</option>
-                {subjects.map(item => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div className="min-w-0">
+            <SubjectPicker
+              subjects={subjects}
+              value={subject}
+              onChange={setSubject}
+              copy={copy.hero}
+            />
             <button
               type="button"
-              className="sika-button sika-button-blue"
+              className="sika-text-link mt-4"
+              data-subject-booking
               onClick={() => openBooking({ subject: subject || undefined })}
             >
               {copy.hero.subjectCta}

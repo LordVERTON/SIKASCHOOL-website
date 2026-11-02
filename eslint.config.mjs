@@ -21,7 +21,11 @@ export default defineConfig([
       'no-duplicate-imports': 'error',
       '@typescript-eslint/no-unused-vars': [
         'warn',
-        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
       ],
       'no-unused-vars': 'off',
       'react/no-unescaped-entities': 'off',
@@ -36,5 +40,10 @@ export default defineConfig([
       'react-hooks/preserve-manual-memoization': 'off',
     },
   },
-  globalIgnores(['.next*/**', 'node_modules/**', 'types/supabase.ts']),
+  globalIgnores([
+    '.next*/**',
+    'node_modules/**',
+    'artifacts/**',
+    'types/supabase.ts',
+  ]),
 ]);
