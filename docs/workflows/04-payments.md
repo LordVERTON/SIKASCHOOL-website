@@ -26,6 +26,7 @@ sequenceDiagram
 ## Checkout et crédits
 
 - `POST /api/student/payments/checkout` exige un élève ou parent disposant d’un élève effectif et utilise le catalogue `lib/payments-catalog.ts`.
+- Les cartes publiques et `lib/stripe.ts` consomment ce même catalogue : montant TTC, coût par séance et économie calculée face aux séances à l’unité du même niveau. Une erreur de préparation est annoncée et permet de réessayer ; un visiteur anonyme est renvoyé vers la connexion avec retour à `/packs` ou `/book-online`. La recette frontend intercepte les paiements ; elle ne confirme pas le bon fonctionnement du compte Stripe réel.
 - La session Stripe transporte les métadonnées d’élève, plan, type, niveau et nombre de séances. Elles sont indispensables à la réconciliation webhook.
 - `checkout.session.completed` enregistre le paiement. Pour `PACK` ou `SESSION`, les crédits sont ajoutés immédiatement ; pour `SUBSCRIPTION`, ils sont ajoutés à `invoice.paid`/`invoice.payment_succeeded`.
 - `student_credit_ledger` garde la trace des variations ; `student_credits` porte le solde par niveau.

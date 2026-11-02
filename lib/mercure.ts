@@ -86,11 +86,11 @@ export async function publishMercureUpdate(topics: string[], payload: MercurePay
     });
 
     if (!response.ok && process.env.NODE_ENV === "development") {
-      console.warn(`[mercure] Publication refusee par le hub (${response.status}).`);
+      console.warn(`[mercure] Publication refusée par le hub (${response.status}).`);
     }
   } catch (error) {
     if (process.env.NODE_ENV === "development") {
-      console.warn("[mercure] Hub injoignable, evenement ignore.", error);
+      console.warn("[mercure] Hub injoignable, événement ignoré.", error);
     }
   }
 }

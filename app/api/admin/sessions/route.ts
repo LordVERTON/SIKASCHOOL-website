@@ -33,7 +33,7 @@ export async function GET() {
       .order('started_at', { ascending: false });
 
     if (sessionsError) {
-      console.error('Erreur lors de la recuperation des sessions:', sessionsError);
+      console.error('Erreur lors de la récupération des sessions:', sessionsError);
       return NextResponse.json(
         { error: 'Failed to fetch sessions', details: sessionsError.message },
         { status: 500 },
@@ -59,7 +59,7 @@ export async function GET() {
         .in('id', userIds);
 
       if (usersError) {
-        console.error('Erreur lors de la recuperation des utilisateurs:', usersError);
+        console.error('Erreur lors de la récupération des utilisateurs:', usersError);
         return NextResponse.json(
           { error: 'Failed to fetch users', details: usersError.message },
           { status: 500 },
@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (sessionError) {
-      console.error('Erreur lors de la creation de la session:', sessionError);
+      console.error('Erreur lors de la création de la session:', sessionError);
       return NextResponse.json({ error: 'Failed to create session' }, { status: 500 });
     }
 

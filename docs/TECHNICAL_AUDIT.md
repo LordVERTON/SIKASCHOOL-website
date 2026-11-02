@@ -1,5 +1,7 @@
 # Audit technique — SikaSchool
 
+> **Actualisation frontend — 20 octobre 2026 :** la charte [SIKASCHOOL V2](BRAND_IDENTITY_V2.md) est prioritaire. L’instance doublée de réservation et le calendrier mock public sont remplacés ; un contexte typé pilote le formulaire existant. Cette refonte visuelle ne valide ni les transactions de réservation/paiement ni les autres risques backend de cet audit. Voir [la recette](BRAND_V2_VERIFICATION.md).
+
 _Périmètre : dépôt local au 12 septembre 2026, lecture du code et exécution de `type-check`, `lint`, `security:check`. Aucune migration ni modification applicative effectuée._
 
 ## Rôle de ce document

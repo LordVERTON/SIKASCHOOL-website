@@ -1,141 +1,82 @@
-"use client";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import toast from "react-hot-toast";
-import SectionHeader from "../Common/SectionHeader";
-import { CLIENT_PLANS, formatEuros } from "@/lib/payments-catalog";
+'use client';
 
-const BookOnline = () => {
-  const router = useRouter();
-  const [pendingPlan, setPendingPlan] = useState<string | null>(null);
-  const sessionPlans = CLIENT_PLANS.filter((plan) => plan.kind === "SESSION");
+import Link from 'next/link';
+import { useLanguage } from '@/context/LanguageContext';
+import { useBooking } from '@/context/BookingContext';
+import Button from '@/components/Common/Button';
+import Card from '@/components/Common/Card';
+import Alert from '@/components/Common/Alert';
+import Section, { Container } from '@/components/Common/Section';
+import PlanCard from '@/components/Pricing/PlanCard';
+import { usePlanCheckout } from '@/components/Pricing/usePlanCheckout';
+import { CLIENT_PLANS, getLevelLabel } from '@/lib/payments-catalog';
 
-  const startCheckout = async (planId: string) => {
-    setPendingPlan(planId);
-    try {
-      const meResponse = await fetch("/api/auth/me", { credentials: "include" });
-      if (!meResponse.ok) {
-        router.push(`/auth/signin?next=${encodeURIComponent("/book-online")}`);
-        return;
-      }
-
-      const currentUser = await meResponse.json();
-      if (currentUser?.role !== "STUDENT" && currentUser?.role !== "PARENT") {
-        toast.error("Seuls les comptes Élève ou Parent peuvent acheter une séance.");
-        setPendingPlan(null);
-        return;
-      }
-
-      const checkoutResponse = await fetch("/api/student/payments/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ planId }),
-      });
-      const checkout = await checkoutResponse.json();
-      if (!checkoutResponse.ok || !checkout?.url) {
-        throw new Error(checkout?.error || "Impossible de préparer le paiement");
-      }
-
-      window.location.href = checkout.url;
-    } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : "Une erreur est survenue");
-      setPendingPlan(null);
-    }
-  };
-
+export default function BookOnline() {
+  const { language, t } = useLanguage();
+  const openBooking = useBooking();
+  const fr = language === 'fr';
+  const { startCheckout, pendingPlan, error } = usePlanCheckout('/book-online');
   return (
-    <>
-      {/* <!-- ===== Book Online Section Start ===== --> */}
-      <section className="overflow-hidden pb-20 pt-15 lg:pb-25 xl:pb-30">
-        <div className="mx-auto max-w-c-1315 px-4 md:px-8 xl:px-0">
-          {/* <!-- Section Title Start --> */}
-          <div className="animate_top mx-auto text-center">
-            <SectionHeader
-              headerInfo={{
-                title: `Séances à la carte`,
-                subtitle: `Un prix clair pour chaque niveau`,
-                description: `Choisissez et payez votre séance avant de réserver le créneau qui vous convient.`,
-              }}
-            />
-          </div>
-          {/* <!-- Section Title End --> */}
-        </div>
-
-        <div className="mx-auto mt-15 max-w-[1200px] px-4 md:px-8 xl:mt-20 xl:px-0">
-          {/* Hero Image */}
-          <div className="mb-12 text-center">
-            <div className="relative mx-auto h-64 w-full max-w-2xl overflow-hidden rounded-lg">
-              <Image
-                src="/images/hero/hero-light.svg"
-                alt=""
-                fill
-                className="object-cover dark:hidden"
-              />
-              <Image
-                src="/images/hero/hero-dark.svg"
-                alt=""
-                fill
-                className="hidden object-cover dark:block"
-              />
-            </div>
-          </div>
-
-          {/* Services Grid */}
-          <div className="grid gap-8 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="animate_top group relative rounded-lg border border-stroke bg-white p-8 shadow-solid-10 dark:border-strokedark dark:bg-blacksection dark:shadow-none">
-              <div className="mb-6">
-                <p className="mb-2 inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                  Tous niveaux
-                </p>
-                <h3 className="mb-1 text-lg font-semibold text-black dark:text-white">Séance d’essai gratuite</h3>
-                <p className="text-sm text-waterloo dark:text-manatee">Découvrez l’accompagnement SikaSchool avec un tuteur adapté.</p>
-              </div>
-              <div className="mb-6 border-t border-stroke pt-6 dark:border-strokedark">
-                <p className="text-sm font-medium text-black dark:text-white">1 h · Gratuit · Sans engagement</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => router.push("/booking")}
-                className="flex min-h-11 w-full items-center justify-center rounded-lg bg-primary px-6 py-3 text-center font-medium text-white transition-all duration-300 hover:bg-primaryho"
+    <Section className="pt-36!" aria-labelledby="sessions-title">
+      <Container>
+        <p className="sika-eyebrow">{t.nav.perSession}</p>
+        <h1
+          id="sessions-title"
+          className="sika-display sika-section-title mt-4"
+        >
+          {fr ? 'Une séance. Un prix clair.' : 'One session. One clear price.'}
+        </h1>
+        <p className="sika-lead mt-5">
+          {fr
+            ? 'Choisissez et payez votre séance avant de réserver votre créneau. Comparez les tarifs par niveau ou commencez par une première séance gratuite.'
+            : 'Choose and pay for your session before booking a time. Compare prices by level or start with a free first session.'}
+        </p>
+        <Link href="/packs" className="sika-text-link mt-4">
+          {t.nav.sessionPacks}
+          <span aria-hidden="true">↗</span>
+        </Link>
+        {error && <Alert className="mt-6">{error}</Alert>}
+        <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+          <Card>
+            <p className="sika-eyebrow">{fr ? 'Tous niveaux' : 'All levels'}</p>
+            <h2 className="mt-4 text-2xl font-bold">
+              {fr ? 'Première séance gratuite' : 'Free first session'}
+            </h2>
+            <p className="mt-5 text-3xl font-bold">0 €</p>
+            <p className="mt-3 pb-6 text-sm">
+              {fr
+                ? '1 séance de 60 minutes pour découvrir l’accompagnement.'
+                : 'One 60-minute session to discover our tutoring.'}
+            </p>
+            <Button className="mt-auto w-full" onClick={() => openBooking()}>
+              {t.hero.reserveButton}
+            </Button>
+          </Card>
+          {CLIENT_PLANS.filter(plan => plan.kind === 'SESSION').map(plan => (
+            <PlanCard
+              key={plan.id}
+              plan={plan}
+              language={language}
+              headingLevel="h2"
+            >
+              <Button
+                variant="blue"
+                className="w-full"
+                disabled={pendingPlan !== null}
+                loading={pendingPlan === plan.id}
+                loadingLabel={
+                  fr ? 'Préparation du paiement…' : 'Preparing checkout…'
+                }
+                onClick={() => void startCheckout(plan.id)}
               >
-                Réserver ma séance d’essai
-              </button>
-            </div>
-
-            {sessionPlans.map((plan) => {
-              const isLoading = pendingPlan === plan.id;
-              return (
-                <div key={plan.id} className="animate_top group relative rounded-lg border border-stroke bg-white p-8 shadow-solid-10 dark:border-strokedark dark:bg-blacksection dark:shadow-none">
-                  <div className="mb-6">
-                    <p className="mb-2 inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                      {plan.levelLabel}
-                    </p>
-                    <h3 className="mb-1 text-lg font-semibold text-black dark:text-white">Séance à la carte</h3>
-                    <p className="text-sm text-waterloo dark:text-manatee">{plan.description}</p>
-                  </div>
-                  <div className="mb-6 border-t border-stroke pt-6 dark:border-strokedark">
-                    <p className="text-3xl font-bold text-primary">{formatEuros(plan.priceCents)}</p>
-                    <p className="mt-1 text-sm font-medium text-black dark:text-white">1 séance de 60 min · prix TTC</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => startCheckout(plan.id)}
-                    disabled={isLoading}
-                    className="flex min-h-11 w-full items-center justify-center rounded-lg bg-primary px-6 py-3 text-center font-medium text-white transition-all duration-300 hover:bg-primaryho disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {isLoading ? "Redirection…" : `Choisir cette séance à ${formatEuros(plan.priceCents)}`}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
+                {fr
+                  ? `Choisir une séance ${plan.levelLabel}`
+                  : `Choose a ${getLevelLabel(plan.level, language)} session`}
+              </Button>
+            </PlanCard>
+          ))}
         </div>
-      </section>
-      {/* <!-- ===== Book Online Section End ===== --> */}
-    </>
+      </Container>
+    </Section>
   );
-};
-
-export default BookOnline;
+}

@@ -44,6 +44,8 @@ Règles :
 
 Entrées : `components/Booking/LeadCaptureModal.tsx`, `POST /api/leads`, `GET|POST /api/leads/first-session-slots`.
 
+L’interface publique est progressive : besoins → coordonnées → créneau. Chaque étape a un titre focalisé, les choix restent présents en revenant en arrière ou en rouvrant la modale pendant la session, et les erreurs n’effacent pas le formulaire. La disponibilité propose chargement, relance et état vide ; un conflit 409 retire le créneau concerné. Le message final distingue une demande enregistrée de la confirmation du tuteur. Cette évolution frontend ne modifie ni le protocole d’identité ni l’atomicité du backend (TECH-003, UX-003 et SK-011 restent ouverts dans la roadmap).
+
 ```mermaid
 flowchart TD
   A[Visiteur saisit ses besoins] --> B[POST /api/leads]

@@ -1,21 +1,25 @@
-"use client";
-import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { setStorageItem, STORAGE_KEYS } from "@/lib/storage";
-import {
-  PHONE_COUNTRIES,
-  findPhoneCountry,
-  normalizeForSearch,
-} from "@/lib/phone-countries";
-import { TUTOR_SUBJECTS } from "@/lib/tutor-subjects";
+'use client';
+
+import Link from 'next/link';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
+import { useLanguage } from '@/context/LanguageContext';
+import Dialog from '@/components/Common/Dialog';
+import Button from '@/components/Common/Button';
+import Field from '@/components/Common/Field';
+import Alert from '@/components/Common/Alert';
+import { setStorageItem, STORAGE_KEYS } from '@/lib/storage';
+import { PHONE_COUNTRIES, findPhoneCountry } from '@/lib/phone-countries';
+import { TUTOR_SUBJECTS } from '@/lib/tutor-subjects';
 
 type LeadCaptureModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onPrefillEmail?: (email: string) => void;
   initialEmail?: string;
-  campaign?: "back_to_school";
+  initialSubject?: string;
+  returnFocusRef?: { current: HTMLElement | null };
+  campaign?: 'back_to_school';
 };
 
 type FirstSessionSlot = {
@@ -24,869 +28,765 @@ type FirstSessionSlot = {
   startedAt: string;
   duration: number;
 };
-
 const LEVELS = [
-  "6ème","5ème","4ème","3ème","Seconde","Première","Terminale","Supérieur"
-] as const;
-
+  '6ème',
+  '5ème',
+  '4ème',
+  '3ème',
+  'Seconde',
+  'Première',
+  'Terminale',
+  'Supérieur',
+];
 const GOALS = [
-  "Découvrir/approfondir",
-  "Reprendre les bases",
-  "Consolider une matière",
-  "Gagner en méthodologie",
-  "Rattraper une matière",
-  "Autre"
-] as const;
+  'Découvrir/approfondir',
+  'Reprendre les bases',
+  'Consolider une matière',
+  'Gagner en méthodologie',
+  'Rattraper une matière',
+  'Autre',
+];
+const GOALS_EN = [
+  'Explore a subject',
+  'Review the basics',
+  'Consolidate a subject',
+  'Improve study methods',
+  'Catch up in a subject',
+  'Other',
+];
 
-
-export default function LeadCaptureModal({ isOpen, onClose, onPrefillEmail, initialEmail, campaign }: LeadCaptureModalProps) {
+export default function LeadCaptureModal({
+  isOpen,
+  onClose,
+  onPrefillEmail,
+  initialEmail,
+  initialSubject,
+  returnFocusRef,
+  campaign,
+}: LeadCaptureModalProps) {
   const router = useRouter();
-  const [accountType, setAccountType] = useState<"PARENT" | "STUDENT">("PARENT");
-  const [level, setLevel] = useState<string>("");
-  const [subject, setSubject] = useState<string>("");
-  const [civility, setCivility] = useState<string>("");
-  const [lastName, setLastName] = useState<string>("");
-  const [firstName, setFirstName] = useState<string>("");
-  const [email, setEmail] = useState<string>(initialEmail?.trim() ?? "");
-  const [emailManuallyEdited, setEmailManuallyEdited] = useState<boolean>(false);
-  const [phone, setPhone] = useState<string>("");
-  const [phoneDialCountry, setPhoneDialCountry] = useState<string>("FR");
-  const [zip, setZip] = useState<string>("");
-  const [goal, setGoal] = useState<string>("");
-  const [goalOther, setGoalOther] = useState<string>("");
-  const [contest, setContest] = useState<string>("");
+  const { language } = useLanguage();
+  const fr = language === 'fr';
+  const [step, setStep] = useState<'needs' | 'contact' | 'slots'>('needs');
+  const [accountType, setAccountType] = useState<'PARENT' | 'STUDENT'>(
+    'PARENT'
+  );
+  const [level, setLevel] = useState('');
+  const [subject, setSubject] = useState('');
+  const [goal, setGoal] = useState('');
+  const [goalOther, setGoalOther] = useState('');
+  const [contest, setContest] = useState('');
+  const [civility, setCivility] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [email, setEmail] = useState(initialEmail?.trim() ?? '');
+  const [phone, setPhone] = useState('');
+  const [phoneDialCountry, setPhoneDialCountry] = useState('FR');
+  const [zip, setZip] = useState('');
+  const [subjectOptions, setSubjectOptions] = useState<string[]>([
+    ...TUTOR_SUBJECTS,
+  ]);
   const [submitting, setSubmitting] = useState(false);
-  const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
-  const [firstSessionSlots, setFirstSessionSlots] = useState<FirstSessionSlot[]>([]);
-  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [firstSessionSlots, setFirstSessionSlots] = useState<
+    FirstSessionSlot[]
+  >([]);
+  const [slotsLoading, setSlotsLoading] = useState(true);
   const [slotsError, setSlotsError] = useState<string | null>(null);
-  const [selectedSlot, setSelectedSlot] = useState<FirstSessionSlot | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<FirstSessionSlot | null>(
+    null
+  );
   const [bookingSlot, setBookingSlot] = useState(false);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
-  const [subjectOptions, setSubjectOptions] = useState<string[]>([...TUTOR_SUBJECTS]);
-  const modalRef = useRef<HTMLDivElement | null>(null);
-  const previouslyFocusedElementRef = useRef<HTMLElement | null>(null);
-  const dialPickerOpenRef = useRef(false);
+  const [slotsVersion, setSlotsVersion] = useState(0);
+  const submittedEmail = useRef('');
+  const submittingRef = useRef(false);
+  const bookingRef = useRef(false);
+  const appliedSubjectRef = useRef<string | undefined>(undefined);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const phoneDialCode = (
+    findPhoneCountry(phoneDialCountry) ?? findPhoneCountry('FR')!
+  ).dial;
 
-  // Keep the form email in sync with the hero/header email as long as the
-  // user has not manually edited the field inside the modal itself.
   useEffect(() => {
-    if (emailManuallyEdited) return;
-    const trimmed = initialEmail?.trim() ?? "";
-    setEmail((current) => (current === trimmed ? current : trimmed));
-  }, [initialEmail, emailManuallyEdited]);
-
-  // Reset the manual-edit flag whenever the modal is closed so the next
-  // opening can be prefilled again from the hero/header email.
+    // Preserve edits when closing/reopening. A new subject can only change the needs step.
+    if (
+      isOpen &&
+      initialSubject &&
+      initialSubject !== appliedSubjectRef.current &&
+      !submittedEmail.current
+    ) {
+      setSubject(initialSubject);
+      appliedSubjectRef.current = initialSubject;
+    }
+  }, [isOpen, initialSubject]);
   useEffect(() => {
-    if (!isOpen) setEmailManuallyEdited(false);
-  }, [isOpen]);
-
+    if (initialEmail?.trim())
+      setEmail(current => current || initialEmail.trim());
+  }, [initialEmail]);
   useEffect(() => {
     if (!isOpen) return;
-
-    let cancelled = false;
-
-    async function loadSubjectOptions() {
-      try {
-        const response = await fetch("/api/tutor-subjects", {
-          cache: "no-store",
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok || !Array.isArray(data.subjects) || data.subjects.length === 0) {
+    const controller = new AbortController();
+    void fetch('/api/tutor-subjects', {
+      cache: 'no-store',
+      signal: controller.signal,
+    })
+      .then(async response => (response.ok ? response.json() : null))
+      .then(data => {
+        if (
+          !Array.isArray(data?.subjects) ||
+          !data.subjects.length ||
+          !data.subjects.every((item: unknown) => typeof item === 'string')
+        )
           return;
-        }
-        if (!cancelled) {
-          setSubjectOptions(data.subjects);
+        setSubjectOptions(data.subjects);
+      })
+      .catch(() => {
+        /* The local catalog remains available. */
+      });
+    return () => controller.abort();
+  }, [isOpen]);
+  useEffect(() => {
+    if (!isOpen) return;
+    const frame = requestAnimationFrame(() => {
+      headingRef.current?.focus({ preventScroll: true });
+      headingRef.current?.closest('dialog')?.scrollTo(0, 0);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [step, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || step !== 'slots' || bookingConfirmed) return;
+    const controller = new AbortController();
+    setSlotsLoading(true);
+    setSlotsError(null);
+    void (async () => {
+      try {
+        const response = await fetch(
+          `/api/leads/first-session-slots?subject=${encodeURIComponent(subject)}`,
+          { cache: 'no-store', signal: controller.signal }
+        );
+        const data = await response.json();
+        if (!response.ok || !Array.isArray(data.slots))
+          throw new Error('slots_failed');
+        if (!controller.signal.aborted) {
+          setFirstSessionSlots(data.slots);
+          setSelectedSlot(
+            current =>
+              data.slots.find(
+                (slot: FirstSessionSlot) =>
+                  slot.tutorId === current?.tutorId &&
+                  slot.startedAt === current?.startedAt
+              ) ?? null
+          );
         }
       } catch {
-        // Keep the local fallback catalog if the API is unavailable.
+        if (!controller.signal.aborted) {
+          setFirstSessionSlots([]);
+          setSelectedSlot(null);
+          setSlotsError(
+            fr
+              ? 'Impossible de charger les créneaux. Vous pouvez réessayer.'
+              : 'Unable to load available times. Please try again.'
+          );
+        }
+      } finally {
+        if (!controller.signal.aborted) setSlotsLoading(false);
       }
-    }
+    })();
+    return () => controller.abort();
+  }, [isOpen, step, subject, slotsVersion, bookingConfirmed, fr]);
 
-    void loadSubjectOptions();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isOpen]);
-
-  const selectedCountry = useMemo(
-    () => findPhoneCountry(phoneDialCountry) ?? findPhoneCountry("FR")!,
-    [phoneDialCountry]
-  );
-  const phoneDialCode = selectedCountry.dial;
-
-  const fullPhone = useMemo(
-    () => (phone ? `${phoneDialCode} ${phone}`.trim() : ""),
-    [phoneDialCode, phone]
-  );
-
-  // --- Dropdown indicatif téléphonique (compact + recherche) -----------------
-  const [dialPickerOpen, setDialPickerOpen] = useState(false);
-  const [dialSearch, setDialSearch] = useState("");
-  const dialPickerRef = useRef<HTMLDivElement | null>(null);
-  const dialSearchInputRef = useRef<HTMLInputElement | null>(null);
-
-  useEffect(() => {
-    dialPickerOpenRef.current = dialPickerOpen;
-  }, [dialPickerOpen]);
-
-  const filteredCountries = useMemo(() => {
-    const q = normalizeForSearch(dialSearch.trim());
-    if (!q) return PHONE_COUNTRIES;
-    const digits = q.replace(/\D+/g, "");
-    return PHONE_COUNTRIES.filter((option) => {
-      if (normalizeForSearch(option.country).includes(q)) return true;
-      if (option.code.toLowerCase().includes(q)) return true;
-      if (digits && option.dial.replace(/\D+/g, "").includes(digits)) return true;
-      return false;
-    });
-  }, [dialSearch]);
-
-  // Fermeture au clic en dehors ou via la touche Echap.
-  useEffect(() => {
-    if (!dialPickerOpen) return;
-    const handleClickOutside = (event: MouseEvent) => {
-      if (!dialPickerRef.current) return;
-      if (!dialPickerRef.current.contains(event.target as Node)) {
-        setDialPickerOpen(false);
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError(null);
+    if (step === 'needs') {
+      if (!subjectOptions.includes(subject)) {
+        setError(
+          fr
+            ? 'Choisissez une matière du catalogue.'
+            : 'Choose a subject from the catalog.'
+        );
+        return;
       }
-    };
-    const handleKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setDialPickerOpen(false);
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleKey);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleKey);
-    };
-  }, [dialPickerOpen]);
-
-  // Focus automatique du champ de recherche à l'ouverture.
-  useEffect(() => {
-    if (dialPickerOpen) {
-      setDialSearch("");
-      requestAnimationFrame(() => dialSearchInputRef.current?.focus());
+      setStep('contact');
+      return;
     }
-  }, [dialPickerOpen]);
-
-  const isValid = useMemo(() => {
-    const base = level && subject && civility && lastName && firstName && /.+@.+\..+/.test(email) && phone.length >= 6 && zip.length >= 4;
-    const contestOk = subject === "Préparation à un concours" ? contest.trim().length > 2 : true;
-    const goalOk = goal === "Autre" ? goalOther.trim().length > 2 : true;
-    return Boolean(base && contestOk && goalOk);
-  }, [level, subject, civility, lastName, firstName, email, phone, zip, contest, goal, goalOther]);
-
-  const handleSubmit = async () => {
-    if (!isValid || submitting) return;
+    if (submittingRef.current) return;
+    if (!firstName.trim() || !lastName.trim()) {
+      setError(
+        fr
+          ? 'Renseignez votre nom et votre prénom.'
+          : 'Enter your first and last name.'
+      );
+      return;
+    }
+    submittingRef.current = true;
     setSubmitting(true);
+    const payload = {
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      civility,
+      email: email.trim(),
+      phone: `${phoneDialCode} ${phone}`,
+      phoneLocal: phone,
+      phoneDialCode,
+      phoneDialCountry,
+      zip,
+      accountType,
+      level,
+      subject,
+      goal,
+      goalOther: goal === 'Autre' ? goalOther : '',
+      contest: subject === 'Préparation à un concours' ? contest : '',
+      campaign,
+    };
     try {
       setStorageItem(STORAGE_KEYS.SELECTED_LEVEL, level);
       setStorageItem(STORAGE_KEYS.SELECTED_SUBJECT, subject);
-      setStorageItem(
-        STORAGE_KEYS.LEAD_FORM,
-        JSON.stringify({
-          civility,
-          lastName,
-          firstName,
-          email,
-          phone: fullPhone,
-          phoneLocal: phone,
-          phoneDialCode,
-          phoneDialCountry,
-          zip,
-          accountType,
-          goal,
-          goalOther: goal === "Autre" ? goalOther : "",
-          contest: subject === "Préparation à un concours" ? contest : "",
-          campaign,
-        })
-      );
-
-      // Call backend to create the student
-      const res = await fetch("/api/leads", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          firstName,
-          lastName,
-          civility,
-          email,
-          phone: fullPhone,
-          phoneDialCode,
-          phoneDialCountry,
-          zip,
-          accountType,
-          level,
-          subject,
-          goal,
-          goalOther,
-          contest,
-          campaign,
-        })
+      setStorageItem(STORAGE_KEYS.LEAD_FORM, JSON.stringify(payload));
+      const response = await fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
-
-      const data = await res.json();
-
-      if (!res.ok || !data?.success) {
-        throw new Error("lead_failed");
-      }
-
-      setSubmittedEmail(email);
-      setStorageItem(STORAGE_KEYS.LAST_LEAD_EMAIL, email);
-      onPrefillEmail?.(email);
-      setError(null);
-      setSelectedSlot(null);
-      setBookingConfirmed(false);
-      // Show a simple inline confirmation state
-      setShowThanks(true);
+      const data = await response.json();
+      if (!response.ok || !data?.success) throw new Error('lead_failed');
+      submittedEmail.current = payload.email;
+      setStorageItem(STORAGE_KEYS.LAST_LEAD_EMAIL, payload.email);
+      onPrefillEmail?.(payload.email);
+      setStep('slots');
     } catch {
-      setError("Une erreur est survenue. Merci de réessayer.");
+      setError(
+        fr
+          ? 'L’envoi a échoué. Vos réponses sont conservées ; réessayez.'
+          : 'Submission failed. Your answers are preserved; please try again.'
+      );
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   };
 
-  const [showThanks, setShowThanks] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!showThanks || !subject) return;
-
-    let cancelled = false;
-
-    async function loadFirstSessionSlots() {
-      setSlotsLoading(true);
-      setSlotsError(null);
-      try {
-        const response = await fetch(`/api/leads/first-session-slots?subject=${encodeURIComponent(subject)}`, {
-          cache: "no-store",
-        });
-        const data = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-          throw new Error(data?.error || "slots_failed");
-        }
-
-        if (!cancelled) {
-          setFirstSessionSlots(Array.isArray(data.slots) ? data.slots : []);
-        }
-      } catch {
-        if (!cancelled) {
-          setFirstSessionSlots([]);
-          setSlotsError("Impossible de charger les créneaux pour le moment.");
-        }
-      } finally {
-        if (!cancelled) setSlotsLoading(false);
-      }
-    }
-
-    void loadFirstSessionSlots();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [showThanks, subject]);
-
-  const formatSlotDate = (startedAt: string) => {
-    const date = new Date(startedAt);
-    return date.toLocaleDateString("fr-FR", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-    });
-  };
-
-  const formatSlotTime = (startedAt: string) => {
-    const date = new Date(startedAt);
-    return date.toLocaleTimeString("fr-FR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const groupedFirstSessionSlots = useMemo(() => {
-    return firstSessionSlots.reduce<Record<string, FirstSessionSlot[]>>((acc, slot) => {
-      const dayKey = new Date(slot.startedAt).toISOString().slice(0, 10);
-      acc[dayKey] = acc[dayKey] || [];
-      acc[dayKey].push(slot);
-      return acc;
-    }, {});
-  }, [firstSessionSlots]);
-
-  const handleConfirmFirstSession = async () => {
-    if (!selectedSlot || !submittedEmail || bookingSlot) return;
-
+  const confirmSlot = async () => {
+    if (!selectedSlot || !submittedEmail.current || bookingRef.current) return;
+    bookingRef.current = true;
     setBookingSlot(true);
     setSlotsError(null);
     try {
-      const response = await fetch("/api/leads/first-session-slots", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/leads/first-session-slots', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: submittedEmail,
+          email: submittedEmail.current,
           subject,
           tutorId: selectedSlot.tutorId,
           startedAt: selectedSlot.startedAt,
           campaign,
         }),
       });
-      const data = await response.json().catch(() => ({}));
-
+      const data = await response.json();
       if (!response.ok || !data?.success) {
-        throw new Error(data?.error || "booking_failed");
+        if (response.status === 409) {
+          setFirstSessionSlots(current =>
+            current.filter(
+              slot =>
+                slot.tutorId !== selectedSlot.tutorId ||
+                slot.startedAt !== selectedSlot.startedAt
+            )
+          );
+          setSelectedSlot(null);
+        }
+        throw new Error('booking_failed');
       }
-
       setBookingConfirmed(true);
     } catch {
-      setSlotsError("Ce créneau n’a pas pu être réservé. Merci d’en choisir un autre.");
+      setSlotsError(
+        fr
+          ? 'La demande n’a pas pu être enregistrée. Réessayez ou choisissez un autre créneau.'
+          : 'Your request could not be saved. Try again or choose another time.'
+      );
     } finally {
+      bookingRef.current = false;
       setBookingSlot(false);
     }
   };
 
-  const handleSigninRedirect = () => {
-    if (submittedEmail?.trim()) {
-      const normalized = submittedEmail.trim();
-      // Double sécurité: query param + stockage local pour garantir le préremplissage.
-      setStorageItem(STORAGE_KEYS.LAST_LEAD_EMAIL, normalized);
-      onClose();
-      router.push(`/auth/signin?email=${encodeURIComponent(normalized)}`);
-      return;
-    }
-    onClose();
-    router.push("/auth/signin");
-  };
-
-  const isParentFlow = accountType === "PARENT";
-  const levelTitle = isParentFlow
-    ? "Sélectionnez la classe de votre enfant"
-    : "Sélectionne ton niveau";
-  const contactTitle = isParentFlow ? "Vos coordonnées" : "Mes coordonnées";
-  const contactDescription = isParentFlow
-    ? "Ces informations nous permettent de créer votre espace parent et de vous contacter pour la première séance."
-    : "Ces informations nous permettent de créer votre espace élève et de préparer votre première séance.";
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    previouslyFocusedElementRef.current = document.activeElement as HTMLElement | null;
-
-    const focusableSelector = [
-      'a[href]',
-      'button:not([disabled])',
-      'input:not([disabled])',
-      'select:not([disabled])',
-      'textarea:not([disabled])',
-      '[tabindex]:not([tabindex="-1"])',
-    ].join(',');
-
-    const focusFirstElement = () => {
-      const focusableElements = modalRef.current?.querySelectorAll<HTMLElement>(focusableSelector);
-      focusableElements?.[0]?.focus();
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        if (dialPickerOpenRef.current) {
-          setDialPickerOpen(false);
-          return;
-        }
-        onClose();
-        return;
-      }
-
-      if (event.key !== "Tab") return;
-
-      const focusableElements = Array.from(
-        modalRef.current?.querySelectorAll<HTMLElement>(focusableSelector) ?? []
-      );
-      if (focusableElements.length === 0) {
-        event.preventDefault();
-        modalRef.current?.focus();
-        return;
-      }
-
-      const firstElement = focusableElements[0];
-      const lastElement = focusableElements[focusableElements.length - 1];
-
-      if (event.shiftKey && document.activeElement === firstElement) {
-        event.preventDefault();
-        lastElement.focus();
-      } else if (!event.shiftKey && document.activeElement === lastElement) {
-        event.preventDefault();
-        firstElement.focus();
-      }
-    };
-
-    const focusTimer = window.setTimeout(focusFirstElement, 0);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.clearTimeout(focusTimer);
-      document.removeEventListener("keydown", handleKeyDown);
-      if (previouslyFocusedElementRef.current?.isConnected) {
-        previouslyFocusedElementRef.current.focus({ preventScroll: true });
-      }
-    };
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
-
+  const stepIndex = step === 'needs' ? 0 : step === 'contact' ? 1 : 2;
   return (
-    <div className="fixed inset-0 z-99999 flex items-center justify-center bg-black/50 p-4" onTouchMove={(e) => e.preventDefault()}>
-      <div
-        ref={modalRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Réserver une séance d’essai"
-        tabIndex={-1}
-        className="relative max-h-[80vh] w-full max-w-3xl overflow-y-auto overscroll-contain rounded-lg bg-white p-6 shadow-2xl dark:bg-blacksection"
-        style={{ WebkitOverflowScrolling: 'touch' }}
+    <Dialog
+      isOpen={isOpen}
+      onClose={onClose}
+      labelledBy="lead-title"
+      describedBy="lead-description"
+      returnFocusRef={returnFocusRef}
+    >
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <p className="sika-eyebrow">
+            {fr ? 'Première séance gratuite' : 'Free first session'}
+          </p>
+          <h2
+            id="lead-title"
+            ref={headingRef}
+            tabIndex={-1}
+            className="mt-3 text-2xl font-bold"
+          >
+            {step === 'needs'
+              ? fr
+                ? 'Vos besoins'
+                : 'Your needs'
+              : step === 'contact'
+                ? fr
+                  ? 'Vos coordonnées'
+                  : 'Your contact details'
+                : fr
+                  ? 'Votre créneau'
+                  : 'Your session time'}
+          </h2>
+        </div>
+        <Button
+          variant="secondary"
+          onClick={onClose}
+          aria-label={fr ? 'Fermer la réservation' : 'Close booking'}
+          className="shrink-0 px-3!"
+        >
+          ×
+        </Button>
+      </div>
+      <ol
+        aria-label={fr ? 'Étapes de réservation' : 'Booking steps'}
+        className="mb-6 grid grid-cols-3 gap-2 text-xs sm:text-sm"
       >
-        {/* Close */}
-        <button type="button" onClick={onClose} aria-label="Fermer la réservation" className="absolute right-4 top-4 flex min-h-11 min-w-11 items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-          <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
-        {error && (
-          <div className="mb-4 rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
-            {error}
-          </div>
-        )}
-        {showThanks ? (
-          <div className="py-8">
-            <div className="text-center">
-            <h3 className="mb-3 text-2xl font-semibold text-black dark:text-white">Merci pour votre inscription</h3>
-            <p className="mx-auto max-w-xl text-waterloo dark:text-manatee">
-              Votre compte est prêt. Choisissez maintenant votre première séance gratuite avec un tuteur disponible en {subject}.
-            </p>
-            </div>
-
-            <div className="mt-8 rounded-lg border border-stroke bg-white p-5 text-left dark:border-strokedark dark:bg-black">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h4 className="text-lg font-semibold text-black dark:text-white">
-                    Je choisis ma première séance gratuite
-                  </h4>
-                  <p className="mt-1 text-sm text-waterloo dark:text-manatee">
-                    Les créneaux affichés proviennent des tuteurs disponibles qui enseignent cette matière.
-                  </p>
-                </div>
-                <span className="rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
-                  1 heure
-                </span>
-              </div>
-
-              {bookingConfirmed ? (
-                <div className="mt-6 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
-                  Votre demande de première séance a bien été enregistrée. Le tuteur recevra une notification pour confirmer le créneau.
-                </div>
-              ) : (
-                <>
-                  {slotsLoading ? (
-                    <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                      {[0, 1, 2, 3].map((item) => (
-                        <div key={item} className="h-16 animate-pulse rounded-lg bg-primary/10" />
-                      ))}
-                    </div>
-                  ) : firstSessionSlots.length > 0 ? (
-                    <div className="mt-6 space-y-5">
-                      {Object.entries(groupedFirstSessionSlots).map(([dateKey, slots]) => (
-                        <div key={dateKey}>
-                          <p className="mb-2 text-sm font-semibold capitalize text-black dark:text-white">
-                            {formatSlotDate(slots[0].startedAt)}
-                          </p>
-                          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                            {slots.map((slot) => {
-                              const isSelected =
-                                selectedSlot?.tutorId === slot.tutorId &&
-                                selectedSlot?.startedAt === slot.startedAt;
-
-                              return (
-                                <button
-                                  key={`${slot.tutorId}-${slot.startedAt}`}
-                                  type="button"
-                                  onClick={() => setSelectedSlot(slot)}
-                                  className={`rounded-lg border p-3 text-left text-sm transition ${
-                                    isSelected
-                                      ? "border-primary bg-primary text-white"
-                                      : "border-stroke bg-white text-black hover:border-primary hover:bg-primary/5 dark:border-strokedark dark:bg-blacksection dark:text-white"
-                                  }`}
-                                >
-                                  <span className="block font-semibold">{formatSlotTime(slot.startedAt)}</span>
-                                  <span className={isSelected ? "text-white/85" : "text-waterloo dark:text-manatee"}>
-                                    {slot.tutorName}
-                                  </span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="mt-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-900">
-                      Aucun créneau disponible n’a été trouvé pour cette matière. Nous vous contacterons pour organiser la première séance.
-                    </div>
-                  )}
-
-                  {slotsError && (
-                    <div className="mt-4 rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
-                      {slotsError}
-                    </div>
-                  )}
-
-                  <div className="mt-6 flex justify-center">
-                    <button
-                      type="button"
-                      disabled={!selectedSlot || bookingSlot}
-                      onClick={handleConfirmFirstSession}
-                      className="rounded-full bg-primary px-8 py-3 text-sm font-semibold text-white transition hover:bg-primaryho disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {bookingSlot ? "Réservation..." : "Confirmer ce créneau"}
-                    </button>
+        {(fr
+          ? ['Besoins', 'Coordonnées', 'Créneau']
+          : ['Needs', 'Contact', 'Time']
+        ).map((label, index) => (
+          <li
+            key={label}
+            aria-current={index === stepIndex ? 'step' : undefined}
+            className={`border-b-2 pb-3 ${index === stepIndex ? 'border-primary dark:border-brand-orange font-bold' : 'border-stroke dark:border-strokedark'}`}
+          >
+            {index + 1}. {label}
+          </li>
+        ))}
+      </ol>
+      <p id="lead-description" className="mb-6 text-sm leading-relaxed">
+        {step === 'needs'
+          ? fr
+            ? 'Commençons par le niveau et la matière. Les champs marqués * sont obligatoires.'
+            : 'Start with your level and subject. Fields marked * are required.'
+          : step === 'contact'
+            ? accountType === 'PARENT'
+              ? fr
+                ? 'Renseignez les coordonnées du parent. Les créneaux seront proposés après l’envoi.'
+                : 'Enter the parent’s contact details. Available times will appear after submission.'
+              : fr
+                ? 'Renseignez vos coordonnées. Les créneaux seront proposés après l’envoi.'
+                : 'Enter your contact details. Available times will appear after submission.'
+            : fr
+              ? 'Vos informations ont été reçues. Choisissez un créneau pour demander votre première séance. Votre inscription seule ne réserve pas de séance.'
+              : 'Your details have been received. Choose a time to request your first session. Submitting your details alone does not book a session.'}
+      </p>
+      {error && <Alert className="mb-6">{error}</Alert>}
+      {step !== 'slots' ? (
+        <form onSubmit={handleSubmit} aria-busy={submitting}>
+          <fieldset disabled={submitting} className="min-w-0 space-y-6">
+            <legend className="sr-only">
+              {step === 'needs'
+                ? fr
+                  ? 'Vos besoins'
+                  : 'Your needs'
+                : fr
+                  ? 'Vos coordonnées'
+                  : 'Contact details'}
+            </legend>
+            {step === 'needs' ? (
+              <>
+                <fieldset>
+                  <legend className="mb-3 font-semibold">
+                    {fr ? 'Je suis' : 'I am'}
+                  </legend>
+                  <div className="flex flex-wrap gap-6">
+                    {(['PARENT', 'STUDENT'] as const).map(value => (
+                      <label
+                        key={value}
+                        className="flex min-h-11 items-center gap-3"
+                      >
+                        <input
+                          type="radio"
+                          name="accountType"
+                          value={value}
+                          checked={accountType === value}
+                          onChange={() => setAccountType(value)}
+                        />
+                        {value === 'PARENT'
+                          ? fr
+                            ? 'Un parent'
+                            : 'A parent'
+                          : fr
+                            ? 'Un élève'
+                            : 'A student'}
+                      </label>
+                    ))}
                   </div>
-                </>
-              )}
-            </div>
-
-            <button
-              type="button"
-              onClick={handleSigninRedirect}
-              className="mt-8 inline-flex items-center justify-center rounded-full bg-primary px-8 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primaryho focus:outline-none focus-visible:ring-2 focus-visible:ring-primaryho focus-visible:ring-offset-2 dark:ring-offset-black"
-            >
-              Se connecter à mon espace
-            </button>
-          </div>
-        ) : (
-        <>
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Étape 1 */}
-          <div className="rounded-lg bg-primary/10 p-6">
-            <div className="mb-4 inline-block rounded bg-primary px-3 py-1 text-white text-sm font-semibold">ÉTAPE 1</div>
-            <h3 className="mb-3 text-xl font-semibold text-black dark:text-white">Je suis</h3>
-            <div className="mb-6 grid gap-3 sm:grid-cols-2">
-              {[
-                { value: "PARENT", label: "Un parent" },
-                { value: "STUDENT", label: "Un élève" },
-              ].map((option) => (
-                <label
-                  key={option.value}
-                  className={`flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-sm transition ${
-                    accountType === option.value
-                      ? "border-primary bg-white text-primary shadow-sm dark:bg-black"
-                      : "border-stroke bg-white/60 text-waterloo hover:border-primary/40 dark:border-strokedark dark:bg-black/30 dark:text-manatee"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="accountType"
-                    value={option.value}
-                    checked={accountType === option.value}
-                    onChange={(e) => setAccountType(e.target.value as "PARENT" | "STUDENT")}
-                    className="h-4 w-4 text-primary focus:ring-primary"
+                </fieldset>
+                <fieldset>
+                  <legend className="mb-3 font-semibold">
+                    {accountType === 'PARENT'
+                      ? fr
+                        ? 'Classe de votre enfant *'
+                        : 'Your child’s grade *'
+                      : fr
+                        ? 'Votre niveau *'
+                        : 'Your grade *'}
+                  </legend>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    {LEVELS.map(value => (
+                      <label
+                        key={value}
+                        className="flex min-h-11 items-center gap-2 text-sm"
+                      >
+                        <input
+                          type="radio"
+                          required
+                          name="level"
+                          value={value}
+                          checked={level === value}
+                          onChange={() => setLevel(value)}
+                        />
+                        {value}
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+                <div>
+                  <label
+                    htmlFor="lead-subject"
+                    className="mb-2 block font-semibold"
+                  >
+                    {fr ? 'Matière *' : 'Subject *'}
+                  </label>
+                  <select
+                    id="lead-subject"
+                    className="sika-field"
+                    required
+                    value={subject}
+                    onChange={event => setSubject(event.target.value)}
+                  >
+                    <option value="">
+                      {fr ? 'Sélectionner une matière' : 'Choose a subject'}
+                    </option>
+                    {subjectOptions.map(value => (
+                      <option key={value}>{value}</option>
+                    ))}
+                  </select>
+                </div>
+                {subject === 'Préparation à un concours' && (
+                  <Field
+                    id="lead-contest"
+                    required
+                    minLength={3}
+                    label={fr ? 'Concours préparé' : 'Entrance exam'}
+                    value={contest}
+                    onChange={event => setContest(event.target.value)}
                   />
-                  <span>{option.label}</span>
-                </label>
-              ))}
-            </div>
-            <h3 className="mb-4 text-xl font-semibold text-black dark:text-white">{levelTitle}</h3>
-            <div className="grid grid-cols-2 gap-y-3">
-              {LEVELS.map((lv) => (
-                <label key={lv} className="flex items-center gap-3">
-                  <input type="radio" name="level" value={lv} checked={level===lv} onChange={(e) => setLevel(e.target.value)} className="h-4 w-4 text-primary focus:ring-primary" />
-                  <span className="text-black dark:text-white">{lv}</span>
-                </label>
-              ))}
-            </div>
-
-            <label htmlFor="lead-subject" className="mt-6 mb-2 block text-xl font-semibold text-black dark:text-white">Matière</label>
-            <select id="lead-subject" value={subject} onChange={(e) => setSubject(e.target.value)} className="w-full rounded-md border border-stroke px-3 py-2 dark:border-strokedark dark:bg-black">
-              <option value="">Sélectionner une matière</option>
-              {subjectOptions.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-            {subject === "Préparation à un concours" && (
-              <div className="mt-3">
-                <label htmlFor="lead-contest" className="mb-2 block text-sm font-medium text-black dark:text-white">Concours préparé</label>
-                <input
-                  id="lead-contest"
-                  value={contest}
-                  onChange={(e) => setContest(e.target.value)}
-                  placeholder="Ex. : Passerelle, BCE, ingénieur"
-                  className="w-full rounded-md border border-stroke px-3 py-2 dark:border-strokedark dark:bg-black"
-                />
-              </div>
-            )}
-
-            <label htmlFor="lead-goal" className="mt-6 mb-2 block text-xl font-semibold text-black dark:text-white">Objectif</label>
-            <select id="lead-goal" value={goal} onChange={(e) => setGoal(e.target.value)} className="w-full rounded-md border border-stroke px-3 py-2 dark:border-strokedark dark:bg-black">
-              <option value="">Sélectionner un objectif</option>
-              {GOALS.map((g) => (
-                <option key={g} value={g}>{g}</option>
-              ))}
-            </select>
-            {goal === "Autre" && (
-              <div className="mt-3">
-                <label htmlFor="lead-goal-other" className="mb-2 block text-sm font-medium text-black dark:text-white">Précisez votre objectif</label>
-                <input
-                  id="lead-goal-other"
-                  value={goalOther}
-                  onChange={(e) => setGoalOther(e.target.value)}
-                  placeholder="Votre objectif"
-                  className="w-full rounded-md border border-stroke px-3 py-2 dark:border-strokedark dark:bg-black"
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Étape 2 */}
-          <div className="rounded-lg bg-primary/10 p-6">
-            <div className="mb-4 inline-block rounded bg-primary px-3 py-1 text-white text-sm font-semibold">ÉTAPE 2</div>
-            <h3 className="mb-4 text-xl font-semibold text-black dark:text-white">
-              {contactTitle}
-            </h3>
-            <p className="mb-5 text-sm text-waterloo dark:text-manatee">
-              {contactDescription}
-            </p>
-
-            <div className="space-y-3">
-              <div>
-                <label htmlFor="lead-civility" className="mb-1 block text-sm font-medium text-black dark:text-white">Civilité</label>
-                <select id="lead-civility" value={civility} onChange={(e) => setCivility(e.target.value)} className="w-full rounded-full bg-white px-4 py-2 text-black">
-                  <option value="">Sélectionner une civilité</option>
-                  <option value="Mme">Mme</option>
-                  <option value="M.">M.</option>
-                </select>
-              </div>
-              <div>
-                <label htmlFor="lead-last-name" className="mb-1 block text-sm font-medium text-black dark:text-white">Nom</label>
-                <input
-                  id="lead-last-name"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  placeholder={isParentFlow ? "Votre nom" : "Mon nom"}
-                  autoComplete="family-name"
-                  className="w-full rounded-full bg-white px-4 py-2 text-black"
-                />
-              </div>
-              <div>
-                <label htmlFor="lead-first-name" className="mb-1 block text-sm font-medium text-black dark:text-white">Prénom</label>
-                <input
-                  id="lead-first-name"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  placeholder={isParentFlow ? "Votre prénom" : "Mon prénom"}
-                  autoComplete="given-name"
-                  className="w-full rounded-full bg-white px-4 py-2 text-black"
-                />
-              </div>
-              <div>
-                <label htmlFor="lead-email" className="mb-1 block text-sm font-medium text-black dark:text-white">Adresse e-mail</label>
-                <input
+                )}
+                <div>
+                  <label
+                    htmlFor="lead-goal"
+                    className="mb-2 block font-semibold"
+                  >
+                    {fr ? 'Objectif (facultatif)' : 'Goal (optional)'}
+                  </label>
+                  <select
+                    id="lead-goal"
+                    className="sika-field"
+                    value={goal}
+                    onChange={event => setGoal(event.target.value)}
+                  >
+                    <option value="">
+                      {fr ? 'Sélectionner un objectif' : 'Choose a goal'}
+                    </option>
+                    {GOALS.map((value, index) => (
+                      <option key={value} value={value}>
+                        {fr ? value : GOALS_EN[index]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {goal === 'Autre' && (
+                  <Field
+                    id="lead-goal-other"
+                    required
+                    minLength={3}
+                    label={
+                      fr ? 'Précisez votre objectif' : 'Describe your goal'
+                    }
+                    value={goalOther}
+                    onChange={event => setGoalOther(event.target.value)}
+                  />
+                )}
+              </>
+            ) : (
+              <>
+                <p className="bg-primary/10 rounded-lg p-4 text-sm dark:bg-white/10">
+                  {level} · {subject}
+                </p>
+                <div>
+                  <label
+                    htmlFor="lead-civility"
+                    className="mb-2 block text-sm font-semibold"
+                  >
+                    {fr ? 'Civilité *' : 'Title *'}
+                  </label>
+                  <select
+                    id="lead-civility"
+                    required
+                    className="sika-field"
+                    value={civility}
+                    onChange={event => setCivility(event.target.value)}
+                  >
+                    <option value="">
+                      {fr ? 'Sélectionner une civilité' : 'Choose a title'}
+                    </option>
+                    <option value="Mme">{fr ? 'Mme' : 'Ms'}</option>
+                    <option value="M.">{fr ? 'M.' : 'Mr'}</option>
+                  </select>
+                </div>
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <Field
+                    id="lead-last-name"
+                    label={fr ? 'Nom' : 'Last name'}
+                    required
+                    autoComplete="family-name"
+                    value={lastName}
+                    onChange={event => setLastName(event.target.value)}
+                  />
+                  <Field
+                    id="lead-first-name"
+                    label={fr ? 'Prénom' : 'First name'}
+                    required
+                    autoComplete="given-name"
+                    value={firstName}
+                    onChange={event => setFirstName(event.target.value)}
+                  />
+                </div>
+                <Field
                   id="lead-email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setEmailManuallyEdited(true);
-                  }}
-                  placeholder={isParentFlow ? "Votre e-mail" : "Mon e-mail"}
+                  label={fr ? 'Adresse e-mail' : 'Email address'}
+                  required
                   type="email"
                   autoComplete="email"
-                  className="w-full rounded-full bg-white px-4 py-2 text-black"
+                  value={email}
+                  onChange={event => setEmail(event.target.value)}
                 />
-              </div>
-              <div>
-                <label htmlFor="lead-phone" className="mb-1 block text-sm font-medium text-black dark:text-white">Numéro de téléphone</label>
-                <div className="flex w-full items-stretch gap-2">
-                <div ref={dialPickerRef} className="relative shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setDialPickerOpen((open) => !open)}
-                    aria-haspopup="listbox"
-                    aria-expanded={dialPickerOpen}
-                    aria-label={`Indicatif téléphonique (${selectedCountry.country}, ${selectedCountry.dial})`}
-                    title={`${selectedCountry.country} (${selectedCountry.dial})`}
-                    className="flex h-full items-center gap-1 rounded-full bg-white pl-3 pr-2 py-2 text-black focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                <div>
+                  <label
+                    htmlFor="lead-phone-country"
+                    className="mb-2 block text-sm font-semibold"
                   >
-                    <span className="text-base leading-none" aria-hidden="true">
-                      {selectedCountry.flag}
-                    </span>
-                    <span className="whitespace-nowrap text-sm font-medium">
-                      {selectedCountry.dial}
-                    </span>
-                    <span
-                      aria-hidden="true"
-                      className="text-xs text-black/60"
-                    >
-                      ▾
-                    </span>
-                  </button>
-
-                  {dialPickerOpen && (
-                    <div
-                      role="dialog"
-                      aria-label="Choisir un indicatif téléphonique"
-                      className="absolute left-0 top-full z-[100] mt-2 flex w-[min(20rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-black/10 bg-white text-black shadow-2xl dark:border-white/10 dark:bg-blacksection dark:text-white"
-                    >
-                      <div className="shrink-0 border-b border-black/5 p-2 dark:border-white/10">
-                        <input
-                          ref={dialSearchInputRef}
-                          value={dialSearch}
-                          onChange={(e) => setDialSearch(e.target.value)}
-                          placeholder="Rechercher un pays ou indicatif…"
-                          aria-label="Rechercher un pays ou indicatif"
-                          className="w-full rounded-full border border-black/10 bg-white px-3 py-1.5 text-sm text-black placeholder-black/40 focus:border-primary focus:outline-none dark:border-white/10 dark:bg-black/30 dark:text-white dark:placeholder-white/40"
-                        />
-                      </div>
-                      <ul
-                        role="listbox"
-                        aria-activedescendant={`dial-option-${selectedCountry.code}`}
-                        className="h-[min(20rem,55vh)] overflow-y-auto overscroll-contain py-1 [scrollbar-color:rgba(0,0,0,0.25)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-black/20 hover:[&::-webkit-scrollbar-thumb]:bg-black/40 [&::-webkit-scrollbar-track]:bg-transparent"
-                        onWheelCapture={(e) => e.stopPropagation()}
-                        onTouchMoveCapture={(e) => e.stopPropagation()}
-                      >
-                        {filteredCountries.length === 0 ? (
-                          <li className="px-3 py-2 text-sm text-black/50 dark:text-white/50">
-                            Aucun résultat
-                          </li>
-                        ) : (
-                          filteredCountries.map((option) => {
-                            const isSelected = option.code === phoneDialCountry;
-                            return (
-                              <li key={option.code}>
-                                <button
-                                  type="button"
-                                  id={`dial-option-${option.code}`}
-                                  role="option"
-                                  aria-selected={isSelected}
-                                  onClick={() => {
-                                    setPhoneDialCountry(option.code);
-                                    setDialPickerOpen(false);
-                                  }}
-                                  className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition hover:bg-primary/10 ${
-                                    isSelected
-                                      ? "bg-primary/10 font-semibold text-primary"
-                                      : "text-black dark:text-white"
-                                  }`}
-                                >
-                                  <span className="text-base leading-none" aria-hidden="true">
-                                    {option.flag}
-                                  </span>
-                                  <span className="flex-1 truncate">
-                                    {option.country}
-                                  </span>
-                                  <span className="shrink-0 text-black/60 dark:text-white/60">
-                                    {option.dial}
-                                  </span>
-                                </button>
-                              </li>
-                            );
-                          })
-                        )}
-                      </ul>
-                      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-5 bg-gradient-to-t from-white to-transparent dark:from-blacksection" />
-                    </div>
-                  )}
+                    {fr
+                      ? 'Pays et indicatif téléphonique'
+                      : 'Country and calling code'}
+                  </label>
+                  <select
+                    id="lead-phone-country"
+                    className="sika-field"
+                    value={phoneDialCountry}
+                    onChange={event => setPhoneDialCountry(event.target.value)}
+                  >
+                    {PHONE_COUNTRIES.map(country => (
+                      <option key={country.code} value={country.code}>
+                        {country.country} ({country.dial})
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                <div className="flex min-w-0 flex-1 items-center rounded-full bg-white px-4 text-black">
-                  <span className="mr-2 select-none whitespace-nowrap text-black/70">
-                    {phoneDialCode}
-                  </span>
-                  <input
-                    id="lead-phone"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value.replace(/\D+/g, ""))}
-                    onKeyDown={(e) => {
-                      if (
-                        e.key.length === 1 &&
-                        !/[0-9]/.test(e.key) &&
-                        !e.ctrlKey &&
-                        !e.metaKey &&
-                        !e.altKey
-                      ) {
-                        e.preventDefault();
-                      }
-                    }}
-                    onPaste={(e) => {
-                      const pasted = e.clipboardData.getData("text");
-                      if (/\D/.test(pasted)) {
-                        e.preventDefault();
-                        setPhone((prev) => (prev + pasted).replace(/\D+/g, ""));
-                      }
-                    }}
-                    placeholder={isParentFlow ? "Votre numéro" : "Mon numéro"}
-                    type="tel"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    autoComplete="tel-national"
-                    maxLength={15}
-                    className="w-full bg-transparent py-2 text-black focus:outline-none"
-                  />
-                </div>
-              </div>
-              </div>
-              <div>
-                <label htmlFor="lead-zip" className="mb-1 block text-sm font-medium text-black dark:text-white">Code postal</label>
-                <input
-                  id="lead-zip"
-                  value={zip}
-                  onChange={(e) => setZip(e.target.value.replace(/\D+/g, ""))}
-                onKeyDown={(e) => {
-                  if (
-                    e.key.length === 1 &&
-                    !/[0-9]/.test(e.key) &&
-                    !e.ctrlKey &&
-                    !e.metaKey &&
-                    !e.altKey
-                  ) {
-                    e.preventDefault();
+                <Field
+                  id="lead-phone"
+                  label={fr ? 'Numéro de téléphone' : 'Phone number'}
+                  hint={
+                    fr
+                      ? `Indicatif ${phoneDialCode} sélectionné. Saisissez le numéro national.`
+                      : `Calling code ${phoneDialCode} selected. Enter the national number.`
                   }
-                }}
-                onPaste={(e) => {
-                  const pasted = e.clipboardData.getData("text");
-                  if (/\D/.test(pasted)) {
-                    e.preventDefault();
-                    setZip((prev) => (prev + pasted).replace(/\D+/g, "").slice(0, 5));
+                  required
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel-national"
+                  minLength={6}
+                  maxLength={15}
+                  pattern="[0-9]{6,15}"
+                  value={phone}
+                  onChange={event =>
+                    setPhone(event.target.value.replace(/[^0-9]/g, ''))
                   }
-                }}
-                placeholder="Code postal"
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                autoComplete="postal-code"
-                maxLength={5}
-                  className="w-full rounded-full bg-white px-4 py-2 text-black"
                 />
-              </div>
-            </div>
-
-            <div className="mt-6 text-xs text-black/70">
-              En soumettant ce formulaire, vous acceptez notre{" "}
-              <Link
-                href="/donnees-personnelles"
-                className="text-primary underline hover:text-primaryho"
+                <Field
+                  id="lead-zip"
+                  label={fr ? 'Code postal' : 'Postal code'}
+                  required
+                  inputMode="numeric"
+                  autoComplete="postal-code"
+                  minLength={4}
+                  maxLength={5}
+                  pattern="[0-9]{4,5}"
+                  value={zip}
+                  onChange={event =>
+                    setZip(event.target.value.replace(/[^0-9]/g, ''))
+                  }
+                />
+                <p className="text-sm leading-relaxed">
+                  {fr ? 'Consultez notre ' : 'Read our '}
+                  <Link
+                    href="/donnees-personnelles"
+                    target="_blank"
+                    className="underline"
+                  >
+                    {fr
+                      ? 'politique de protection des données (nouvel onglet)'
+                      : 'privacy policy (new tab)'}
+                  </Link>
+                  .
+                </p>
+              </>
+            )}
+          </fieldset>
+          <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
+            {step === 'contact' && (
+              <Button
+                variant="secondary"
+                disabled={submitting}
+                onClick={() => {
+                  setError(null);
+                  setStep('needs');
+                }}
               >
-                politique de protection des données
-              </Link>
-              .
-            </div>
+                {fr ? 'Retour aux besoins' : 'Back to needs'}
+              </Button>
+            )}
+            <Button
+              type="submit"
+              loading={submitting}
+              loadingLabel={fr ? 'Envoi…' : 'Sending…'}
+            >
+              {step === 'needs'
+                ? fr
+                  ? 'Continuer'
+                  : 'Continue'
+                : fr
+                  ? 'Envoyer et voir les créneaux'
+                  : 'Submit and view available times'}
+            </Button>
+          </div>
+        </form>
+      ) : (
+        <div>
+          {bookingConfirmed ? (
+            <Alert tone="success">
+              {fr
+                ? 'Votre demande de première séance est enregistrée. Le tuteur doit encore confirmer le créneau.'
+                : 'Your first-session request has been saved. The tutor still needs to confirm the time.'}
+            </Alert>
+          ) : (
+            <>
+              {slotsLoading ? (
+                <p role="status" className="py-8">
+                  {fr ? 'Chargement des créneaux…' : 'Loading available times…'}
+                </p>
+              ) : slotsError &&
+                firstSessionSlots.length ===
+                  0 ? null : firstSessionSlots.length === 0 ? (
+                <Alert tone="info">
+                  {fr
+                    ? 'Aucun créneau proposé pour le moment. Aucune séance n’est réservée. Vous pouvez actualiser les créneaux ou contacter notre équipe.'
+                    : 'No times are available yet. No session has been booked. Refresh available times or contact our team.'}
+                </Alert>
+              ) : (
+                <fieldset disabled={bookingSlot}>
+                  <legend className="mb-4 font-semibold">
+                    {fr
+                      ? 'Choisissez un créneau (heure locale de votre appareil)'
+                      : 'Choose a time (your device’s local time)'}
+                  </legend>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {firstSessionSlots.map(slot => (
+                      <label
+                        key={`${slot.tutorId}-${slot.startedAt}`}
+                        className="border-stroke dark:border-strokedark flex items-start gap-3 rounded-lg border p-4"
+                      >
+                        <input
+                          type="radio"
+                          name="first-session-slot"
+                          className="mt-1"
+                          checked={
+                            selectedSlot?.tutorId === slot.tutorId &&
+                            selectedSlot?.startedAt === slot.startedAt
+                          }
+                          onChange={() => setSelectedSlot(slot)}
+                        />
+                        <span className="text-sm">
+                          <span className="block font-semibold">
+                            {new Date(slot.startedAt).toLocaleString(
+                              fr ? 'fr-FR' : 'en-GB',
+                              {
+                                weekday: 'long',
+                                day: 'numeric',
+                                month: 'long',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              }
+                            )}
+                          </span>
+                          {slot.tutorName} · {slot.duration} min
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+              )}
+              {slotsError && <Alert className="mt-4">{slotsError}</Alert>}
+              <div className="mt-6 flex flex-wrap gap-4">
+                <Button
+                  disabled={!selectedSlot || slotsLoading}
+                  loading={bookingSlot}
+                  loadingLabel={fr ? 'Réservation…' : 'Booking…'}
+                  onClick={() => void confirmSlot()}
+                >
+                  {fr ? 'Demander ce créneau' : 'Request this time'}
+                </Button>
+                <Button
+                  variant="secondary"
+                  disabled={slotsLoading || bookingSlot}
+                  onClick={() => setSlotsVersion(current => current + 1)}
+                >
+                  {fr ? 'Actualiser les créneaux' : 'Refresh available times'}
+                </Button>
+              </div>
+              <a
+                className="sika-text-link mt-4"
+                href="mailto:sikaschoolservice@gmail.com"
+              >
+                {fr ? 'Contacter l’équipe' : 'Contact our team'}
+              </a>
+            </>
+          )}
+          <div className="mt-8">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                onClose();
+                router.push(
+                  `/auth/signin?email=${encodeURIComponent(submittedEmail.current)}`
+                );
+              }}
+            >
+              {fr ? 'Se connecter à mon espace' : 'Sign in to my account'}
+            </Button>
           </div>
         </div>
-
-        <div className="mt-6 flex justify-center">
-          <button disabled={!isValid || submitting} onClick={handleSubmit} className="rounded-full bg-primary px-10 py-3 text-white hover:bg-primaryho disabled:opacity-60">
-            {submitting ? 'Envoi…' : 'Valider'}
-          </button>
-        </div>
-        </>
-        )}
-      </div>
-    </div>
+      )}
+    </Dialog>
   );
 }
-
-

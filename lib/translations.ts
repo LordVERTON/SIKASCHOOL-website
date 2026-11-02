@@ -13,8 +13,11 @@ export interface Translations {
     sessionPacks: string;
     perSession: string;
     signIn: string;
+    reviews: string;
+    tutors: string;
+    pricing: string;
   };
-  
+
   // Hero Section
   hero: {
     title: string;
@@ -30,7 +33,7 @@ export interface Translations {
       learn: string;
     };
   };
-  
+
   // About Section
   about: {
     title: string;
@@ -51,7 +54,7 @@ export interface Translations {
     };
     qualifications: string;
   };
-  
+
   // Fun Facts
   funFacts: {
     title: string;
@@ -59,7 +62,7 @@ export interface Translations {
     families: string;
     success: string;
   };
-  
+
   // Pricing
   pricing: {
     title: string;
@@ -90,7 +93,7 @@ export interface Translations {
     benefitConfidence: string;
     cta: string;
   };
-  
+
   // Testimonials
   testimonials: {
     title: string;
@@ -99,7 +102,7 @@ export interface Translations {
     author: string;
     location: string;
   };
-  
+
   // Footer
   footer: {
     description: string;
@@ -114,7 +117,7 @@ export interface Translations {
     copyright: string;
     language: string;
   };
-  
+
   // Common
   common: {
     loading: string;
@@ -176,19 +179,24 @@ export const translations: Record<Language, Translations> = {
     nav: {
       home: 'Accueil',
       howItWorks: 'Comment ça marche',
-      aboutUs: 'Qui sommes nous ?',
+      aboutUs: 'Qui sommes-nous ?',
       sessionPacks: 'Packs de séances',
-      perSession: 'A la séance',
+      perSession: 'À la séance',
+      reviews: 'Avis',
+      tutors: 'L’équipe',
+      pricing: 'Tarifs',
       signIn: 'Mon espace',
     },
     hero: {
       title: 'Cours particuliers en ligne du collège au supérieur',
       subtitle: 'Un accompagnement adapté à chaque objectif',
-      description: 'Trouvez un tuteur adapté au niveau, à la matière et aux objectifs de votre enfant ou de votre parcours.',
+      description:
+        'Trouvez un tuteur adapté au niveau, à la matière et aux objectifs de votre enfant ou de votre parcours.',
       emailPlaceholder: 'Votre e-mail',
       reserveButton: 'Réserver ma séance d’essai gratuite',
       secondaryButton: 'Voir les tarifs',
-      freeTrial: 'Première séance gratuite · Sans engagement · Réservation en quelques étapes',
+      freeTrial:
+        'Première séance gratuite · Sans engagement · Réservation en quelques étapes',
       steps: {
         needs: 'Partagez vos besoins',
         schedule: 'Choisissez un créneau',
@@ -201,15 +209,18 @@ export const translations: Record<Language, Translations> = {
       fallback: [
         {
           question: 'Comment se déroule la première séance ?',
-          answer: 'Vous indiquez le niveau, la matière et vos objectifs, puis vous choisissez un créneau parmi les disponibilités proposées.',
+          answer:
+            'Vous indiquez le niveau, la matière et vos objectifs, puis vous choisissez un créneau parmi les disponibilités proposées.',
         },
         {
           question: 'Puis-je réserver une seule séance ?',
-          answer: 'Oui. Les séances à la carte sont disponibles pour le collège, le lycée et le supérieur, avec un prix affiché avant le paiement.',
+          answer:
+            'Oui. Les séances à la carte sont disponibles pour le collège, le lycée et le supérieur, avec un prix affiché avant le paiement.',
         },
         {
           question: 'Comment le tuteur est-il choisi ?',
-          answer: 'Les disponibilités proposées correspondent à des tuteurs disponibles pour la matière demandée.',
+          answer:
+            'Les disponibilités proposées correspondent à des tuteurs disponibles pour la matière demandée.',
         },
       ],
     },
@@ -219,22 +230,26 @@ export const translations: Record<Language, Translations> = {
       methods: {
         understand: {
           title: 'Comprendre',
-          description: 'Identifier les difficultés et les besoins spécifiques de chaque élève.',
+          description:
+            'Identifier les difficultés et les besoins spécifiques de chaque élève.',
         },
         progress: {
           title: 'Progresser',
-          description: 'Mettre en place des stratégies d\'apprentissage personnalisées.',
+          description:
+            "Mettre en place des stratégies d'apprentissage personnalisées.",
         },
         succeed: {
           title: 'Réussir',
-          description: 'Atteindre les objectifs académiques avec confiance et sérénité.',
+          description:
+            'Atteindre les objectifs académiques avec confiance et sérénité.',
         },
       },
-      qualifications: 'Nos tuteurs sont certifiés et sélectionnés pour leur expertise pédagogique.',
+      qualifications:
+        'Nos tuteurs sont certifiés et sélectionnés pour leur expertise pédagogique.',
     },
     funFacts: {
       title: 'Pourquoi choisir SIKASCHOOL',
-      years: '5+ ans d\'expérience',
+      years: "5+ ans d'expérience",
       families: '200+ familles accompagnées',
       success: '95% de mention obtenues au bac',
     },
@@ -251,7 +266,8 @@ export const translations: Record<Language, Translations> = {
     stagePromo: {
       title: 'Offre de rentrée',
       subtitle: '−15 % sur votre accompagnement*',
-      description: 'Démarrez l’année scolaire sereinement avec un accompagnement personnalisé et bénéficiez de 15 % de réduction sur les formules éligibles.',
+      description:
+        'Démarrez l’année scolaire sereinement avec un accompagnement personnalisé et bénéficiez de 15 % de réduction sur les formules éligibles.',
       benefitReview: 'Revoir les notions difficiles',
       benefitConsolidate: 'Consolider ses bases',
       benefitConfidence: 'Reprendre confiance',
@@ -260,17 +276,20 @@ export const translations: Record<Language, Translations> = {
     testimonials: {
       title: 'Témoignages',
       subtitle: 'Ce que disent nos familles',
-      quote: 'SikaSchool a transformé l\'approche de mon fils face aux mathématiques. Les résultats sont visibles dès les premières séances.',
+      quote:
+        "SikaSchool a transformé l'approche de mon fils face aux mathématiques. Les résultats sont visibles dès les premières séances.",
       author: 'Hélène',
       location: 'Paris',
     },
     footer: {
-      description: 'SikaSchool accompagne les élèves dans leur réussite scolaire avec des tuteurs qualifiés et une approche pédagogique personnalisée.',
+      description:
+        'SikaSchool accompagne les élèves du collège au supérieur avec des cours en ligne adaptés à leurs besoins.',
       contact: 'Contact',
       quickLinks: 'Liens rapides',
       support: 'Support',
       newsletter: 'Newsletter',
-      newsletterDescription: 'Abonnez-vous pour recevoir nos dernières actualités',
+      newsletterDescription:
+        'Abonnez-vous pour recevoir nos dernières actualités',
       newsletterPlaceholder: 'Adresse e-mail',
       privacyPolicy: 'Politique de confidentialité',
       supportLink: 'Support',
@@ -295,7 +314,8 @@ export const translations: Record<Language, Translations> = {
       subjectPlaceholder: 'Objet',
       phonePlaceholder: 'Numéro de téléphone',
       messagePlaceholder: 'Message',
-      consentText: 'En cliquant, vous acceptez nos conditions d’utilisation du formulaire et l’utilisation des cookies dans votre navigateur.',
+      consentText:
+        'En cliquant, vous acceptez nos conditions d’utilisation du formulaire et l’utilisation des cookies dans votre navigateur.',
       sendButton: 'Envoyer',
       sidebarTitle: 'Nous trouver',
       locationTitle: 'Notre adresse',
@@ -334,12 +354,16 @@ export const translations: Record<Language, Translations> = {
       aboutUs: 'About us',
       sessionPacks: 'Session packs',
       perSession: 'Per session',
+      reviews: 'Reviews',
+      tutors: 'Our team',
+      pricing: 'Pricing',
       signIn: 'My space',
     },
     hero: {
       title: 'Online tutoring from middle school to higher education',
       subtitle: 'Support tailored to every goal',
-      description: 'Find a tutor matched to the level, subject and goals of your child or academic journey.',
+      description:
+        'Find a tutor matched to the level, subject and goals of your child or academic journey.',
       emailPlaceholder: 'Your email',
       reserveButton: 'Book my free trial session',
       secondaryButton: 'View pricing',
@@ -356,15 +380,18 @@ export const translations: Record<Language, Translations> = {
       fallback: [
         {
           question: 'How does the first session work?',
-          answer: 'Tell us the level, subject and goals, then choose a time slot from the available options.',
+          answer:
+            'Tell us the level, subject and goals, then choose a time slot from the available options.',
         },
         {
           question: 'Can I book just one session?',
-          answer: 'Yes. Pay-as-you-go sessions are available for middle school, high school and higher education, with the price shown before payment.',
+          answer:
+            'Yes. Pay-as-you-go sessions are available for middle school, high school and higher education, with the price shown before payment.',
         },
         {
           question: 'How is the tutor selected?',
-          answer: 'The proposed availability comes from tutors available for the requested subject.',
+          answer:
+            'The proposed availability comes from tutors available for the requested subject.',
         },
       ],
     },
@@ -374,7 +401,8 @@ export const translations: Record<Language, Translations> = {
       methods: {
         understand: {
           title: 'Understand',
-          description: 'Identify the difficulties and specific needs of each student.',
+          description:
+            'Identify the difficulties and specific needs of each student.',
         },
         progress: {
           title: 'Progress',
@@ -385,7 +413,8 @@ export const translations: Record<Language, Translations> = {
           description: 'Achieve academic goals with confidence and serenity.',
         },
       },
-      qualifications: 'Our tutors are certified and selected for their pedagogical expertise.',
+      qualifications:
+        'Our tutors are certified and selected for their pedagogical expertise.',
     },
     funFacts: {
       title: 'Some Numbers...',
@@ -396,7 +425,8 @@ export const translations: Record<Language, Translations> = {
     pricing: {
       title: 'Session packs',
       subtitle: 'Back-to-school offer: 15% off*',
-      description: 'Choose the pack that suits you: Middle School, High School, or University.',
+      description:
+        'Choose the pack that suits you: Middle School, High School, or University.',
       college: 'Middle School',
       highSchool: 'High School',
       university: 'University',
@@ -406,7 +436,8 @@ export const translations: Record<Language, Translations> = {
     stagePromo: {
       title: 'Back-to-school offer',
       subtitle: '15% off your tutoring plan*',
-      description: 'Start the school year with confidence through personalised tutoring and receive 15% off eligible plans.',
+      description:
+        'Start the school year with confidence through personalised tutoring and receive 15% off eligible plans.',
       benefitReview: 'Review difficult topics',
       benefitConsolidate: 'Strengthen the basics',
       benefitConfidence: 'Regain confidence',
@@ -415,12 +446,14 @@ export const translations: Record<Language, Translations> = {
     testimonials: {
       title: 'Testimonials',
       subtitle: 'What our families say',
-      quote: 'SikaSchool transformed my son\'s approach to mathematics. The results are visible from the first sessions.',
+      quote:
+        "SikaSchool transformed my son's approach to mathematics. The results are visible from the first sessions.",
       author: 'Helen',
       location: 'Paris',
     },
     footer: {
-      description: 'SikaSchool supports students in their academic success with qualified tutors and a personalized pedagogical approach.',
+      description:
+        'SikaSchool supports students from middle school to higher education with online lessons adapted to their needs.',
       contact: 'Contact',
       quickLinks: 'Quick Links',
       support: 'Support',
@@ -450,7 +483,8 @@ export const translations: Record<Language, Translations> = {
       subjectPlaceholder: 'Subject',
       phonePlaceholder: 'Phone number',
       messagePlaceholder: 'Message',
-      consentText: 'By clicking, you agree to our form terms and consent to cookie usage in your browser.',
+      consentText:
+        'By clicking, you agree to our form terms and consent to cookie usage in your browser.',
       sendButton: 'Send Message',
       sidebarTitle: 'Find us',
       locationTitle: 'Our Location',

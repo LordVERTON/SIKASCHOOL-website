@@ -1,12 +1,13 @@
-"use client";
+'use client';
 
-import { useEffect, useState, type SVGProps } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Image from "next/image";
-import { getStorageItem, removeStorageItem, STORAGE_KEYS } from "@/lib/storage";
-import ForgotPasswordModal from "./ForgotPasswordModal";
-import { toast } from "react-hot-toast";
-import { supabaseBrowser } from "@/lib/supabase-browser";
+import { useEffect, useState, type SVGProps } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Image from 'next/image';
+import { getStorageItem, removeStorageItem, STORAGE_KEYS } from '@/lib/storage';
+import ForgotPasswordModal from './ForgotPasswordModal';
+import { toast } from 'react-hot-toast';
+import { supabaseBrowser } from '@/lib/supabase-browser';
+import { getPublicOfferReturnPath } from '@/lib/public-offer-return';
 
 const EyeIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg
@@ -44,38 +45,38 @@ const EyeOffIcon = (props: SVGProps<SVGSVGElement>) => (
 
 export default function SimpleSignin() {
   const [data, setData] = useState({
-    email: "",
-    password: "",
-    firstName: "",
-    lastName: "",
-    phone: "",
-    accountType: "STUDENT" as "STUDENT" | "PARENT",
-    confirmPassword: "",
+    email: '',
+    password: '',
+    firstName: '',
+    lastName: '',
+    phone: '',
+    accountType: 'STUDENT' as 'STUDENT' | 'PARENT',
+    confirmPassword: '',
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [isSignup, setIsSignup] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
   const [twoFactorRequired, setTwoFactorRequired] = useState(false);
-  const [twoFactorCode, setTwoFactorCode] = useState("");
+  const [twoFactorCode, setTwoFactorCode] = useState('');
   const [twoFactorTicket, setTwoFactorTicket] = useState<string | null>(null);
   const [twoFactorInfo, setTwoFactorInfo] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const isParentSignup = isSignup && data.accountType === "PARENT";
+  const isParentSignup = isSignup && data.accountType === 'PARENT';
 
   useEffect(() => {
-    const emailParam = searchParams?.get("email");
+    const emailParam = searchParams?.get('email');
     if (emailParam) {
-      setData((prev) => ({ ...prev, email: emailParam }));
+      setData(prev => ({ ...prev, email: emailParam }));
       removeStorageItem(STORAGE_KEYS.LAST_LEAD_EMAIL);
       return;
     }
 
     const storedEmail = getStorageItem(STORAGE_KEYS.LAST_LEAD_EMAIL);
     if (storedEmail) {
-      setData((prev) => ({ ...prev, email: storedEmail }));
+      setData(prev => ({ ...prev, email: storedEmail }));
       removeStorageItem(STORAGE_KEYS.LAST_LEAD_EMAIL);
     }
   }, [searchParams]);
@@ -83,20 +84,21 @@ export default function SimpleSignin() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError("");
+    setError('');
 
     try {
       let response;
-      let supabaseCredentials: { email: string; password: string } | null = null;
+      let supabaseCredentials: { email: string; password: string } | null =
+        null;
 
       if (isSignup) {
         // Inscription
         if (!data.firstName || !data.lastName) {
-          setError('Prénom et nom requis pour l\'inscription');
+          setError("Prénom et nom requis pour l'inscription");
           return;
         }
         if (!data.email.trim()) {
-          setError("L’e-mail est requis");
+          setError('L’e-mail est requis');
           return;
         }
         if (!data.password) {
@@ -132,13 +134,17 @@ export default function SimpleSignin() {
             firstName: data.firstName.trim(),
             lastName: data.lastName.trim(),
             phone: data.phone.trim(),
-            role: data.accountType
+            role: data.accountType,
           }),
         });
       } else {
         if (twoFactorRequired) {
-          if (!twoFactorCode || twoFactorCode.trim().length !== 6 || !twoFactorTicket) {
-            setError("Entrez le code SMS à 6 chiffres.");
+          if (
+            !twoFactorCode ||
+            twoFactorCode.trim().length !== 6 ||
+            !twoFactorTicket
+          ) {
+            setError('Entrez le code SMS à 6 chiffres.');
             setIsLoading(false);
             return;
           }
@@ -167,34 +173,58 @@ export default function SimpleSignin() {
       if (response.status === 202 && result?.requiresTwoFactor) {
         setTwoFactorRequired(true);
         setTwoFactorTicket(result.twoFactorTicket ?? null);
-        setTwoFactorInfo(typeof result.message === "string" ? result.message : "Code SMS envoyé.");
-        setError("");
+        setTwoFactorInfo(
+          typeof result.message === 'string'
+            ? result.message
+            : 'Code SMS envoyé.'
+        );
+        setError('');
         return;
       }
 
       if (!response.ok) {
-        setError(result.error || (isSignup ? 'Erreur d\'inscription' : 'Erreur de connexion'));
+        setError(
+          result.error ||
+            (isSignup ? "Erreur d'inscription" : 'Erreur de connexion')
+        );
         return;
       }
 
       if (result.success) {
         if (supabaseCredentials) {
-          const { error: sbAuthErr } = await supabaseBrowser.auth.signInWithPassword(supabaseCredentials);
+          const { error: sbAuthErr } =
+            await supabaseBrowser.auth.signInWithPassword(supabaseCredentials);
           if (sbAuthErr) {
-            console.warn("[signin] Session Supabase (Realtime):", sbAuthErr.message);
+            console.warn(
+              '[signin] Session Supabase (Realtime):',
+              sbAuthErr.message
+            );
           }
         }
-        if (typeof window !== "undefined") {
+        if (typeof window !== 'undefined') {
           try {
             Object.keys(sessionStorage)
-              .filter((k) => k.startsWith("sika:notif-popup-shown"))
-              .forEach((k) => sessionStorage.removeItem(k));
+              .filter(k => k.startsWith('sika:notif-popup-shown'))
+              .forEach(k => sessionStorage.removeItem(k));
           } catch {
             // ignore
           }
         }
-        if (isSignup && typeof result.message === "string" && result.message.trim()) {
+        if (
+          isSignup &&
+          typeof result.message === 'string' &&
+          result.message.trim()
+        ) {
           toast.success(result.message.trim());
+        }
+        const offerReturnPath = getPublicOfferReturnPath(
+          searchParams?.get('next'),
+          result.user.role
+        );
+        if (offerReturnPath) {
+          router.push(offerReturnPath);
+          router.refresh();
+          return;
         }
         // Rediriger vers l'espace approprié selon le rôle
         switch (result.user.role) {
@@ -216,8 +246,13 @@ export default function SimpleSignin() {
         router.refresh();
       }
     } catch (error) {
-      console.error(isSignup ? 'Erreur d\'inscription:' : 'Erreur de connexion:', error);
-      setError(`Une erreur est survenue lors de ${isSignup ? 'l\'inscription' : 'la connexion'}`);
+      console.error(
+        isSignup ? "Erreur d'inscription:" : 'Erreur de connexion:',
+        error
+      );
+      setError(
+        `Une erreur est survenue lors de ${isSignup ? "l'inscription" : 'la connexion'}`
+      );
     } finally {
       setIsLoading(false);
     }
@@ -226,47 +261,47 @@ export default function SimpleSignin() {
   return (
     <>
       {/* <!-- ===== SignIn Form Start ===== --> */}
-      <section className="pb-12.5 pt-32.5 lg:pb-25 lg:pt-45 xl:pb-30 xl:pt-50">
-        <div className="relative z-1 mx-auto max-w-c-1016 px-7.5 pb-7.5 pt-10 lg:px-15 lg:pt-15 xl:px-20 xl:pt-20">
-          <div className="absolute left-0 top-0 -z-1 h-2/3 w-full rounded-lg bg-linear-to-t from-transparent to-[#dee7ff47] dark:bg-linear-to-t dark:to-[#252A42]"></div>
+      <section className="pt-32.5 pb-12.5 lg:pt-45 lg:pb-25 xl:pt-50 xl:pb-30">
+        <div className="max-w-c-1016 relative z-1 mx-auto px-7.5 pt-10 pb-7.5 lg:px-15 lg:pt-15 xl:px-20 xl:pt-20">
+          <div className="absolute top-0 left-0 -z-1 h-2/3 w-full rounded-lg bg-linear-to-t from-transparent to-[#dee7ff47] dark:bg-linear-to-t dark:to-[#252A42]"></div>
           <div className="absolute bottom-17.5 left-0 -z-1 h-1/3 w-full">
             <Image
               src="/images/shape/shape-dotted-light.svg"
               alt="Dotted"
-              width={100}
-              height={100}
-              className="dark:hidden"
+              width={1403}
+              height={383}
+              className="h-auto w-[100px] dark:hidden"
             />
             <Image
               src="/images/shape/shape-dotted-dark.svg"
               alt="Dotted"
-              width={100}
-              height={100}
-              className="hidden dark:block"
+              width={1403}
+              height={383}
+              className="hidden h-auto w-[100px] dark:block"
             />
           </div>
 
-          <div className="animate_top rounded-lg bg-white px-7.5 pt-7.5 shadow-solid-8 dark:border dark:border-strokedark dark:bg-black xl:px-15 xl:pt-15">
-            <h2 className="mb-15 text-center text-3xl font-semibold text-black dark:text-white xl:text-sectiontitle2">
+          <div className="animate_top shadow-solid-8 dark:border-strokedark rounded-lg bg-white px-7.5 pt-7.5 xl:px-15 xl:pt-15 dark:border dark:bg-black">
+            <h2 className="xl:text-sectiontitle2 mb-15 text-center text-3xl font-semibold text-black dark:text-white">
               {isSignup ? 'Inscription' : 'Connexion'}
             </h2>
-            
+
             {/* Bouton de basculement */}
             <div className="mb-7.5 flex justify-center">
-              <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+              <div className="flex rounded-lg bg-gray-100 p-1 dark:bg-gray-800">
                 <button
                   type="button"
                   onClick={() => {
                     setIsSignup(false);
                     setTwoFactorRequired(false);
-                    setTwoFactorCode("");
+                    setTwoFactorCode('');
                     setTwoFactorTicket(null);
                     setTwoFactorInfo(null);
                   }}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    !isSignup 
-                      ? 'bg-white text-black shadow-sm dark:bg-gray-700 dark:text-white' 
-                      : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
+                  className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                    !isSignup
+                      ? 'bg-white text-black shadow-sm dark:bg-gray-700 dark:text-white'
+                      : 'text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white'
                   }`}
                 >
                   Connexion
@@ -276,14 +311,14 @@ export default function SimpleSignin() {
                   onClick={() => {
                     setIsSignup(true);
                     setTwoFactorRequired(false);
-                    setTwoFactorCode("");
+                    setTwoFactorCode('');
                     setTwoFactorTicket(null);
                     setTwoFactorInfo(null);
                   }}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isSignup 
-                      ? 'bg-white text-black shadow-sm dark:bg-gray-700 dark:text-white' 
-                      : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
+                  className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                    isSignup
+                      ? 'bg-white text-black shadow-sm dark:bg-gray-700 dark:text-white'
+                      : 'text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white'
                   }`}
                 >
                   Inscription
@@ -300,15 +335,15 @@ export default function SimpleSignin() {
                     </label>
                     <div className="grid gap-3 sm:grid-cols-2">
                       {[
-                        { value: "STUDENT", label: "Élève" },
-                        { value: "PARENT", label: "Parent" },
-                      ].map((option) => (
+                        { value: 'STUDENT', label: 'Élève' },
+                        { value: 'PARENT', label: 'Parent' },
+                      ].map(option => (
                         <label
                           key={option.value}
                           className={`flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-sm transition ${
                             data.accountType === option.value
-                              ? "border-primary bg-primary/10 text-primary"
-                              : "border-stroke text-waterloo hover:border-primary/40 dark:border-strokedark dark:text-manatee"
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-stroke text-waterloo hover:border-primary/40 dark:border-strokedark dark:text-manatee'
                           }`}
                         >
                           <input
@@ -316,10 +351,14 @@ export default function SimpleSignin() {
                             name="accountType"
                             value={option.value}
                             checked={data.accountType === option.value}
-                            onChange={(e) =>
-                              setData({ ...data, accountType: e.target.value as "STUDENT" | "PARENT" })
+                            onChange={e =>
+                              setData({
+                                ...data,
+                                accountType: e.target.value as
+                                  'STUDENT' | 'PARENT',
+                              })
                             }
-                            className="h-4 w-4 text-primary focus:ring-primary"
+                            className="text-primary focus:ring-primary h-4 w-4"
                           />
                           <span>{option.label}</span>
                         </label>
@@ -329,37 +368,49 @@ export default function SimpleSignin() {
 
                   <div>
                     <h3 className="mb-5 text-lg font-semibold text-black dark:text-white">
-                      {isParentSignup ? "Vos coordonnées" : "Mes coordonnées"}
+                      {isParentSignup ? 'Vos coordonnées' : 'Mes coordonnées'}
                     </h3>
                     <div className="flex flex-col gap-7.5 lg:flex-row lg:justify-between lg:gap-14">
                       <input
                         type="text"
-                        placeholder={isParentSignup ? "Votre prénom" : "Mon prénom"}
+                        placeholder={
+                          isParentSignup ? 'Votre prénom' : 'Mon prénom'
+                        }
                         name="firstName"
                         value={data.firstName}
-                        onChange={(e) => setData({ ...data, firstName: e.target.value })}
+                        onChange={e =>
+                          setData({ ...data, firstName: e.target.value })
+                        }
                         required={isSignup}
-                        className="w-full border-b border-stroke bg-white! pb-3.5 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:bg-black! dark:focus:border-manatee dark:focus:placeholder:text-white lg:w-1/2"
+                        className="border-stroke focus:border-waterloo dark:border-strokedark dark:focus:border-manatee w-full border-b bg-white! pb-3.5 focus:placeholder:text-black focus-visible:outline-hidden lg:w-1/2 dark:bg-black! dark:focus:placeholder:text-white"
                       />
 
                       <input
                         type="text"
-                        placeholder={isParentSignup ? "Votre nom" : "Mon nom"}
+                        placeholder={isParentSignup ? 'Votre nom' : 'Mon nom'}
                         name="lastName"
                         value={data.lastName}
-                        onChange={(e) => setData({ ...data, lastName: e.target.value })}
+                        onChange={e =>
+                          setData({ ...data, lastName: e.target.value })
+                        }
                         required={isSignup}
-                        className="w-full border-b border-stroke bg-white! pb-3.5 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:bg-black! dark:focus:border-manatee dark:focus:placeholder:text-white lg:w-1/2"
+                        className="border-stroke focus:border-waterloo dark:border-strokedark dark:focus:border-manatee w-full border-b bg-white! pb-3.5 focus:placeholder:text-black focus-visible:outline-hidden lg:w-1/2 dark:bg-black! dark:focus:placeholder:text-white"
                       />
                     </div>
                     <input
                       type="tel"
-                      placeholder={isParentSignup ? "Votre numéro de téléphone" : "Mon numéro de téléphone"}
+                      placeholder={
+                        isParentSignup
+                          ? 'Votre numéro de téléphone'
+                          : 'Mon numéro de téléphone'
+                      }
                       name="phone"
                       value={data.phone}
-                      onChange={(e) => setData({ ...data, phone: e.target.value })}
+                      onChange={e =>
+                        setData({ ...data, phone: e.target.value })
+                      }
                       required={isSignup}
-                      className="mt-7.5 w-full border-b border-stroke bg-white! pb-3.5 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:bg-black! dark:focus:border-manatee dark:focus:placeholder:text-white"
+                      className="border-stroke focus:border-waterloo dark:border-strokedark dark:focus:border-manatee mt-7.5 w-full border-b bg-white! pb-3.5 focus:placeholder:text-black focus-visible:outline-hidden dark:bg-black! dark:focus:placeholder:text-white"
                     />
                   </div>
                 </div>
@@ -373,63 +424,79 @@ export default function SimpleSignin() {
                   autoComplete="email"
                   data-protonpass-ignore="true"
                   value={data.email}
-                  onChange={(e) => setData({ ...data, email: e.target.value })}
+                  onChange={e => setData({ ...data, email: e.target.value })}
                   required
-                  className="w-full border-b border-stroke bg-white! pb-3.5 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:bg-black! dark:focus:border-manatee dark:focus:placeholder:text-white lg:w-1/2"
+                  className="border-stroke focus:border-waterloo dark:border-strokedark dark:focus:border-manatee w-full border-b bg-white! pb-3.5 focus:placeholder:text-black focus-visible:outline-hidden lg:w-1/2 dark:bg-black! dark:focus:placeholder:text-white"
                 />
 
                 <div className="w-full lg:w-1/2">
                   <div className="relative">
                     <input
-                      type={showPassword ? "text" : "password"}
-                      placeholder={isSignup ? "Choisissez votre mot de passe" : "Votre mot de passe"}
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder={
+                        isSignup
+                          ? 'Choisissez votre mot de passe'
+                          : 'Votre mot de passe'
+                      }
                       name="password"
-                      autoComplete={isSignup ? "new-password" : "current-password"}
+                      autoComplete={
+                        isSignup ? 'new-password' : 'current-password'
+                      }
                       data-protonpass-ignore="true"
                       value={data.password}
-                      onChange={(e) =>
+                      onChange={e =>
                         setData({ ...data, password: e.target.value })
                       }
                       required
-                      className="w-full border-b border-stroke bg-white! pb-3.5 pr-10 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:bg-black! dark:focus:border-manatee dark:focus:placeholder:text-white"
+                      className="border-stroke focus:border-waterloo dark:border-strokedark dark:focus:border-manatee w-full border-b bg-white! pr-10 pb-3.5 focus:placeholder:text-black focus-visible:outline-hidden dark:bg-black! dark:focus:placeholder:text-white"
                     />
                     <button
                       type="button"
-                      aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                      aria-label={
+                        showPassword
+                          ? 'Masquer le mot de passe'
+                          : 'Afficher le mot de passe'
+                      }
                       aria-pressed={showPassword}
-                      onClick={() => setShowPassword((prev) => !prev)}
-                      className="absolute right-0 top-1/2 -translate-y-1/2 text-waterloo transition hover:text-primary dark:text-manatee"
+                      onClick={() => setShowPassword(prev => !prev)}
+                      className="text-waterloo hover:text-primary dark:text-manatee absolute top-1/2 right-0 -translate-y-1/2 transition"
                     >
-                      {showPassword ? <EyeOffIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+                      {showPassword ? (
+                        <EyeOffIcon className="h-5 w-5" />
+                      ) : (
+                        <EyeIcon className="h-5 w-5" />
+                      )}
                     </button>
                   </div>
                   {isSignup && (
                     <input
-                      type={showPassword ? "text" : "password"}
+                      type={showPassword ? 'text' : 'password'}
                       placeholder="Confirmez votre mot de passe"
                       name="confirmPassword"
                       autoComplete="new-password"
                       data-protonpass-ignore="true"
                       value={data.confirmPassword}
-                      onChange={(e) =>
+                      onChange={e =>
                         setData({ ...data, confirmPassword: e.target.value })
                       }
                       required={isSignup}
-                      className="mt-7.5 w-full border-b border-stroke bg-white! pb-3.5 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:bg-black! dark:focus:border-manatee dark:focus:placeholder:text-white"
+                      className="border-stroke focus:border-waterloo dark:border-strokedark dark:focus:border-manatee mt-7.5 w-full border-b bg-white! pb-3.5 focus:placeholder:text-black focus-visible:outline-hidden dark:bg-black! dark:focus:placeholder:text-white"
                     />
                   )}
                 </div>
               </div>
 
               {error && (
-                <div className="mb-5 text-red-600 text-sm text-center">
+                <div className="mb-5 text-center text-sm text-red-600">
                   {error}
                 </div>
               )}
               {!isSignup && twoFactorRequired && (
                 <div className="mb-5 space-y-3">
                   {twoFactorInfo && (
-                    <div className="text-center text-xs text-waterloo dark:text-manatee">{twoFactorInfo}</div>
+                    <div className="text-waterloo dark:text-manatee text-center text-xs">
+                      {twoFactorInfo}
+                    </div>
                   )}
                   <input
                     type="text"
@@ -437,14 +504,18 @@ export default function SimpleSignin() {
                     maxLength={6}
                     placeholder="Code SMS (6 chiffres)"
                     value={twoFactorCode}
-                    onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                    className="w-full border-b border-stroke bg-white! pb-3.5 focus:border-waterloo focus:placeholder:text-black focus-visible:outline-hidden dark:border-strokedark dark:bg-black! dark:focus:border-manatee dark:focus:placeholder:text-white"
+                    onChange={e =>
+                      setTwoFactorCode(
+                        e.target.value.replace(/\D/g, '').slice(0, 6)
+                      )
+                    }
+                    className="border-stroke focus:border-waterloo dark:border-strokedark dark:focus:border-manatee w-full border-b bg-white! pb-3.5 focus:placeholder:text-black focus-visible:outline-hidden dark:bg-black! dark:focus:placeholder:text-white"
                   />
                   <button
                     type="button"
                     onClick={async () => {
                       setIsLoading(true);
-                      setError("");
+                      setError('');
                       try {
                         const resp = await fetch('/api/auth/login', {
                           method: 'POST',
@@ -457,17 +528,21 @@ export default function SimpleSignin() {
                         const payload = await resp.json().catch(() => ({}));
                         if (resp.status === 202 && payload?.requiresTwoFactor) {
                           setTwoFactorTicket(payload.twoFactorTicket ?? null);
-                          setTwoFactorInfo(typeof payload.message === "string" ? payload.message : "Code SMS renvoyé.");
+                          setTwoFactorInfo(
+                            typeof payload.message === 'string'
+                              ? payload.message
+                              : 'Code SMS renvoyé.'
+                          );
                         } else if (!resp.ok) {
-                          setError(payload.error || "Échec du renvoi du code.");
+                          setError(payload.error || 'Échec du renvoi du code.');
                         }
                       } catch {
-                        setError("Erreur réseau lors du renvoi du code.");
+                        setError('Erreur réseau lors du renvoi du code.');
                       } finally {
                         setIsLoading(false);
                       }
                     }}
-                    className="text-xs text-primary hover:underline"
+                    className="text-primary text-xs hover:underline"
                   >
                     Renvoyer le code
                   </button>
@@ -483,7 +558,7 @@ export default function SimpleSignin() {
                         type="checkbox"
                         className="peer sr-only"
                       />
-                      <span className="border-gray-300 bg-gray-100 text-blue-600 dark:border-gray-600 dark:bg-gray-700 group mt-1 flex h-5 min-w-[20px] items-center justify-center rounded-sm peer-checked:bg-primary">
+                      <span className="text-primary group peer-checked:bg-primary mt-1 flex h-5 min-w-[20px] items-center justify-center rounded-sm border-gray-300 bg-gray-100 dark:border-gray-600 dark:bg-gray-700">
                         <svg
                           className="opacity-0 in-[.group]:peer-checked:opacity-100"
                           width="10"
@@ -502,7 +577,7 @@ export default function SimpleSignin() {
                       </span>
                       <label
                         htmlFor="default-checkbox"
-                        className="flex max-w-[425px] cursor-pointer select-none pl-3"
+                        className="flex max-w-[425px] cursor-pointer pl-3 select-none"
                       >
                         Se souvenir de moi
                       </label>
@@ -521,9 +596,15 @@ export default function SimpleSignin() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="inline-flex items-center gap-2.5 rounded-full bg-black px-6 py-3 font-medium text-white duration-300 ease-in-out hover:bg-blackho dark:bg-btndark dark:hover:bg-blackho disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="hover:bg-blackho dark:bg-btndark dark:hover:bg-blackho inline-flex items-center gap-2.5 rounded-full bg-black px-6 py-3 font-medium text-white duration-300 ease-in-out disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {isLoading ? (isSignup ? "Inscription..." : "Connexion...") : (isSignup ? "S'inscrire" : "Connexion")}
+                  {isLoading
+                    ? isSignup
+                      ? 'Inscription...'
+                      : 'Connexion...'
+                    : isSignup
+                      ? "S'inscrire"
+                      : 'Connexion'}
                   <svg
                     className="fill-white"
                     width="14"
@@ -540,40 +621,40 @@ export default function SimpleSignin() {
                 </button>
               </div>
 
-              <div className="mt-12.5 border-t border-stroke py-5 text-center dark:border-strokedark">
+              <div className="border-stroke dark:border-strokedark mt-12.5 border-t py-5 text-center">
                 <p className="text-gray-600 dark:text-gray-400">
                   {isSignup ? (
                     <>
-                      Déjà un compte ?{" "}
+                      Déjà un compte ?{' '}
                       <a
                         href="/auth/signin"
-                        onClick={(event) => {
+                        onClick={event => {
                           event.preventDefault();
                           setIsSignup(false);
                           setTwoFactorRequired(false);
-                          setTwoFactorCode("");
+                          setTwoFactorCode('');
                           setTwoFactorTicket(null);
                           setTwoFactorInfo(null);
                         }}
-                        className="font-medium text-primary hover:underline"
+                        className="text-primary font-medium hover:underline"
                       >
                         Connectez-vous
                       </a>
                     </>
                   ) : (
                     <>
-                      Nouveau sur SikaSchool ?{" "}
+                      Nouveau sur SikaSchool ?{' '}
                       <a
                         href="/auth/signin"
-                        onClick={(event) => {
+                        onClick={event => {
                           event.preventDefault();
                           setIsSignup(true);
                           setTwoFactorRequired(false);
-                          setTwoFactorCode("");
+                          setTwoFactorCode('');
                           setTwoFactorTicket(null);
                           setTwoFactorInfo(null);
                         }}
-                        className="font-medium text-primary hover:underline"
+                        className="text-primary font-medium hover:underline"
                       >
                         Je m&apos;inscris
                       </a>
@@ -581,15 +662,14 @@ export default function SimpleSignin() {
                   )}
                 </p>
               </div>
-
             </form>
           </div>
         </div>
       </section>
       {/* <!-- ===== SignIn Form End ===== --> */}
-      
-      <ForgotPasswordModal 
-        isOpen={showForgotPasswordModal} 
+
+      <ForgotPasswordModal
+        isOpen={showForgotPasswordModal}
         onClose={() => setShowForgotPasswordModal(false)}
         initialEmail={data.email}
       />

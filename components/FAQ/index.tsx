@@ -1,132 +1,180 @@
-"use client";
-import { motion } from "framer-motion";
-import Image from "next/image";
-import { useState, useEffect } from "react";
-import FAQItem from "./FAQItem";
-import type { FAQ as FAQType } from "@/types/faq";
-import { useLanguage } from "@/context/LanguageContext";
+'use client';
 
-const FAQ = () => {
-  const [activeFaq, setActiveFaq] = useState(1);
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import FAQItem from './FAQItem';
+import type { FAQ as FAQType } from '@/types/faq';
+import { useLanguage } from '@/context/LanguageContext';
+
+function isFAQ(value: unknown): value is FAQType {
+  if (!value || typeof value !== 'object') return false;
+  const item = value as Partial<FAQType>;
+  return (
+    typeof item.id === 'number' &&
+    typeof item.quest === 'string' &&
+    Boolean(item.quest.trim()) &&
+    typeof item.ans === 'string' &&
+    Boolean(item.ans.trim())
+  );
+}
+
+export default function FAQ() {
+  const { t, language } = useLanguage();
+  const fr = language === 'fr';
+  const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [faqData, setFaqData] = useState<FAQType[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { t } = useLanguage();
+  const [status, setStatus] = useState<'loading' | 'ready' | 'fallback'>(
+    'loading'
+  );
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    const fetchFAQs = async () => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    let mounted = true;
+    async function load() {
       try {
-        const response = await fetch('/api/faqs');
-        if (response.ok) {
-          const data = await response.json();
-          setFaqData(Array.isArray(data) ? data : []);
-        } else {
-          console.error('Erreur lors du chargement des FAQ');
+        const response = await fetch('/api/faqs', {
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error('FAQ unavailable');
+        const data: unknown = await response.json();
+        if (
+          !Array.isArray(data) ||
+          !data.length ||
+          !data.every(isFAQ) ||
+          new Set(data.map(item => item.id)).size !== data.length
+        )
+          throw new Error('Invalid FAQ');
+        if (mounted) {
+          setFaqData(data);
+          setStatus('ready');
+          setActiveFaq(null);
         }
-      } catch (error) {
-        console.error('Erreur lors du chargement des FAQ:', error);
+      } catch {
+        if (mounted) {
+          setFaqData([]);
+          setStatus('fallback');
+        }
       } finally {
-        setLoading(false);
+        clearTimeout(timeout);
       }
+    }
+    void load();
+    return () => {
+      mounted = false;
+      clearTimeout(timeout);
+      controller.abort();
     };
+  }, [attempt]);
 
-    fetchFAQs();
-  }, []);
-
-  const handleFaqToggle = (id: number) => {
-    activeFaq === id ? setActiveFaq(0) : setActiveFaq(id);
-  };
-  const displayedFaqs: FAQType[] = faqData.length > 0
-    ? faqData
-    : t.faq.fallback.map((faq, index) => ({
-        id: index + 1,
-        quest: faq.question,
-        ans: faq.answer,
-      }));
-
+  // No locale field in the current API: preserve its original French text and
+  // explicitly announce it in EN. The existing local fallback has both locales.
+  const contentLanguage = status === 'ready' ? 'fr' : language;
+  const items =
+    status === 'ready'
+      ? faqData
+      : t.faq.fallback.map((faq, index) => ({
+          id: index + 1,
+          quest: faq.question,
+          ans: faq.answer,
+        }));
   return (
-    <>
-      {/* <!-- ===== FAQ Start ===== --> */}
-      <section id="faq" className="overflow-hidden pb-20 pt-8 lg:pb-25 xl:pb-30" aria-labelledby="faq-title">
-        <div className="relative mx-auto max-w-c-1235 px-4 md:px-8 xl:px-0">
-          <div className="absolute -bottom-16 -z-1 h-full w-full">
-            <Image
-              fill
-              src="/images/shape/shape-dotted-light.svg"
-              alt=""
-              className="dark:hidden"
-            />
-            <Image
-              fill
-              src="/images/shape/shape-dotted-light.svg"
-              alt=""
-              className="hidden dark:block"
-            />
+    <section
+      id="faq"
+      className="sika-section sika-faq"
+      aria-labelledby="faq-title"
+    >
+      <div className="sika-container sika-faq-grid">
+        <div>
+          <p className="sika-eyebrow">{t.faq.eyebrow}</p>
+          <h2 id="faq-title" className="sika-display sika-section-title mt-4">
+            {t.faq.title}
+          </h2>
+          <p className="sika-lead mt-5">
+            {fr
+              ? 'Le fonctionnement, les séances, l’accompagnement : les repères pour faire votre choix.'
+              : 'How it works, lessons and support: the essentials to help you choose.'}
+          </p>
+          <Link href="/#contact" className="sika-text-link mt-5">
+            {fr
+              ? 'Parlons de vos questions'
+              : 'Talk to us about your questions'}
+            <span aria-hidden="true">↗</span>
+          </Link>
+        </div>
+        <div className="min-w-0">
+          <div
+            className="sika-faq-status text-sm"
+            role="status"
+            aria-live="polite"
+          >
+            {status === 'loading' &&
+              (fr
+                ? 'Actualisation des réponses… Les informations essentielles restent disponibles.'
+                : 'Updating answers… Essential information remains available.')}
+            {status === 'fallback' &&
+              (fr
+                ? 'Les réponses actualisées sont indisponibles. Voici les informations essentielles.'
+                : 'Updated answers are unavailable. Here is the essential information.')}
+            {status === 'ready' &&
+              !fr &&
+              'These answers are available in French and are shown in their original language.'}
           </div>
-          <div className="flex flex-wrap gap-8 md:flex-nowrap md:items-center xl:gap-32.5">
-            <motion.div
-              variants={{
-                hidden: {
-                  opacity: 0,
-                  x: -20,
-                },
-
-                visible: {
-                  opacity: 1,
-                  x: 0,
-                },
+          {status === 'fallback' && (
+            <button
+              type="button"
+              className="sika-text-link mb-3 text-sm"
+              onClick={() => {
+                setStatus('loading');
+                setAttempt(current => current + 1);
               }}
-              initial="hidden"
-              whileInView="visible"
-              transition={{ duration: 1, delay: 0.1 }}
-              viewport={{ once: true }}
-              className="animate_left md:w-2/5 lg:w-1/2"
             >
-              <span className="font-medium uppercase text-black dark:text-white">
-                {t.faq.eyebrow}
-              </span>
-              <h2 id="faq-title" className="relative mb-6 text-3xl font-bold text-black dark:text-white xl:text-hero">
-                {t.faq.title}
-              </h2>
-              <p className="max-w-md">Retrouvez les informations essentielles pour choisir votre accompagnement en toute confiance.</p>
-            </motion.div>
-
-            <motion.div
-              variants={{
-                hidden: {
-                  opacity: 0,
-                  x: 20,
-                },
-
-                visible: {
-                  opacity: 1,
-                  x: 0,
-                },
-              }}
-              initial="hidden"
-              whileInView="visible"
-              transition={{ duration: 1, delay: 0.1 }}
-              viewport={{ once: true }}
-              className="animate_right md:w-3/5 lg:w-1/2"
-            >
-              <div className="rounded-lg bg-white shadow-solid-8 dark:border dark:border-strokedark dark:bg-blacksection">
-                {loading && faqData.length === 0 ? (
-                  <div className="p-6 text-center">Chargement des FAQ...</div>
-                ) : (
-                  displayedFaqs.map((faq) => (
-                    <FAQItem
-                      key={faq.id}
-                      faqData={{ ...faq, activeFaq, handleFaqToggle }}
-                    />
-                  ))
-                )}
-              </div>
-            </motion.div>
+              {fr ? 'Réessayer' : 'Try again'}
+              <span aria-hidden="true">↻</span>
+            </button>
+          )}
+          <div
+            className="sika-accordion"
+            onKeyDown={event => {
+              if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key))
+                return;
+              const triggers = [
+                ...event.currentTarget.querySelectorAll<HTMLButtonElement>(
+                  '[data-accordion-trigger]'
+                ),
+              ];
+              const index = triggers.indexOf(event.target as HTMLButtonElement);
+              if (index < 0) return;
+              event.preventDefault();
+              const next =
+                event.key === 'Home'
+                  ? 0
+                  : event.key === 'End'
+                    ? triggers.length - 1
+                    : (index +
+                        (event.key === 'ArrowDown' ? 1 : -1) +
+                        triggers.length) %
+                      triggers.length;
+              triggers[next]?.focus();
+            }}
+          >
+            {items.map(item => (
+              <FAQItem
+                key={`${contentLanguage}-${item.id}`}
+                item={item}
+                language={contentLanguage}
+                open={activeFaq === item.id}
+                onToggle={() =>
+                  setActiveFaq(current =>
+                    current === item.id ? null : item.id
+                  )
+                }
+              />
+            ))}
           </div>
         </div>
-      </section>
-      {/* <!-- ===== FAQ End ===== --> */}
-    </>
+      </div>
+    </section>
   );
-};
-
-export default FAQ;
+}

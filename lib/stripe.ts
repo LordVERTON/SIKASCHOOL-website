@@ -6,12 +6,15 @@
  */
 
 import Stripe from 'stripe';
+import { CLIENT_PLANS } from './payments-catalog';
 
 const apiKey = process.env.STRIPE_SECRET_KEY;
 
 if (!apiKey && process.env.NODE_ENV !== 'test') {
   // On ne throw pas au build mais on log clairement en dev
-  console.warn('[stripe] STRIPE_SECRET_KEY manquant. Les paiements seront désactivés.');
+  console.warn(
+    '[stripe] STRIPE_SECRET_KEY manquant. Les paiements seront désactivés.'
+  );
 }
 
 export const stripe: Stripe = apiKey
@@ -63,168 +66,20 @@ export interface PlanDefinition {
   color: string;
 }
 
-export const PLANS: Record<string, PlanDefinition> = {
-  // ===== Packs Eco (8 séances) =====
-  pack_eco_college: {
-    id: 'pack_eco_college',
-    kind: 'PACK',
-    name: 'NOTA Eco',
-    description: '8 séances · Collège · Maths, Français, Physique-Chimie',
-    level: 'COLLEGE',
-    levelLabel: 'Collège',
-    priceCents: 14400,
-    currency: 'eur',
-    sessions: 8,
-    badge: 'Eco',
-    color: 'yellow',
-  },
-  pack_eco_lycee: {
-    id: 'pack_eco_lycee',
-    kind: 'PACK',
-    name: 'AVA Eco',
-    description: '8 séances · Lycée · Maths, Physique, SVT, Spécialités',
-    level: 'LYCEE',
-    levelLabel: 'Lycée',
-    priceCents: 17600,
-    currency: 'eur',
-    sessions: 8,
-    badge: 'Eco',
-    color: 'sky',
-  },
-  pack_eco_superieur: {
-    id: 'pack_eco_superieur',
-    kind: 'PACK',
-    name: 'TODA Eco',
-    description: '8 séances · Supérieur · Maths, Physique, Info',
-    level: 'SUPERIEUR',
-    levelLabel: 'Supérieur',
-    priceCents: 22400,
-    currency: 'eur',
-    sessions: 8,
-    badge: 'Eco',
-    color: 'green',
-  },
-
-  // ===== Packs Basic (4 séances) =====
-  pack_basic_college: {
-    id: 'pack_basic_college',
-    kind: 'PACK',
-    name: 'NOTA Basic',
-    description: '4 séances · Collège · Maths, Français, Physique-Chimie',
-    level: 'COLLEGE',
-    levelLabel: 'Collège',
-    priceCents: 8800,
-    currency: 'eur',
-    sessions: 4,
-    badge: 'Basic',
-    color: 'yellow',
-  },
-  pack_basic_lycee: {
-    id: 'pack_basic_lycee',
-    kind: 'PACK',
-    name: 'AVA Basic',
-    description: '4 séances · Lycée · Maths, Physique, SVT, Spécialités',
-    level: 'LYCEE',
-    levelLabel: 'Lycée',
-    priceCents: 10800,
-    currency: 'eur',
-    sessions: 4,
-    badge: 'Basic',
-    color: 'sky',
-  },
-  pack_basic_superieur: {
-    id: 'pack_basic_superieur',
-    kind: 'PACK',
-    name: 'TODA Basic',
-    description: '4 séances · Supérieur · Maths, Physique, Info',
-    level: 'SUPERIEUR',
-    levelLabel: 'Supérieur',
-    priceCents: 12800,
-    currency: 'eur',
-    sessions: 4,
-    badge: 'Basic',
-    color: 'green',
-  },
-
-  // ===== Séance à l'unité =====
-  session_college: {
-    id: 'session_college',
-    kind: 'SESSION',
-    name: 'Séance à l\'unité · Collège',
-    description: '1 séance de 60 min · Collège',
-    level: 'COLLEGE',
-    levelLabel: 'Collège',
-    priceCents: 2500,
-    currency: 'eur',
-    sessions: 1,
-    color: 'yellow',
-  },
-  session_lycee: {
-    id: 'session_lycee',
-    kind: 'SESSION',
-    name: 'Séance à l\'unité · Lycée',
-    description: '1 séance de 60 min · Lycée',
-    level: 'LYCEE',
-    levelLabel: 'Lycée',
-    priceCents: 3000,
-    currency: 'eur',
-    sessions: 1,
-    color: 'sky',
-  },
-  session_superieur: {
-    id: 'session_superieur',
-    kind: 'SESSION',
-    name: 'Séance à l\'unité · Supérieur',
-    description: '1 séance de 60 min · Supérieur',
-    level: 'SUPERIEUR',
-    levelLabel: 'Supérieur',
-    priceCents: 3800,
-    currency: 'eur',
-    sessions: 1,
-    color: 'green',
-  },
-
-  // ===== Abonnements mensuels =====
-  sub_college: {
-    id: 'sub_college',
-    kind: 'SUBSCRIPTION',
-    name: 'Abonnement Collège',
-    description: '4 séances / mois · Collège · résiliable à tout moment',
-    level: 'COLLEGE',
-    levelLabel: 'Collège',
-    priceCents: 7900,
-    currency: 'eur',
-    sessions: 4,
-    recurringInterval: 'month',
-    color: 'yellow',
-  },
-  sub_lycee: {
-    id: 'sub_lycee',
-    kind: 'SUBSCRIPTION',
-    name: 'Abonnement Lycée',
-    description: '4 séances / mois · Lycée · résiliable à tout moment',
-    level: 'LYCEE',
-    levelLabel: 'Lycée',
-    priceCents: 9900,
-    currency: 'eur',
-    sessions: 4,
-    recurringInterval: 'month',
-    color: 'sky',
-  },
-  sub_superieur: {
-    id: 'sub_superieur',
-    kind: 'SUBSCRIPTION',
-    name: 'Abonnement Supérieur',
-    description: '4 séances / mois · Supérieur · résiliable à tout moment',
-    level: 'SUPERIEUR',
-    levelLabel: 'Supérieur',
-    priceCents: 11900,
-    currency: 'eur',
-    sessions: 4,
-    recurringInterval: 'month',
-    color: 'green',
-  },
-};
+// The public cards and Stripe price_data use the same amounts and product IDs.
+export const PLANS: Record<string, PlanDefinition> = Object.fromEntries(
+  CLIENT_PLANS.map(plan => [
+    plan.id,
+    {
+      ...plan,
+      name:
+        plan.kind === 'SESSION'
+          ? `${plan.name} · ${plan.levelLabel}`
+          : plan.name,
+      currency: 'eur' as const,
+    },
+  ])
+);
 
 export function getPlan(id: string): PlanDefinition | null {
   return PLANS[id] ?? null;
@@ -232,7 +87,7 @@ export function getPlan(id: string): PlanDefinition | null {
 
 export function listPlans(kind?: PlanKind): PlanDefinition[] {
   const all = Object.values(PLANS);
-  return kind ? all.filter((p) => p.kind === kind) : all;
+  return kind ? all.filter(p => p.kind === kind) : all;
 }
 
 /** Formate un prix en centimes vers "24,00 €" */

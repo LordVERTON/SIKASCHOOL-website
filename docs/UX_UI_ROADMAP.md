@@ -1,5 +1,7 @@
 # Feuille de route UX/UI — SikaSchool
 
+> **Priorité V2 — 20 octobre 2026 :** les hypothèses graphiques de cette archive, dont l’interdiction de changer les couleurs, sont remplacées par [BRAND_IDENTITY_V2.md](BRAND_IDENTITY_V2.md). Le backlog courant reste [roadmap.md](roadmap.md). Cette archive ne décrit pas le rendu actuel.
+
 > Archive historique conservée avec ses cases et son contexte d'origine. Le seul backlog d'exécution à maintenir est [roadmap.md](roadmap.md) ; les lots ci-dessous ne constituent pas une roadmap parallèle ni une preuve de recette actuelle.
 
 > Statut : planification. Ce document décrit des lots à valider avant toute implémentation ; il ne constitue pas un ordre d’exécution automatique.

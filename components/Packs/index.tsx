@@ -1,208 +1,76 @@
-"use client";
-import Image from "next/image";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
-import SectionHeader from "../Common/SectionHeader";
-import { CLIENT_PLANS, formatEuros, LEVEL_COLORS } from "@/lib/payments-catalog";
+'use client';
 
-const Packs = () => {
-  const router = useRouter();
-  const [pendingPlan, setPendingPlan] = useState<string | null>(null);
+import Link from 'next/link';
+import { useLanguage } from '@/context/LanguageContext';
+import Button from '@/components/Common/Button';
+import Alert from '@/components/Common/Alert';
+import Section, { Container } from '@/components/Common/Section';
+import PlanCard from '@/components/Pricing/PlanCard';
+import { usePlanCheckout } from '@/components/Pricing/usePlanCheckout';
+import { CLIENT_PLANS, getLevelLabel } from '@/lib/payments-catalog';
 
-  const ecoPlans = CLIENT_PLANS.filter((p) => p.kind === "PACK" && p.sessions === 8);
-  const basicPlans = CLIENT_PLANS.filter((p) => p.kind === "PACK" && p.sessions === 4);
-
-  const onSelect = async (planId: string) => {
-    setPendingPlan(planId);
-    try {
-      // Vérifie auth via /api/auth/me
-      const meRes = await fetch("/api/auth/me", { credentials: "include" });
-      if (!meRes.ok) {
-        // Non connecté -> signin avec retour vers /student/paiements
-        router.push(`/auth/signin?next=${encodeURIComponent("/student/paiements")}`);
-        return;
-      }
-      const me = await meRes.json();
-      if (me?.role !== "STUDENT" && me?.role !== "PARENT") {
-        toast.error("Seuls les comptes Élève peuvent acheter un pack.");
-        setPendingPlan(null);
-        return;
-      }
-
-      // Crée une session Stripe Checkout
-      const res = await fetch("/api/student/payments/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ planId }),
-      });
-      const body = await res.json();
-      if (!res.ok || !body?.url) {
-        throw new Error(body?.error || "Erreur lors du paiement");
-      }
-      window.location.href = body.url;
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Erreur";
-      toast.error(msg);
-      setPendingPlan(null);
-    }
-  };
-
+export default function Packs() {
+  const { language, t } = useLanguage();
+  const fr = language === 'fr';
+  const { startCheckout, pendingPlan, error } = usePlanCheckout('/packs');
   return (
-    <>
-      <section className="overflow-hidden pb-20 pt-15 lg:pb-25 xl:pb-30">
-        <div className="mx-auto max-w-c-1315 px-4 md:px-8 xl:px-0">
-          <div className="animate_top mx-auto text-center">
-            <SectionHeader
-              headerInfo={{
-                title: `Choisissez votre formule`,
-                subtitle: `Trouvez celle qui vous convient`,
-                description: `Carnets de séances sans engagement pour tous les niveaux.`,
-              }}
-            />
-          </div>
-        </div>
-
-        <div className="relative mx-auto mt-15 max-w-[1400px] px-4 md:px-8 xl:mt-20 xl:px-0">
-          <div className="absolute -bottom-15 -z-1 h-full w-full">
-            <Image
-              fill
-              src="./images/shape/shape-dotted-light.svg"
-              alt=""
-              className="dark:hidden"
-            />
-          </div>
-
-          {/* Eco Plans Section */}
-          <div className="mb-12">
-            <h3 className="mb-8 text-center text-2xl font-bold text-black dark:text-white">
-              Formules Eco (8 séances)
-            </h3>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {ecoPlans.map((plan) => {
-                const colors = LEVEL_COLORS[plan.level];
-                const isLoading = pendingPlan === plan.id;
-                return (
-                  <div
-                    key={plan.id}
-                    className="animate_top group relative rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection dark:shadow-none xl:p-12.5"
+    <Section className="pt-36!" aria-labelledby="packs-title">
+      <Container>
+        <p className="sika-eyebrow">{t.nav.sessionPacks}</p>
+        <h1 id="packs-title" className="sika-display sika-section-title mt-4">
+          {fr
+            ? 'Un pack adapté à votre rythme.'
+            : 'A session pack at your pace.'}
+        </h1>
+        <p className="sika-lead mt-5">
+          {fr
+            ? 'Comparez le prix total et le coût par séance pour votre niveau. Un pack est un carnet de séances ; il se distingue d’un abonnement mensuel.'
+            : 'Compare the total and per-session price for your level. A pack is a set of sessions, separate from a monthly subscription.'}
+        </p>
+        <Link href="/book-online" className="sika-text-link mt-4">
+          {t.nav.perSession}
+          <span aria-hidden="true">↗</span>
+        </Link>
+        {error && <Alert className="mt-6">{error}</Alert>}
+        {[8, 4].map(count => (
+          <section
+            key={count}
+            className="mt-12"
+            aria-labelledby={`packs-${count}`}
+          >
+            <h2 id={`packs-${count}`} className="mb-6 text-2xl font-bold">
+              {fr ? `Packs de ${count} séances` : `${count}-session packs`} ·{' '}
+              {count === 8 ? 'Eco' : 'Basic'}
+            </h2>
+            <div className="grid gap-6 md:grid-cols-3">
+              {CLIENT_PLANS.filter(
+                plan => plan.kind === 'PACK' && plan.sessions === count
+              ).map(plan => (
+                <PlanCard key={plan.id} plan={plan} language={language}>
+                  <Button
+                    className="w-full"
+                    disabled={pendingPlan !== null}
+                    loading={pendingPlan === plan.id}
+                    loadingLabel={
+                      fr ? 'Préparation du paiement…' : 'Preparing checkout…'
+                    }
+                    onClick={() => void startCheckout(plan.id)}
                   >
-                    <p className={`mb-3 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${colors.bg} ${colors.text}`}>
-                      Formule {plan.badge}
-                    </p>
-                    <h4 className="mb-1 text-xl font-semibold text-black dark:text-white">
-                      {plan.levelLabel}
-                    </h4>
-                    <div className="mb-2">
-                      <span className="text-3xl font-bold text-primary">{formatEuros(plan.priceCents)}</span>
-                      {plan.sessions && plan.sessions > 1 && (
-                        <span className="ml-2 text-sm text-waterloo dark:text-manatee">
-                          soit {formatEuros(plan.priceCents / plan.sessions)} / séance
-                        </span>
-                      )}
-                    </div>
-                    <p className="mb-2 text-sm font-medium text-black dark:text-white">
-                      {plan.sessions} séances (Sans Engagement)
-                    </p>
-                    <p className="mb-6 text-sm text-waterloo dark:text-manatee">
-                      {plan.description}
-                    </p>
-
-                    <button
-                      onClick={() => onSelect(plan.id)}
-                      disabled={isLoading}
-                      aria-label={`Choisir le pack ${plan.levelLabel} ${plan.badge}`}
-                      className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-white transition-all duration-300 hover:bg-primaryho disabled:opacity-60"
-                    >
-                      {isLoading ? (
-                        <>
-                          <Spinner /> Redirection...
-                        </>
-                      ) : (
-                        "Sélectionner"
-                      )}
-                    </button>
-                  </div>
-                );
-              })}
+                    {fr
+                      ? `Choisir le pack ${plan.levelLabel} ${plan.badge}`
+                      : `Choose ${getLevelLabel(plan.level, language)} ${plan.badge}`}
+                  </Button>
+                </PlanCard>
+              ))}
             </div>
-          </div>
-
-          {/* Basic Plans Section */}
-          <div>
-            <h3 className="mb-8 text-center text-2xl font-bold text-black dark:text-white">
-              Formules Basic (4 séances)
-            </h3>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {basicPlans.map((plan) => {
-                const colors = LEVEL_COLORS[plan.level];
-                const isLoading = pendingPlan === plan.id;
-                return (
-                  <div
-                    key={plan.id}
-                    className="animate_top group relative rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection dark:shadow-none xl:p-12.5"
-                  >
-                    <p className={`mb-3 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${colors.bg} ${colors.text}`}>
-                      Formule {plan.badge}
-                    </p>
-                    <h4 className="mb-1 text-xl font-semibold text-black dark:text-white">
-                      {plan.levelLabel}
-                    </h4>
-                    <div className="mb-2">
-                      <span className="text-3xl font-bold text-primary">{formatEuros(plan.priceCents)}</span>
-                      {plan.sessions && plan.sessions > 1 && (
-                        <span className="ml-2 text-sm text-waterloo dark:text-manatee">
-                          soit {formatEuros(plan.priceCents / plan.sessions)} / séance
-                        </span>
-                      )}
-                    </div>
-                    <p className="mb-2 text-sm font-medium text-black dark:text-white">
-                      {plan.sessions} séances (Sans Engagement)
-                    </p>
-                    <p className="mb-6 text-sm text-waterloo dark:text-manatee">
-                      {plan.description}
-                    </p>
-
-                    <button
-                      onClick={() => onSelect(plan.id)}
-                      disabled={isLoading}
-                      aria-label={`Choisir le pack ${plan.levelLabel} ${plan.badge}`}
-                      className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-white transition-all duration-300 hover:bg-primaryho disabled:opacity-60"
-                    >
-                      {isLoading ? (
-                        <>
-                          <Spinner /> Redirection...
-                        </>
-                      ) : (
-                        "Sélectionner"
-                      )}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-          {/* Explainer */}
-          <div className="mx-auto mt-10 max-w-[900px] text-center text-sm text-waterloo dark:text-manatee">
-            <p>
-              Pack = carnet de séances à tarif avantageux. À la séance = paiement à l&apos;unité.
-              Choisissez selon votre besoin et votre régularité. Paiement 100% sécurisé par Stripe.
-            </p>
-          </div>
-        </div>
-      </section>
-    </>
-  );
-};
-
-function Spinner() {
-  return (
-    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.25" strokeWidth="4" />
-      <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-    </svg>
+          </section>
+        ))}
+        <p className="mt-8 max-w-3xl text-sm leading-relaxed">
+          {fr
+            ? 'Les économies sont calculées sur le tarif à la séance du même niveau, hors promotion. Le montant total est payé à l’achat du pack.'
+            : 'Savings are calculated against single sessions at the same level, excluding promotions. The total is paid when purchasing the pack.'}
+        </p>
+      </Container>
+    </Section>
   );
 }
-
-export default Packs;

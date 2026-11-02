@@ -834,12 +834,12 @@ export default function TutorProfile() {
                       }}
                       className="rounded-md border border-stroke px-4 py-2 text-primary transition hover:opacity-90 dark:border-strokedark"
                     >
-                      {twoFactorEnabled ? "Desactiver" : "Activer"}
+                      {twoFactorEnabled ? "Désactiver" : "Activer"}
                     </button>
                   </div>
                   {!twilioConfigured && (
                     <p className="text-xs text-red-600 dark:text-red-400">
-                      Twilio n&apos;est pas configure sur le serveur. Ajoutez les variables d&apos;environnement requises.
+                      Twilio n&apos;est pas configuré sur le serveur. Ajoutez les variables d&apos;environnement requises.
                     </p>
                   )}
                   {!twoFactorEnabled && showTwoFactorSetup && (
@@ -847,7 +847,7 @@ export default function TutorProfile() {
                       <div className="grid gap-3 md:grid-cols-3">
                         <input
                           type="tel"
-                          placeholder="Numero (+336...)"
+                          placeholder="Numéro (+336...)"
                           value={twoFactorPhoneInput}
                           onChange={(e) => setTwoFactorPhoneInput(e.target.value)}
                           className="w-full rounded-lg border border-stroke p-3 focus:outline-none focus:ring-2 focus:ring-primary dark:border-strokedark dark:bg-blacksection"
@@ -876,7 +876,7 @@ export default function TutorProfile() {
                           disabled={twoFactorLoading}
                           className="rounded-md bg-primary px-5 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-60"
                         >
-                          Verifier et activer
+                          Vérifier et activer
                         </button>
                       </div>
                       {twoFactorError && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{twoFactorError}</p>}

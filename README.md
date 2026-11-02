@@ -1,8 +1,12 @@
 # SikaSchool
 
-Plateforme de cours particuliers (**Next.js 15**, **React 19**, **TypeScript**) : portails élève / tuteur / admin, vidéo (**LiveKit**), messagerie temps réel (**Supabase**), **Sika AI** (assistant élève via LangChain / LangGraph). Production : [sikaschool.app](https://sikaschool.app).
+Plateforme de cours particuliers (**Next.js 16**, **React 19**, **TypeScript**) : portails élève / tuteur / admin, vidéo (**LiveKit**), messagerie temps réel (**Supabase**), **Sika AI** (assistant élève via LangChain / LangGraph). Production : [sikaschool.app](https://sikaschool.app).
 
 ---
+
+## Identité visuelle V2
+
+La [charte officielle SIKASCHOOL V2](docs/BRAND_IDENTITY_V2.md) prime sur les hypothèses graphiques historiques : bleu profond `#1E3A8A`, orange `#FFBC58`, Sensa Wild Fill en police primaire, Poppins en police secondaire sur le site public et Inter dans les espaces connectés. Les fichiers de polices sont servis par le site. La homepage et les pages publiques utilisent ces fondations, avec une réservation partagée et un catalogue de matières réel. [Roadmap courante](docs/roadmap.md) · [Recette et limites](docs/BRAND_V2_VERIFICATION.md).
 
 ## Fonctionnalités (résumé)
 
