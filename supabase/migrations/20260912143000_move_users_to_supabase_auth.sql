@@ -56,7 +56,14 @@ SELECT
   'authenticated',
   'authenticated',
   lower(u.email),
-  u.password_hash,
+  -- Some legacy rows contain placeholders rather than bcrypt hashes. Import
+  -- those identities without a password; recovery can set a valid one later.
+  -- Existing Auth passwords are preserved by the conflict handler below.
+  CASE
+    WHEN u.password_hash ~ '^\$2[aby]\$[0-9]{2}\$[./A-Za-z0-9]{53}$'
+      THEN u.password_hash
+    ELSE ''
+  END,
   CASE WHEN u.email_verified THEN COALESCE(u.updated_at, u.created_at, NOW()) ELSE NULL END,
   '',
   '',
