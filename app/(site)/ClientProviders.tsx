@@ -6,7 +6,6 @@ import ScrollToTop from '@/components/ScrollToTop';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { SkipLink } from '@/components/Accessibility';
 import { LanguageProvider } from '@/context/LanguageContext';
-import { ThemeProvider } from 'next-themes';
 import ToastContext from '@/context/ToastContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import LeadCaptureModal from '@/components/Booking/LeadCaptureModal';
@@ -57,32 +56,30 @@ export default function ClientProviders({
   }, [openBooking]);
 
   return (
-    <ThemeProvider enableSystem={false} attribute="class" defaultTheme="light">
-      <LanguageProvider>
-        <MotionConfig reducedMotion="user">
-          <BookingContext.Provider value={openBooking}>
-            <ErrorBoundary>
-              <div inert={leadOpen}>
-                <SkipLink />
-                <Header />
-                <ToastContext />
-                {children}
-                <Footer />
-                <ScrollToTop />
-              </div>
-              <LeadCaptureModal
-                isOpen={leadOpen}
-                onClose={closeBooking}
-                onPrefillEmail={handlePrefillEmail}
-                initialEmail={leadInitialEmail}
-                initialSubject={bookingOptions.subject}
-                campaign={bookingOptions.campaign}
-                returnFocusRef={returnFocusRef}
-              />
-            </ErrorBoundary>
-          </BookingContext.Provider>
-        </MotionConfig>
-      </LanguageProvider>
-    </ThemeProvider>
+    <LanguageProvider>
+      <MotionConfig reducedMotion="user">
+        <BookingContext.Provider value={openBooking}>
+          <ErrorBoundary>
+            <div inert={leadOpen}>
+              <SkipLink />
+              <Header />
+              <ToastContext />
+              {children}
+              <Footer />
+              <ScrollToTop />
+            </div>
+            <LeadCaptureModal
+              isOpen={leadOpen}
+              onClose={closeBooking}
+              onPrefillEmail={handlePrefillEmail}
+              initialEmail={leadInitialEmail}
+              initialSubject={bookingOptions.subject}
+              campaign={bookingOptions.campaign}
+              returnFocusRef={returnFocusRef}
+            />
+          </ErrorBoundary>
+        </BookingContext.Provider>
+      </MotionConfig>
+    </LanguageProvider>
   );
 }

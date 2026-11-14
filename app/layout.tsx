@@ -1,6 +1,7 @@
 import "./globals.css";
 import localFont from "next/font/local";
 import { Inter } from "next/font/google";
+import ThemeProvider from "@/components/ThemeProvider";
 
 const sensaWild = localFont({
   src: "../public/fonts/sensa-wild-fill.woff2",
@@ -30,7 +31,8 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="dark:bg-black">
-        {children}
+        {/* Keep the theme and its initialization script mounted across navigations. */}
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );
