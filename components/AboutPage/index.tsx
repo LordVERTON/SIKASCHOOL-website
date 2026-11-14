@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import walidPortrait from "@/public/images/team/walid.jpg";
+import danielPortrait from "@/public/images/team/daniel.jpg";
 import SectionHeader from "../Common/SectionHeader";
 
 const AboutPage = () => {
@@ -13,14 +13,8 @@ const AboutPage = () => {
     },
     {
       id: 2,
-      name: "Walid Lakas",
-      image: walidPortrait.src,
-      role: "Tuteur"
-    },
-    {
-      id: 3,
       name: "Daniel Verton",
-      image: "/images/team/daniel.jpg",
+      image: danielPortrait.src,
       role: "Tuteur"
     },
     {
@@ -42,7 +36,7 @@ const AboutPage = () => {
       id: 1,
       title: "Redonner de la confiance à l'étudiant...",
       description: "La patience et l'écoute nous permettent de redonner confiance à l'étudiant, de raviver son intérêt pour la matière et de l'aider à exploiter pleinement son potentiel.",
-      author: "Walid"
+      author: "Daniel"
     },
     {
       id: 2,

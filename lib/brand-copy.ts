@@ -80,7 +80,7 @@ export const brandCopy = {
       title: 'Des personnes, avant des profils.',
       description:
         'Derrière chaque cours, une personne avec qui poser vos questions, reprendre les bases et construire votre méthode.',
-      adviceTitle: 'Le conseil de Walid',
+      adviceTitle: 'Le conseil de Daniel',
       advice:
         'La patience et l’écoute nous permettent de redonner confiance à l’étudiant, de raviver son intérêt pour la matière et de l’aider à exploiter pleinement son potentiel.',
       link: 'Rencontrer l’équipe',
@@ -199,7 +199,7 @@ export const brandCopy = {
       title: 'People before profiles.',
       description:
         'Behind each lesson is a person to ask questions, revisit the basics with and help you build your study skills.',
-      adviceTitle: 'Walid’s teaching advice',
+      adviceTitle: 'Daniel’s teaching advice',
       advice:
         'Patience and listening help students rebuild confidence, rediscover their interest in a subject and develop their full potential.',
       link: 'Meet the team',

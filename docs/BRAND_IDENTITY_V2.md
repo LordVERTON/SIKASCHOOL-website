@@ -53,7 +53,7 @@ React, Tailwind et Framer Motion sont les fondations réellement installées. Ra
 
 Ordre initial V2 : **Hero → témoignages → fonctionnement → signature → équipe → tarifs → FAQ → contact → CTA final**.
 
-Évolution V2.1 du 21 octobre 2026, demandée par le propriétaire : **Hero → réassurance → fonctionnement → équipe → témoignages → signature → tarifs → FAQ → contact → CTA final**. L’identité, les tarifs et le contrôleur de réservation restent ceux de la V2. Les raccourcis de matières utilisent des radios natifs : quatre premières entrées disponibles, autres matières dépliables et choix différé, avec une seule valeur transmise au formulaire. Les droits des portraits de Ruudy Mbouza-Bayonne et Walid Lakas ont été confirmés explicitement par le propriétaire dans cette session ; cela ne valide pas les autres portraits ni les témoignages. Voir [la recette V2.1](BRAND_V2_VERIFICATION.md#v21--21-octobre-2026) et les tickets existants de la roadmap.
+Évolution V2.1 du 21 octobre 2026, demandée par le propriétaire : **Hero → réassurance → fonctionnement → équipe → témoignages → signature → tarifs → FAQ → contact → CTA final**. L’identité, les tarifs et le contrôleur de réservation restent ceux de la V2. Les raccourcis de matières utilisent des radios natifs : quatre premières entrées disponibles, autres matières dépliables et choix différé, avec une seule valeur transmise au formulaire. Les droits du portrait de Ruudy Mbouza-Bayonne ont été confirmés explicitement par le propriétaire dans cette session. Le 14 novembre 2026, le propriétaire a demandé de présenter Daniel Verton avec son portrait à ses côtés ; cela ne valide pas les autres portraits ni les témoignages. Voir [la recette V2.1](BRAND_V2_VERIFICATION.md#v21--21-octobre-2026) et les tickets existants de la roadmap.
 
 | Zone | Implémentation et garde-fous |
 | --- | --- |
@@ -62,7 +62,7 @@ Ordre initial V2 : **Hero → témoignages → fonctionnement → signature → 
 | Transmission | `useBooking({ subject })` transmet le choix à `LeadCaptureModal.initialSubject`. La modale revalide ce choix contre les options de l’API. |
 | Fonctionnement | Niveau/matière/besoins → coordonnées → créneaux proposés → réservation de l’essai ; aucune mise en relation automatisée supplémentaire annoncée. La progression pédagogique vient ensuite. |
 | Signature | « COMPRENDRE. PROGRESSER. RÉUSSIR. » en texte HTML ; bleu profond et orange. |
-| Équipe | Identités et portraits déjà publiés sur la page À propos ; conseil pédagogique de Walid repris de cette page. Aucun diplôme, matière individuelle ou badge « vérifié » inféré. |
+| Équipe | Identités et portraits déjà publiés sur la page À propos ; conseil pédagogique de Daniel repris de cette page. Aucun diplôme, matière individuelle ou badge « vérifié » inféré. |
 | Témoignages | Textes de `lib/homepage-testimonials.ts`, contexte conservé, présentation éditoriale statique. Aucune note ajoutée, pas d’avatar de banque d’images, pas de carrousel automatique. Consentement et pièces sources restent à contrôler. |
 | Tarifs | Prix des packs Eco calculés depuis `CLIENT_PLANS`, TTC, total et prix par séance ; liens réels vers `/packs` et `/book-online`. Aucune réduction saisonnière réactivée. |
 | CTA final | « Réservez votre première séance gratuite » ; même modale que le hero et le header. Vouvoiement cohérent avec le site, tutoiement limité à l’accroche secondaire « Tu galères en… ? ». |

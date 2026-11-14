@@ -1,7 +1,7 @@
 'use client';
 import { useId, useState } from 'react';
 import Image from 'next/image';
-import walidPortrait from '@/public/images/team/walid.jpg';
+import danielPortrait from '@/public/images/team/daniel.jpg';
 import { validateTutorId } from '@/lib/validation';
 import { logger } from '@/lib/logger';
 import Dialog from '@/components/Common/Dialog';
@@ -50,19 +50,13 @@ const TutorSelectionModal = ({
     {
       id: 'daniel',
       name: 'Daniel',
-      avatar: '/images/team/daniel.jpg',
+      avatar: danielPortrait.src,
       available: true,
     },
     {
       id: 'distel',
       name: 'Distel',
       avatar: '/images/team/distel.jpg',
-      available: true,
-    },
-    {
-      id: 'walid',
-      name: 'Walid',
-      avatar: walidPortrait.src,
       available: true,
     },
     {

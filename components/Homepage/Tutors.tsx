@@ -1,16 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import walidPortrait from '@/public/images/team/walid.jpg';
+import danielPortrait from '@/public/images/team/daniel.jpg';
 import { useLanguage } from '@/context/LanguageContext';
 import { brandCopy } from '@/lib/brand-copy';
 import TutorCard from './TutorCard';
 
-// Identities and Walid's quote: components/AboutPage/index.tsx.
-// Publication rights for these two portraits confirmed by the owner, 2026-10-21.
+// Identities and Daniel's quote: components/AboutPage/index.tsx.
+// Daniel's portrait selected by the owner for the homepage.
 const members = [
   { name: 'Ruudy Mbouza-Bayonne', image: '/images/team/ruudy.jpg' },
-  { name: 'Walid Lakas', image: walidPortrait.src },
+  { name: 'Daniel Verton', image: danielPortrait.src },
 ];
 
 export default function Tutors() {
@@ -56,12 +56,12 @@ export default function Tutors() {
                   {...member}
                   role={copy.role}
                   quote={
-                    member.name === 'Walid Lakas'
+                    member.name === 'Daniel Verton'
                       ? {
                           title:
                             language === 'fr'
                               ? copy.adviceTitle
-                              : 'Walid’s advice · in French',
+                              : 'Daniel’s advice · in French',
                           text: brandCopy.fr.tutors.advice,
                           language: 'fr',
                         }

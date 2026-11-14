@@ -122,7 +122,6 @@ function getTutorSubjects(email: string): string[] {
     'nolwen.verton@sikaschool.com': ['Mathématiques', 'Mécanique'],
     'ruudy.mbouza-bayonne@sikaschool.com': ['Mécanique des fluides', 'Physique', 'Mathématiques'],
     'daniel.verton@sikaschool.com': ['Mathématiques', 'Physique', 'Informatique', 'Sciences de l\'ingénieur'],
-    'walid.lakas@sikaschool.com': ['Mathématiques', 'Informatique', 'Physique']
   };
   
   return subjectsMap[email] || ['Mathématiques', 'Physique'];

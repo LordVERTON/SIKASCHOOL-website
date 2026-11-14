@@ -49,7 +49,7 @@ export function validateTutorId(tutorId: string): ValidationResult {
     return { isValid: false, error: 'Tutor ID is required' };
   }
 
-  const allowedIds = ['any', 'alix', 'nolwen', 'daniel', 'distel', 'walid', 'ruudy'];
+  const allowedIds = ['any', 'alix', 'nolwen', 'daniel', 'distel', 'ruudy'];
   if (!allowedIds.includes(tutorId)) {
     return { isValid: false, error: 'Invalid tutor ID' };
   }
