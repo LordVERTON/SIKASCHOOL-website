@@ -37,6 +37,13 @@ const nextConfig = {
         hostname: "images.pexels.com",
         port: "",
       },
+      {
+        protocol: "https",
+        hostname: "i.pravatar.cc",
+        port: "",
+        pathname: "/**",
+        // Avatar selection uses query parameters such as ?img=12.
+      },
     ],
     formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 60,
