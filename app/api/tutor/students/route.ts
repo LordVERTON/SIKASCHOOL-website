@@ -20,7 +20,7 @@ export async function GET() {
         student_id,
         assigned_at,
         notes,
-        profiles!tutor_student_assignments_student_id_fkey(
+        student:profiles!tutor_student_assignments_student_id_fkey(
           id,
           first_name,
           last_name,
@@ -50,11 +50,16 @@ export async function GET() {
     }
 
     // Transformer les données pour l'affichage
-    const assignedStudents = (assignments as any)?.map((assignment: any) => {
-      const student = assignment.users;
-      const studentProfile = student.students?.[0] || {};
+    const assignedStudents = (assignments || []).flatMap((assignment) => {
+      const student = assignment.student;
+      if (!student) return [];
+
+      // A unique students.user_id makes PostgREST return an object instead of an array.
+      const studentProfile = Array.isArray(student.students)
+        ? student.students[0]
+        : student.students;
       let intakeDetails: any = null;
-      if (studentProfile.learning_style) {
+      if (studentProfile?.learning_style) {
         try {
           intakeDetails = JSON.parse(studentProfile.learning_style);
         } catch (parseErr) {
@@ -63,25 +68,25 @@ export async function GET() {
       }
 
       const preferredSubject = intakeDetails?.subject || '';
-      const goalSummary = intakeDetails?.goalSummary || studentProfile.academic_goals || '';
+      const goalSummary = intakeDetails?.goalSummary || studentProfile?.academic_goals || '';
 
       return {
         id: student.id,
-        name: `${student.first_name} ${student.last_name}`,
+        name: `${student.first_name || ''} ${student.last_name || ''}`.trim(),
         email: student.email,
         avatar_url: student.avatar_url || '/images/user/user-01.png',
-        level: studentProfile.grade_level || intakeDetails?.level || 'Débutant',
+        level: studentProfile?.grade_level || intakeDetails?.level || 'Débutant',
         bio: '',
-        academic_goals: studentProfile.academic_goals || goalSummary || '',
+        academic_goals: studentProfile?.academic_goals || goalSummary || '',
         preferredSubject,
         assignedAt: assignment.assigned_at,
         notes: assignment.notes || '',
         assignmentId: assignment.id,
         intake: intakeDetails,
-        phone: studentProfile.phone || student.phone || intakeDetails?.phone || '',
-        postalCode: studentProfile.postal_code || student.postal_code || intakeDetails?.zip || '',
+        phone: studentProfile?.phone || student.phone || intakeDetails?.phone || '',
+        postalCode: studentProfile?.postal_code || student.postal_code || intakeDetails?.zip || '',
       };
-    }) || [];
+    });
 
     return NextResponse.json({ 
       students: assignedStudents,
