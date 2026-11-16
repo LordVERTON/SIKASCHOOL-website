@@ -91,6 +91,17 @@ Les campagnes d'été et de rentrée 2026 sont passées au jour de cette mise à
 
 ## Phase 0 — Corrections critiques
 
+**Lot local du 14 novembre 2026 :** priorité donnée à l'intégrité Stripe,
+aux autorisations persistées et à la continuité des parcours. TECH-002 est
+soldé avec tests PostgreSQL de concurrence/rollback ; les autres tickets
+ci-dessous ne sont cochés que sur leurs critères démontrés. Dialogs,
+statuts, historique et retours de paiement ont été améliorés, avec sonde DB,
+tests et pipeline CI préparé. Détail des preuves, captures et limites dans
+[ROADMAP_VERIFICATION_2026-11-14.md](ROADMAP_VERIFICATION_2026-11-14.md).
+Aucune publication, modification de production, promotion de compte ou
+transaction Stripe réelle n'a été effectuée. TECH-003 et SK-011 restent
+prioritaires pour le prochain lot de réservation sécurisée.
+
 - [x] **[P0][SECURITY][TECH-001] Supprimer toute réinitialisation de mot de passe déclenchée par un lead**
   - Impact : élevé
   - Effort : moyen
@@ -102,16 +113,17 @@ Les campagnes d'été et de rentrée 2026 sont passées au jour de cette mise à
     - [x] Aucune réponse/log/e-mail ne contient un mot de passe généré.
     - [x] Un lead ne peut pas modifier le rôle ni le mot de passe d'un compte existant.
 
-- [ ] **[P0][SECURITY][TECH-002] Rendre l'attribution de crédits Stripe atomique et idempotente**
+- [x] **[P0][SECURITY][TECH-002] Rendre l'attribution de crédits Stripe atomique et idempotente**
   - Impact : élevé
   - Effort : élevé
   - Risque : élevé
   - Dépendances : migration SQL/RPC et stratégie de réconciliation
   - Fichiers concernés : `app/api/webhooks/stripe/route.ts`, `supabase/migrations/**`, `docs/workflows/04-payments.md`
   - Travail : ajouter référence unique d'événement au ledger, transactionner paiement/ledger/solde et faire retourner le chemin déjà appliqué.
+  - Réalisé le 14 novembre : RPC `apply_stripe_payment` invoker réservée au service role, unicité événement/source/facture, verrou transactionnel et incrément SQL atomique. Paiement/ledger/solde sont annulés ensemble en cas d'erreur ; le webhook renvoie 500 pour retry. Paiements différés crédités seulement après règlement ; première facture d'abonnement comptabilisée une fois. Les paiements historiques sans référence fiable sont bloqués pour réconciliation documentée.
   - Critères d'acceptation :
-    - [ ] Un replay d'événement ne crédite pas deux fois.
-    - [ ] Les totaux correspondent au ledger après concurrence et retry.
+    - [x] Un replay d'événement ne crédite pas deux fois : 12 replays concurrents et 2 événements distincts d'une même facture testés sur PostgreSQL local.
+    - [x] Les totaux correspondent au ledger après concurrence et retry : 10 achats distincts concurrents, rollback forcé après écritures et relance réussie, fixtures nettoyées.
 
 - [ ] **[P0][SECURITY][TECH-003] Lier la réservation gratuite à un token vérifié et empêcher le double booking**
   - Impact : élevé
@@ -144,6 +156,7 @@ Les campagnes d'été et de rentrée 2026 sont passées au jour de cette mise à
   - Fichiers concernés : `app/(site)/layout.tsx`, pages publiques, `components/Accessibility/SkipLink.tsx`, `components/Booking/**Modal.tsx`
   - Travail : un seul main, cible de skip link focalisable, dialog standard avec focus trap/Échap/retour focus/titre annoncé.
   - Lot UX/UI : `Common/Dialog` natif partagé par réservation, choix du tuteur et menu mobile ; arrière-plan inerte via la top layer, piège Tab/Maj+Tab, défilement mobile et retour focus. Landmarks publics conservés. Le choix du tuteur est un composant historique non monté dans le parcours actuel ; son contrôle est statique, celui du composant partagé est exécuté au navigateur.
+  - Lot du 14 novembre : récupération du mot de passe, alertes et confirmations migrées vers ce dialog partagé, titres/descriptions associés, Échap et focus testés ; captures mobile/desktop et clair/sombre. La recette lecteur d'écran reste ouverte.
   - Critères d'acceptation :
     - [x] Aucun focus n'atteint l'arrière-plan des modales publiques testées (réservation et menu mobile) ; le choix du tuteur utilise la même primitive.
     - [ ] La navigation par landmarks/titres est valide au lecteur d'écran.
@@ -167,8 +180,9 @@ Les campagnes d'été et de rentrée 2026 sont passées au jour de cette mise à
   - Dépendances : environnement de preview/build pour les mises à jour majeures
   - Fichiers concernés : `package.json`, `package-lock.json`, `next.config.js`, `SECURITY.md`
   - Travail : mise à jour compatible prioritaire de Next.js, audit des alertes restantes, tests de régression, inventaire CSP/HSTS.
+  - Lot du 14 novembre : Next.js et ESLint config 16.4.6, Zod 4.6.6, correctifs transitifs compatibles. Dernier audit : 0 critique, 3 hautes (Nodemailer et sa chaîne de dépendances Auth.js), 7 modérées (outils de développement). `SECURITY.md` décrit les en-têtes configurés et l'absence de CSP/HSTS versionnés ; vérification en production encore nécessaire.
   - Critères d'acceptation :
-    - [ ] Aucune vulnérabilité critique connue ne reste dans le lockfile validé.
+    - [x] Aucune vulnérabilité critique connue ne reste dans le lockfile validé (audit npm du 14 novembre, build et régressions locaux).
     - [ ] `SECURITY.md` décrit les en-têtes réellement déployés.
 
 ## Phase 1 — UX et conversion
@@ -238,6 +252,7 @@ Les campagnes d'été et de rentrée 2026 sont passées au jour de cette mise à
   - Lot UX/UI : sept primitives React partagées, adoptées sur les offres publiques, le header, le formulaire et Comment ça marche ; variantes, boutons en attente/désactivés, champs avec labels/aide/erreur et alertes sémantiques. Le ticket reste ouvert pour la poursuite de migration et la validation display/supports signalée dans l’addendum.
   - Réalisé localement le 20 octobre : palette officielle et alias compatibles, Poppins/Archivo Black, primitives CSS publiques, homepage et pages secondaires ; Radix/shadcn/Lucide ne sont pas encore installés. Alternative display et comparaison aux supports à valider.
   - Lot V2.1 : Sensa/Poppins conservées, `AccordionItem` accessible sans dépendance supplémentaire, FAQ sans pointillés ni ombres du template, `TutorCard`, `SubjectPicker` à radios natifs et `Reassurance`. Tokens V2 réutilisés pour surfaces, bordures, rayons, sélection, survol et focus ; bouton primaire d’au moins 48 px. Image Hero identique et optimisée par `next/image`, prop `preload` remplaçant `priority` dépréciée dans Next 16.
+  - Lot du 14 novembre : extension des primitives Dialog/Button/Alert aux alertes et confirmations métier, récupération du mot de passe et contrôle de connexion DB ; variante compacte du dialog. Les supports et autres écrans restent à migrer.
   - Recette V2.1 :
     - [x] FAQ, cartes et matières cohérentes en clair/sombre et FR/EN aux sept largeurs ; aucune décoration historique dans la FAQ.
     - [x] Les titres éditoriaux sont en Sensa, le contenu en Poppins et les libellés fonctionnels restent lisibles ; aucun mot du Hero coupé maladroitement.
@@ -251,6 +266,7 @@ Les campagnes d'été et de rentrée 2026 sont passées au jour de cette mise à
   - Fichiers concernés : `components/{Common,Student,ErrorBoundary}/**`, composants Motion, `app/(site)/error/page.tsx`
   - Travail : composants état vide/skeleton/erreur/retry et règle `prefers-reduced-motion`; localiser les erreurs template.
   - Lot UX/UI : `Alert` annonce erreur/succès ; disponibilité vide, chargement, relance et conflit de réservation ; erreurs de paiement réessayables et libellés loading communs. Mouvement réduit existant conservé. Restent les autres écrans et formulaires métier.
+  - Lot du 14 novembre : échec/réessai de récupération sans effacer l'e-mail, succès non énumérant annoncé ; dialogues d'annulation/erreur testés, sonde DB avec relance. Retours de paiement sans animation aléatoire ni confirmation de crédits non vérifiée. La recette lecteur d'écran et les autres formulaires restent ouverts.
   - Lot V2.1 : boutons d’accordéon avec titres, `aria-expanded`/`aria-controls` et régions nommées ; Entrée/Espace, flèches, Début/Fin ; radios natifs avec légende, focus visible sur la carte et coche en plus de la couleur. FAQ utile pendant le chargement, délai d’expiration, réponse vide/invalide/erreur → repli traduit et relance. Les réponses de l’API, actuellement sans métadonnée de langue, restent en français avec `lang="fr"` et avertissement explicite en EN ; aucune traduction prétendue.
   - Recette V2.1 :
     - [x] Clavier FAQ et radios, focus visible, états sélectionnés/ouverts et panneaux associés validés.
@@ -268,8 +284,9 @@ Les campagnes d'été et de rentrée 2026 sont passées au jour de cette mise à
   - Dépendances : tests initiaux (TECH-010)
   - Fichiers concernés : `app/api/**`, `app/tutor/administration/page.tsx`, profils, `LeadCaptureModal`
   - Travail : commencer par booking/paiements ; faire des routes minces ; extraire hooks/vues de grosses pages.
+  - Lot du 14 novembre : route webhook réduite à la signature et au contrat HTTP ; handlers dans `lib/stripe-webhook.ts`, contrat dans `lib/stripe-payment.ts`, tests isolés sans serveur Next. L'extraction booking et les écrans monolithiques restent ouverts.
   - Critères d'acceptation :
-    - [ ] Règles métier testables sans route Next.
+    - [x] Règles métier testables sans route Next pour le webhook extrait, avec cas paiement différé, facture, erreur DB et métadonnées invalides.
     - [ ] Aucun refactor général non justifié.
 
 - [ ] **[P1][ARCH][CODE][TECH-005] Normaliser schémas, DTO et erreurs**
@@ -277,6 +294,7 @@ Les campagnes d'été et de rentrée 2026 sont passées au jour de cette mise à
   - Dépendances : TECH-004
   - Fichiers concernés : `lib/validation.ts`, `app/api/**`, `types/supabase.ts`
   - Travail : Zod aux frontières, réponse d'erreur stable, régénération type DB et suppression progressive des `any` prioritaires.
+  - Lot du 14 novembre : contrat Zod et types explicites des paiements Stripe, RPC/ledger typés, erreurs Checkout/webhook génériques sans détails DB. La génération complète des types via pg-meta local a échoué sur l'authentification PostgreSQL ; seuls les ajouts de cette migration ont été typés manuellement et vérifiés par TypeScript. Le ticket reste ouvert.
   - Critères d'acceptation :
     - [ ] Entrée/sortie des endpoints critiques documentées et validées.
     - [ ] Pas de détail DB envoyé au navigateur.
@@ -286,8 +304,9 @@ Les campagnes d'été et de rentrée 2026 sont passées au jour de cette mise à
   - Dépendances : matrice permissions validée
   - Fichiers concernés : `auth.ts`, `lib/{auth,admin-permissions,student-access}.ts`, `app/api/**`
   - Travail : supprimer liste e-mails admin, guards cohérents, ownership au niveau service.
+  - Lot du 14 novembre : suppression des deux exceptions d'e-mail administrateur ; contrôle du rôle `ADMIN` persisté et du profil actif à chaque session serveur, lecture bornée à 5 s. Matrice négative des guards/Checkout/sonde et révocation immédiate vérifiées au navigateur. Aucun compte existant n'a été promu ; les anciens tuteurs admis par e-mail doivent recevoir un rôle explicite s'ils doivent administrer. L'inventaire d'ownership de tous les services reste ouvert.
   - Critères d'acceptation :
-    - [ ] Privilèges uniquement issus d'un rôle/capacité persisté.
+    - [x] Privilèges administrateur uniquement issus du rôle persisté ; exceptions d'e-mail supprimées et révocation d'un JWT ADMIN existant vérifiée.
     - [ ] Matrice rôle × action couverte par tests négatifs.
 
 ## Phase 4 — Workflows
@@ -350,6 +369,7 @@ Les campagnes d'été et de rentrée 2026 sont passées au jour de cette mise à
   - Dépendances : environnement Supabase local reproductible
   - Fichiers concernés : `package.json`, `README.md`, futur `.env.example`, `.github/workflows/**`, tests
   - Travail : unit (catalogue, transitions, permissions), intégration (lead/booking/Stripe), E2E (signup/login/booking/achat), PR pipeline install → format → lint → type → unit → build → e2e preview.
+  - Lot du 14 novembre : `npm test` couvre 63 tests, `test:db` vérifie les transactions PostgreSQL locales, `test:browser` les parcours des quatre rôles avec fixtures nettoyées. `.env.example` ajouté et workflow GitHub lint/test/build/types sous Node 24 préparé. Pas de CI distante exécutée, protection de branche ni E2E preview configurés ; les P0 booking n'ont pas encore de preuve transactionnelle.
   - Critères d'acceptation :
     - [ ] Chaque P0 a une preuve automatisée.
     - [ ] CI bloque une régression lint/type/build/test.
@@ -375,10 +395,11 @@ Les onze cases principales ci-dessous sont ouvertes. Les critères devront être
   - État vérifié : Checkout existe pour packs, séances et abonnements, avec métadonnées élève/plan, codes promotionnels autorisés et création de facture pour les paiements uniques. Portail, consultation, signature webhook et handlers abonnement/remboursement existent. `addCredits` lit puis écrit le solde et le ledger sans transaction ni référence unique appliquée ; son contrôle d'existence ne bloque pas le replay. La migration initiale rend `stripe_checkout_session` unique, mais pas `stripe_invoice_id`, pourtant utilisé comme cible d'upsert. Le remboursement met seulement le paiement à `REFUNDED`. Certaines erreurs DB sont journalisées sans provoquer de retry.
   - Fichiers vérifiés : `lib/stripe.ts`, `lib/payments-catalog.ts`, `app/api/student/payments/checkout/route.ts`, `app/api/webhooks/stripe/route.ts`, `app/api/student/payments/portal/route.ts`, `app/api/student/payments/overview/route.ts`, `lib/student-access.ts`, `supabase/migrations/20260101120000_initial_schema.sql`, `supabase/migrations/20260912143000_move_users_to_supabase_auth.sql`, [STRIPE_SETUP.md](STRIPE_SETUP.md), [workflow paiements](workflows/04-payments.md).
   - Travail : auditer l'existant puis finaliser les parcours d'achat, renouvellement, échec, annulation, remboursement et accès aux factures ; réconcilier catalogue affiché, montants payés, ledger et droits. Faire réaliser l'atomicité dans TECH-002, y compris l'unicité de l'attribution par facture afin que deux types d'événements relatifs à une même facture ne créditent pas deux fois. Vérifier le statut de paiement avant attribution, les erreurs/retries DB et les événements désordonnés. Corriger ensuite les garanties excessives et les références `users` devenues `profiles` dans les guides. Préparer une checklist go-live avec responsable, configuration test/live, fiscalité, réconciliation et retour arrière.
+  - Lot du 14 novembre : TECH-002 livré localement ; Checkout parent renvoyé vers `/family/paiements`, erreurs sûres, pages success/cancel respectant l'espace du rôle et sans promesse de crédit/prélèvement non vérifiée. Abonnements synchronisés depuis l'état courant Stripe, événement d'échec tardif empêché de déclasser un paiement payé/remboursé ; remboursement partiel ne classe plus le total comme remboursé. Guides corrigés. Recette Stripe test, factures réelles et politique de reprise des crédits remboursés restent ouverts.
   - Dépendances bloquantes : TECH-002 pour l'atomicité ; UX-002 et validation métier des prix, taxes, annulations et remboursements pour la recette commerciale. Coordination : TECH-010 pour les tests, TECH-011 et SK-008 pour les alertes/reprise. Le go-live et tout paiement réel nécessitent une décision explicite ultérieure.
   - Critères d'acceptation :
     - [ ] En environnement Stripe de test, packs, séances et abonnements couvrent succès, refus/échec, abandon/annulation, renouvellement et résiliation ; aucun retour navigateur ne crédite un achat.
-    - [ ] Les tests de TECH-002 prouvent une transaction paiement/ledger/solde atomique ; replays, concurrence, interruption/retry et événements distincts pour une même facture ne créent ni double crédit ni perte.
+    - [x] Les tests de TECH-002 prouvent une transaction paiement/ledger/solde atomique ; replays, concurrence, interruption/retry et événements distincts pour une même facture ne créent ni double crédit ni perte (PostgreSQL local).
     - [ ] Montants en centimes, devise, quantité/niveau des séances et éventuelles remises correspondent entre catalogue, Checkout, facture et DB ; les totaux se réconcilient sans double comptabilisation initiale d'abonnement.
     - [ ] Remboursements complets/partiels et crédits déjà consommés suivent une règle validée et testée ; les droits et soldes restent cohérents.
     - [ ] Factures/portail et routes de retour fonctionnent pour élève et parent lié ; tuteur, compte tiers et parent sans élève lié n'accèdent à aucun achat indu.
@@ -391,6 +412,7 @@ Les onze cases principales ci-dessous sont ouvertes. Les critères devront être
   - Fichiers vérifiés : `app/student/tutors/page.tsx`, `app/family/tutors/page.tsx`, `components/Student/CreateSessionModal.tsx`, `app/api/sessions/route.ts`, `lib/student-access.ts`, `app/(site)/booking/page.tsx`, `components/Booking/BookingCalendar.tsx`, `components/Booking/TutorSelectionModal.tsx`, `auth.ts`, `proxy.ts`, `next.config.js`.
   - Travail : consigner d'abord URL exacte, page d'origine, clic, rôle/session, paramètres tuteur, appareil, réponse HTTP et chaîne de redirections, en distinguant 404 de page et d'API. Tracer le bouton ou l'éventuelle fiche concernée, puis corriger route, paramètres ou reprise après connexion selon la cause démontrée. Conserver le tuteur choisi sans contourner les contrôles d'assignation, de rôle et d'élève effectif.
   - Dépendances : reproduction documentée avant correction ; coordination avec TECH-008 pour la destination réelle de réservation et UX-001 si le CTA public traverse la modale partagée. Ne pas recopier leur refonte dans ce correctif.
+  - Lot du 14 novembre : une autre 404 est identifiée par la référence `/student/booking` de l'état vide de l'historique, route absente de l'arborescence. Ce lien pointe désormais vers le calendrier réel du rôle ; le bouton sans action « Voir détails » ouvre ce calendrier. Tests navigateur élève/parent. Le scénario initial depuis un tuteur n'est pas reproduit : SK-003 reste ouvert.
   - Critères d'acceptation :
     - [ ] Le scénario initial et la requête 404 sont documentés avec résultat attendu/observé avant modification, puis couverts par un test de non-régression.
     - [ ] Desktop/mobile, connecté/non connecté et parent/élève aboutissent au parcours autorisé ; le tuteur choisi est conservé après navigation ou connexion.
@@ -403,9 +425,10 @@ Les onze cases principales ci-dessous sont ouvertes. Les critères devront être
   - État vérifié : `lib/supabase.ts` expose les clients anon/service role et un détecteur d'erreurs réseau ; aucun health check DB dédié ni ordonnanceur de surveillance n'a été trouvé dans les fichiers examinés. Le README décrit l'hébergement et Supabase local/cloud, sans preuve de surveillance en production. `supabase/README.md` recommande une sauvegarde avant migration, sans exercice complet de restauration. Le GET `/api/admin/resend/health` envoie réellement un e-mail : il ne convient pas à une sonde DB non destructive.
   - Fichiers vérifiés : `lib/supabase.ts`, `app/api/student/dashboard/route.ts`, `app/api/sessions/route.ts`, `app/api/leads/first-session-slots/route.ts`, `app/api/webhooks/stripe/route.ts`, `app/api/admin/resend/health/route.ts`, `next.config.js`, `package.json`, `README.md`, `supabase/README.md`.
   - Travail : inventorier les dépendances DB des parcours critiques, puis définir une sonde serveur en lecture seule, bornée et sans retour de données métier, séparant app accessible et DB joignable. Proposition initiale à valider : toutes les 5 minutes, timeout 5 secondes, alerte après 3 échecs, rétablissement après 2 succès ; limiter charge et doublons. Désigner destinataire, escalade et maintenance. Documenter diagnostic, restauration, réconciliation des écritures interrompues et reprise des webhooks ; fixer RPO/RTO, rétention, chiffrement et emplacement des sauvegardes avec un responsable.
+  - Lot du 14 novembre : sonde administrative HEAD/limit 1, timeout 5 s par lecture (autorisation et sonde, au plus 10 s d'attente DB), réponses sans donnée métier et `no-store`, carte de résultat/relance. Contrôle réel en local et panne simulée au navigateur ; runbook dans `DATABASE_OPERATIONS.md`. Ni ordonnanceur ni alerte externe activés, aucune restauration exécutée.
   - Dépendances : accès d'exploitation et environnement non productif ; validation des seuils, destinataires, RPO/RTO et moyens de sauvegarde disponibles. Coordination TECH-011 pour logs/alertes et TECH-010 pour la reproductibilité. Aucun outil payant ne sera activé sans validation.
   - Critères d'acceptation :
-    - [ ] La sonde n'écrit pas en DB, n'envoie ni e-mail métier ni paiement et ne renvoie aucun secret ou donnée personnelle ; accès, timeout, cadence et charge sont documentés.
+    - [x] La sonde n'écrit pas en DB, n'envoie ni e-mail métier ni paiement et ne renvoie aucun secret ou donnée personnelle ; accès, timeout, cadence et charge sont documentés et contrôlés localement.
     - [ ] Une panne simulée hors production déclenche une seule alerte exploitable, puis une notification de rétablissement fiable ; délai mesuré, faux positifs et maintenance sont vérifiés.
     - [ ] Les logs corrélés restent sans secrets/PII ; le runbook nomme responsable, escalade, contrôles de santé et conditions de reprise.
     - [ ] Une sauvegarde est restaurée dans un environnement isolé ; intégrité, permissions, crédits/séances et RPO/RTO sont vérifiés, sans écriture sur la production.
@@ -433,15 +456,17 @@ Les onze cases principales ci-dessous sont ouvertes. Les critères devront être
   - Fichiers vérifiés : `lib/translations.ts`, `app/student/page.tsx`, `app/tutor/page.tsx`, `app/tutor/administration/page.tsx`, `app/student/paiements/page.tsx`, `app/student/notifications/page.tsx`, `app/tutor/notifications/page.tsx`, `app/family/tutors/page.tsx`, `lib/registration-emails.ts`, [cycle des séances](workflows/03-session-lifecycle.md).
   - Travail : inventorier tous les rendus de statuts (dashboards, calendriers, historiques, paiements, notifications et e-mails), centraliser les libellés par domaine/langue et supprimer les fallbacks techniques visibles. Définir notamment PENDING → « En attente », SCHEDULED → « Programmée », IN_PROGRESS → « En cours », COMPLETED → « Terminée », CANCELLED → « Annulée », avec accord adapté à l'objet ; couvrir aussi paiements et abonnements. Préserver strictement valeurs DB/API et logique de transition.
   - Dépendances : glossaire métier FR/EN validé ; coordination UX-006 pour le vocabulaire, sans recopier la normalisation des liens.
+  - Lot du 14 novembre : `lib/status-labels.ts` centralise séances/paiements/abonnements FR/EN et le fallback neutre, sans toucher aux valeurs DB/API. Adoption dans dix écrans partagés (dont parents), suppression des enums bruts des paiements admin et de l'historique de revenus tuteur. Historique responsive corrigé pour les libellés longs. Notifications/e-mails et glossaire métier restent à recetter.
   - Critères d'acceptation :
     - [ ] Aucun statut anglais/enum technique ne reste visible en français dans les écrans, notifications et e-mails inventoriés, pour élève, parent, tuteur et admin.
-    - [ ] Un mapping centralisé par domaine et langue couvre tous les statuts recensés et un fallback français neutre pour une valeur inconnue ; les écrans déjà traduits ne régressent pas.
+    - [x] Un mapping centralisé par domaine et langue couvre séances, paiements et abonnements recensés et un fallback français neutre ; tests des domaines, inconnus et valeurs héritées, écrans de quatre rôles contrôlés au navigateur.
     - [ ] Tests de mapping et recette sur tous les rôles : filtres, badges, historiques et messages gardent leur sens ; les valeurs DB/API et les libellés anglais disponibles sont préservés.
 
 - [ ] **[P1][UX][SEO][SK-006] Mettre à jour et recetter le site**
   - Catégories : UX, SEO, contenu ; Impact : élevé ; Effort : élevé ; Risque : moyen (informations commerciales, liens et identité).
   - Actualisation du 20 octobre : homepage V2, charte, pages publiques, footer, contact et tarifs d’accueil refondus ; les chiffres/remises périmés ne sont plus rendus sur l’accueil. Les URL publiques manquantes sont corrigées. Les constats du 17 octobre ci-dessous restent l’état initial ; voir la recette V2 pour les contrôles effectivement exécutés et leurs limites.
   - Lot V2.1 du 21 octobre : recette étendue dans `scripts/verify-brand-v2.mjs` et sélecteurs actualisés dans `scripts/verify-ux-roadmap.mjs`. Captures/rapports locaux dans `artifacts/v2.1/`, ignorés par Git ; comparaison au commit `799d9dc`, aucun lead/e-mail/paiement réel ni écriture Supabase pendant la recette. Les résultats finaux sont ajoutés à `BRAND_V2_VERIFICATION.md`.
+  - Lot du 14 novembre : 36 contrôles publics existants passent après mise à jour Next ; recette dédiée des dialogues, statuts, historique et retours de paiement avec comptes Auth locaux temporaires. Avertissement d'hydratation du thème sombre corrigé. Captures inspectées dans `artifacts/roadmap-2026-11/`, détails dans `ROADMAP_VERIFICATION_2026-11-14.md` ; aucune publication.
   - Recette V2.1 :
     - [x] `npm run type-check`, `npm run lint` et `npm run build` terminés avec succès sous Node 24 ; build de 99 pages avec un worker local (`CIRCLE_NODE_TOTAL=2`), sans modification de la configuration de déploiement.
     - [x] Script V2 étendu : 56 rendus publics, puis reprise des interactions et matrice homepage de 28 combinaisons ; liens, réservation, FAQ, zoom et absence d’erreur JavaScript. `verify-ux-roadmap.mjs` : 36 contrôles supplémentaires, écritures interceptées, dont parent/élève FR/EN, reprise/conflit de créneau et erreur Checkout.
