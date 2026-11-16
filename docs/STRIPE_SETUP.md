@@ -1,18 +1,18 @@
 # 💳 Intégration Stripe – Guide complet
 
-Cette intégration permet aux familles (rôle `STUDENT`) d'acheter depuis la plateforme :
+Cette intégration permet aux élèves (`STUDENT`) et parents (`PARENT` avec élève lié) d'acheter depuis la plateforme :
 
 - **Packs** de 4 ou 8 séances (paiement unique)
 - **Séances à l'unité** (paiement unique)
 - **Abonnement mensuel** (4 séances / mois, résiliable à tout moment)
 
-L'expérience utilisateur repose sur **Stripe Checkout** (page hébergée) + **Stripe Customer Portal** (gestion des factures, carte, résiliation), ce qui garantit :
+L'expérience utilisateur utilise **Stripe Checkout** (page hébergée) et **Stripe Customer Portal**. Les moyens de paiement, taxes, factures et options du portail dépendent de la configuration du compte Stripe et doivent être vérifiés en mode test :
 
-- Apple Pay / Google Pay / Link activés automatiquement
+- Apple Pay / Google Pay / Link selon les moyens activés et les appareils éligibles
 - PCI-DSS géré par Stripe (aucun numéro de carte ne touche notre serveur)
 - 3D Secure natif
-- Factures PDF générées automatiquement
-- Portail en français
+- Factures PDF selon les options Checkout et la configuration du compte
+- Langue du portail selon sa configuration
 
 ---
 
@@ -41,11 +41,14 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 ## 3. Migration base de données
 
-Exécute la migration SQL une seule fois :
-
-1. Ouvre ton projet dans [Supabase Studio](https://supabase.com/dashboard) → **SQL Editor**
-2. Copie-colle la partie **Stripe** du fichier [`supabase/migrations/20260101120000_initial_schema.sql`](../supabase/migrations/20260101120000_initial_schema.sql) (tables `payments`, `student_credits`, etc.), ou applique les migrations via `npx supabase db push`.
-3. Clique sur **Run**
+Utiliser les migrations versionnées selon [le guide Supabase](../supabase/README.md).
+Ne pas recopier une portion de la baseline dans une base existante.
+La migration `20261114154431_stripe_atomic_credits.sql` doit être appliquée avant
+le nouveau webhook. Elle refuse les références de facture historiques dupliquées :
+les réconcilier avant migration, sans suppression automatique des paiements.
+Les paiements historiques déjà payés et sans référence de ledger fiable exigent
+aussi une réconciliation avant replay ; la RPC les bloque sans recréditer.
+Cette livraison a été testée sur la base locale seulement.
 
 Tables créées :
 
@@ -55,7 +58,7 @@ Tables créées :
 | `student_credits` | Solde de séances disponibles par élève et par niveau |
 | `student_credit_ledger` | Audit (+ achat / − consommation) |
 | `subscriptions` | Projection des abonnements Stripe actifs |
-| `users.stripe_customer_id` | Association user ↔ Stripe Customer |
+| `profiles.stripe_customer_id` | Association profil ↔ Stripe Customer |
 
 ---
 

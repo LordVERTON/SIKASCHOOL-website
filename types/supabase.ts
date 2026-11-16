@@ -754,6 +754,8 @@ export type Database = {
           reason: string
           session_id: string | null
           student_id: string
+            stripe_event_id: string | null
+            stripe_source_ref: string | null
         }
         Insert: {
           created_at?: string | null
@@ -764,6 +766,8 @@ export type Database = {
           reason: string
           session_id?: string | null
           student_id: string
+            stripe_event_id?: string | null
+            stripe_source_ref?: string | null
         }
         Update: {
           created_at?: string | null
@@ -774,6 +778,8 @@ export type Database = {
           reason?: string
           session_id?: string | null
           student_id?: string
+            stripe_event_id?: string | null
+            stripe_source_ref?: string | null
         }
         Relationships: [
           {
@@ -1199,6 +1205,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_stripe_payment: {
+        Args: { p_event_id: string; p_payment: Json }
+        Returns: { payment_id: string; applied: boolean }[]
+      }
       assign_tutor_to_student: {
         Args: {
           p_assigned_by?: string
