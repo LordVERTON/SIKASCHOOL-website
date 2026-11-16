@@ -1,4 +1,5 @@
 "use client";
+import { getPaymentStatusLabel } from '@/lib/status-labels';
 
 export const dynamic = "force-dynamic";
 
@@ -368,10 +369,10 @@ function StatusPill({ status }: { status: string }) {
     REFUNDED: { bg: "bg-gray-200 text-gray-800 dark:bg-gray-500/20 dark:text-gray-300", label: "Remboursé" },
     CANCELED: { bg: "bg-gray-200 text-gray-800 dark:bg-gray-500/20 dark:text-gray-300", label: "Annulé" },
   };
-  const m = map[status] ?? map.PENDING;
+  const m = map[status] ?? { bg: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300' };
   return (
     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${m.bg}`}>
-      {m.label}
+      {getPaymentStatusLabel(status)}
     </span>
   );
 }

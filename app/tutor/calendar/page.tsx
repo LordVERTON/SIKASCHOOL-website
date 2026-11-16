@@ -1,4 +1,5 @@
 "use client";
+import { getSessionStatusLabel as getStatusLabel } from '@/lib/status-labels';
 // Link not used on this page
 import { useEffect, useMemo, useState } from "react";
 import ConfirmationModal from "@/components/ConfirmationModal";
@@ -112,22 +113,6 @@ export default function TutorCalendar() {
     return hoursUntilSession >= 24;
   };
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "PENDING":
-        return "En attente";
-      case "SCHEDULED":
-        return "Programmée";
-      case "IN_PROGRESS":
-        return "En cours";
-      case "COMPLETED":
-        return "Terminée";
-      case "CANCELLED":
-        return "Annulée";
-      default:
-        return "Statut inconnu";
-    }
-  };
 
   const handleSessionAction = async (sessionId: string, action: 'ACCEPT' | 'REJECT') => {
     try {

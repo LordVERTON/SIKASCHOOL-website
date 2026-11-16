@@ -1,4 +1,5 @@
 "use client";
+import { getSessionStatusLabel as getStatusText } from '@/lib/status-labels';
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -86,22 +87,6 @@ export default function TutorHistoryPage() {
     }
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'PENDING':
-        return 'En attente';
-      case 'SCHEDULED':
-        return 'Programmée';
-      case 'COMPLETED':
-        return 'Terminée';
-      case 'IN_PROGRESS':
-        return 'En cours';
-      case 'CANCELLED':
-        return 'Annulée';
-      default:
-        return 'Statut inconnu';
-    }
-  };
 
   if (loading) {
     return (
@@ -184,7 +169,7 @@ export default function TutorHistoryPage() {
                   key={session.id}
                   className="animate_top rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection"
                 >
-                  <div className="flex items-start justify-between mb-4">
+                  <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex items-start space-x-4">
                       <Image
                         src={session.studentAvatar || '/images/user/user-01.png'}
@@ -205,8 +190,8 @@ export default function TutorHistoryPage() {
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(session.status)}`}>
+                    <div className="sm:text-right">
+                      <span className={`inline-flex max-w-full rounded-full px-3 py-1 text-sm font-medium ${getStatusColor(session.status)}`}>
                         {getStatusText(session.status)}
                       </span>
                     </div>

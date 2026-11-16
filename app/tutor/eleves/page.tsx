@@ -1,4 +1,5 @@
 "use client";
+import { getSessionStatusLabel } from '@/lib/status-labels';
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -252,11 +253,7 @@ export default function TutorEleves() {
                                               session.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-700 dark:bg-gray-800 dark:text-yellow-300' :
                                               'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
                                             }`}>
-                                              {session.status === 'COMPLETED' ? 'Terminée' :
-                                               session.status === 'SCHEDULED' ? 'Programmée' :
-                                               session.status === 'PENDING' ? 'En attente' :
-                                               session.status === 'IN_PROGRESS' ? 'En cours' :
-                                               'Statut inconnu'}
+                                              {getSessionStatusLabel(session.status)}
                                             </span>
                                           </td>
                                         </tr>

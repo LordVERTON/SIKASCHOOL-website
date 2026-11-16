@@ -1,4 +1,5 @@
 "use client";
+import { getSessionStatusLabel } from '@/lib/status-labels';
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -37,22 +38,6 @@ const shortcuts = [
   { href: "/student/messages", label: "Messages", detail: "Écrire au tuteur" },
 ];
 
-const getSessionStatusLabel = (status: string) => {
-  switch (status) {
-    case "PENDING":
-      return "En attente";
-    case "SCHEDULED":
-      return "Programmée";
-    case "IN_PROGRESS":
-      return "En cours";
-    case "COMPLETED":
-      return "Terminée";
-    case "CANCELLED":
-      return "Annulée";
-    default:
-      return "Statut inconnu";
-  }
-};
 
 const getSessionStatusClassName = (status: string) => {
   switch (status) {

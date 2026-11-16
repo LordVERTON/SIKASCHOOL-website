@@ -1,4 +1,5 @@
 "use client";
+import { getSessionStatusLabel } from '@/lib/status-labels';
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -280,7 +281,7 @@ export default function TutorHome() {
                       )}
                     </div>
                     <div className={`text-sm font-medium ${s.status === 'COMPLETED' ? 'text-green-600' : s.status === 'CANCELLED' ? 'text-red-600' : 'text-gray-600'}`}>
-                      {s.status === 'COMPLETED' ? 'Terminée' : s.status === 'CANCELLED' ? 'Annulée' : s.status}
+                      {getSessionStatusLabel(s.status)}
                     </div>
                   </div>
                 </div>

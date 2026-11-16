@@ -1,7 +1,9 @@
 "use client";
+import { getSessionStatusLabel as getStatusText } from '@/lib/status-labels';
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { formatMinutes } from '@/lib/time-utils';
 import { useAuth } from '@/hooks/useAuth';
@@ -25,6 +27,8 @@ interface Session {
 }
 
 export default function HistoryPage() {
+  const pathname = usePathname();
+  const spaceBase = pathname?.startsWith('/family') ? '/family' : '/student';
   const { user, loading: authLoading } = useAuth();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,22 +84,6 @@ export default function HistoryPage() {
     }
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'PENDING':
-        return 'En attente';
-      case 'SCHEDULED':
-        return 'Programmée';
-      case 'COMPLETED':
-        return 'Terminée';
-      case 'IN_PROGRESS':
-        return 'En cours';
-      case 'CANCELLED':
-        return 'Annulée';
-      default:
-        return 'Statut inconnu';
-    }
-  };
 
   if (loading) {
     return (
@@ -171,16 +159,16 @@ export default function HistoryPage() {
                 key={session.id}
                 className="animate_top rounded-lg border border-stroke bg-white p-7.5 shadow-solid-10 dark:border-strokedark dark:bg-blacksection"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-start space-x-4">
+                <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex min-w-0 items-start gap-4">
                     <Image
                       src={session.tutorAvatar || '/images/user/user-01.png'}
                       alt={session.tutor}
                       width={48}
                       height={48}
-                      className="w-12 h-12 rounded-full object-cover"
+                      className="h-12 w-12 shrink-0 rounded-full object-cover"
                     />
-                    <div className="flex-1">
+                    <div className="min-w-0 flex-1">
                       <h3 className="text-lg font-semibold text-black dark:text-white">
                         {session.course} - {session.type}
                       </h3>
@@ -192,8 +180,8 @@ export default function HistoryPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(session.status)}`}>
+                  <div className="sm:text-right">
+                    <span className={`inline-flex max-w-full rounded-full px-3 py-1 text-sm font-medium ${getStatusColor(session.status)}`}>
                       {getStatusText(session.status)}
                     </span>
                   </div>
@@ -267,9 +255,9 @@ export default function HistoryPage() {
                   </div>
                   
                   <div className="flex space-x-2">
-                    <button className="px-4 py-2 border border-stroke dark:border-strokedark text-black dark:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition text-sm">
-                      Voir détails
-                    </button>
+                    <Link href={`${spaceBase}/calendar`} className="px-4 py-2 border border-stroke dark:border-strokedark text-black dark:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition text-sm">
+                      Voir le calendrier
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -288,7 +276,7 @@ export default function HistoryPage() {
                   }
                 </p>
                 <Link
-                  href="/student/booking"
+                  href={`${spaceBase}/calendar`}
                   className="inline-flex items-center px-6 py-3 bg-primary text-white rounded-lg hover:opacity-90 transition"
                 >
                   Réserver une séance
@@ -301,7 +289,7 @@ export default function HistoryPage() {
         {/* Retour au tableau de bord */}
         <div className="mt-10 text-center">
           <Link
-            href="/student"
+            href={spaceBase}
             className="inline-flex items-center px-6 py-3 border border-stroke text-black dark:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition"
           >
             ← Retour au tableau de bord

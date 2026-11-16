@@ -1,4 +1,5 @@
 "use client";
+import { getSessionStatusLabel } from '@/lib/status-labels';
 export const dynamic = 'force-dynamic';
 import { useEffect, useMemo, useState } from 'react';
 import { formatMinutes } from '@/lib/time-utils';
@@ -93,7 +94,7 @@ export default function TutorPaiements() {
                       <td className="py-3 pr-6">{h.student} ({h.subject} / {h.level})</td>
                       <td className="py-3 pr-6">{new Date(h.declaredAt).toLocaleDateString('fr-FR', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })} - Durée : {formatMinutes(h.durationMinutes||0)}</td>
                       <td className="py-3 pr-6">{formatMinutes(h.durationMinutes||0)}</td>
-                      <td className="py-3"><span className="rounded bg-green-100 px-2 py-0.5 text-xs text-green-700 dark:bg-gray-800 dark:text-green-300">{h.status}</span></td>
+                      <td className="py-3"><span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-700 dark:bg-gray-800 dark:text-gray-300">{getSessionStatusLabel(h.status)}</span></td>
                     </tr>
                   ))}
                 </tbody>
