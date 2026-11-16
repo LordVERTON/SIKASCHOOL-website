@@ -17,7 +17,7 @@ const report = {
   checks: [],
   errors: [],
 };
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined });
 const subjects = ['Mathématiques', 'Français', 'Préparation à un concours'];
 const slots = [0, 1].map(index => ({
   tutorId: `test-tutor-${index}`,
@@ -34,6 +34,7 @@ const respond = (route, status, data) =>
 
 async function setup(width, language = 'fr') {
   const context = await browser.newContext({
+    ignoreHTTPSErrors: true,
     viewport: { width, height: 900 },
     reducedMotion: 'reduce',
   });

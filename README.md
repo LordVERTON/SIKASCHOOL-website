@@ -52,7 +52,7 @@ docs/              LiveKit, Sika AI, Supabase (résumés)
 
 ## Prérequis
 
-- Node.js 18+
+- Node.js 24 (version déclarée par `package.json` et utilisée par la CI)
 - **Docker** (Supabase local ou Mailpit pour les emails de dev)
 - Comptes / clés selon usage : **Supabase**, **LiveKit**, **OpenAI** (optionnel pour Sika AI)
 
@@ -67,7 +67,7 @@ npm install --legacy-peer-deps
 cp .env.example .env.local
 ```
 
-Renseigner au minimum **`JWT_SECRET`**, **`NEXT_PUBLIC_SUPABASE_*`**, **`SUPABASE_SERVICE_ROLE_KEY`** (voir `.env.example`).
+Renseigner au minimum **`AUTH_SECRET`**, **`JWT_SECRET`**, **`NEXT_PUBLIC_SUPABASE_*`**, **`SUPABASE_SERVICE_ROLE_KEY`** (voir `.env.example`).
 
 ### Supabase en local
 
@@ -217,8 +217,23 @@ Tables centrales : `users`, `students`, `tutors`, `sessions`, `notifications`, `
 | `npm run mailpit:down` | Arrête Mailpit (Docker Compose) |
 | `npm run mercure` / `npm run mercure:down` | Démarre / arrête le hub Mercure local |
 | `npm run lint` / `npm run type-check` | Qualité |
+| `npm test` | Tests de régression catalogue, auth, permissions, statuts et webhook |
+| `npm run test:db` | Tests Stripe transactionnels sur le conteneur Supabase local ; fixtures temporaires nettoyées |
+| `npm run test:webhook-local` | Webhook HTTP signé synthétique → RPC → ledger/solde sur le serveur et Supabase locaux, sans appel à Stripe |
+| `npm run test:browser` | Recette locale sur `https://localhost:3000`, captures dans `artifacts/roadmap-2026-11/` ; comptes de test locaux nettoyés |
 | `npm run supabase:types` | Génère les types TS depuis Supabase local |
 | `npm run security:check` | Audit npm via script |
+
+Pour la recette navigateur, installer Chromium avec `npx playwright install chromium`,
+ou définir `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` vers un navigateur de test déjà installé.
+Le script refuse les URLs d'application ou de Supabase distantes. Les envois du formulaire
+de récupération sont interceptés ; seuls l'authentification et le contrôle DB sont réels,
+sur des comptes temporaires de Supabase local. Aucune campagne ni transaction Stripe n'est lancée.
+
+La CI `.github/workflows/quality.yml` vérifie lint, tests, build et types sous Node 24.
+Son exécution distante reste à observer après ouverture d'une PR ; configurer la protection
+de branche pour rendre ce contrôle obligatoire. Les tests DB/navigateur restent locaux
+dans ce premier pipeline.
 
 ---
 
