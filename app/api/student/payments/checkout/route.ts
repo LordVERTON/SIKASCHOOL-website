@@ -14,7 +14,7 @@ import type Stripe from 'stripe';
 import { getUserSession } from '@/lib/auth';
 import { stripe, assertStripeConfigured, getPlan } from '@/lib/stripe';
 import { getOrCreateStripeCustomer } from '@/lib/stripe-customer';
-import { canAccessStudentFeatures, getEffectiveStudentAccess } from '@/lib/student-access';
+import { canAccessStudentFeatures, getEffectiveStudentAccess, getStudentSpaceBasePath } from '@/lib/student-access';
 
 export async function POST(req: Request) {
   try {
@@ -44,8 +44,9 @@ export async function POST(req: Request) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const customerId = await getOrCreateStripeCustomer(user.id);
 
-    const successUrl = `${appUrl}/student/paiements/success?session_id={CHECKOUT_SESSION_ID}`;
-    const cancelUrl = `${appUrl}/student/paiements/cancel`;
+    const spaceBase = getStudentSpaceBasePath(user.role);
+    const successUrl = `${appUrl}${spaceBase}/paiements/success?session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = `${appUrl}${spaceBase}/paiements/cancel`;
 
     const commonMetadata: Record<string, string> = {
       sikaschool_user_id: user.id,
@@ -127,9 +128,8 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ url: session.url, sessionId: session.id });
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[payments/checkout] error', error);
-    return NextResponse.json({ error: message }, { status: 500 });
+  } catch {
+    console.error('[payments/checkout] preparation failed');
+    return NextResponse.json({ error: 'Le paiement n’a pas pu être préparé. Veuillez réessayer.' }, { status: 500 });
   }
 }
