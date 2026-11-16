@@ -239,13 +239,12 @@ dans ce premier pipeline.
 
 ## Documentation
 
-- [docs/roadmap.md](docs/roadmap.md) — Backlog d'exécution canonique, incluant les demandes du 17 octobre 2026
+- [docs/roadmap.md](docs/roadmap.md) — Priorités, backlog d'exécution et [analyse STRIDE intégrée](docs/roadmap.md#analyse-stride)
 - [docs/SIKA_AI_TUTOR.md](docs/SIKA_AI_TUTOR.md) — Sika AI  
 - [docs/LIVEKIT_SETUP.md](docs/LIVEKIT_SETUP.md) — LiveKit  
 - [docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md) — Pointeur Supabase  
 - [supabase/README.md](supabase/README.md) — Migrations, `db reset`, cloud  
 - [SECURITY.md](SECURITY.md)
-- [docs/STRIDE_ANALYSIS.md](docs/STRIDE_ANALYSIS.md) — Modèle de menaces STRIDE : architecture, risques priorisés, preuves et critères de correction (16 novembre 2026)
 
 ---
 
