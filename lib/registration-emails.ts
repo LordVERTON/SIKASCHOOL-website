@@ -2,7 +2,6 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import nodemailer, { type Transporter } from 'nodemailer';
 import { Resend } from 'resend';
 import { APP_CONFIG } from '@/lib/constants';
-import { getAdminTutorEmails } from '@/lib/admin-permissions';
 
 /** Client service-role : les types générés ne couvrent pas toutes les tables utilisées ici. */
 type ServiceSupabase = SupabaseClient<any>;
@@ -183,12 +182,12 @@ export type RegistrationIntakeDetails = {
 async function resolveAdminNotifyUsers(
   supabase: ServiceSupabase
 ): Promise<Array<{ id: string; email: string; role: string }>> {
-  const tutorAdminEmails = getAdminTutorEmails();
   const extra =
     process.env.ADMIN_NOTIFY_EMAILS?.split(',')
       .map((e) => e.trim().toLowerCase())
       .filter(Boolean) ?? [];
-  const emailSet = new Set([...tutorAdminEmails.map((e) => e.toLowerCase()), ...extra]);
+  // Explicit notification routing does not grant any application permission.
+  const emailSet = new Set(extra);
   const emails = Array.from(emailSet);
 
   const { data: roleAdmins, error: e1 } = await supabase

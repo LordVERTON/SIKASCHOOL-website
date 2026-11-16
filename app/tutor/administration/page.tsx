@@ -1,4 +1,5 @@
 "use client";
+import { getSessionStatusLabel, getPaymentStatusLabel } from '@/lib/status-labels';
 export const dynamic = 'force-dynamic';
 
 import { useState, useEffect, useMemo, Suspense } from 'react';
@@ -7,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { formatMinutes } from '@/lib/time-utils';
 import { hasAdminPermissions } from '@/lib/admin-permissions';
 import AssignmentModal from '@/components/Admin/AssignmentModal';
+import DatabaseHealth from '@/components/Admin/DatabaseHealth';
 
 interface User {
   id: string;
@@ -72,22 +74,6 @@ interface Review {
   createdAt: string;
 }
 
-const getSessionStatusLabel = (status: string) => {
-  switch (status) {
-    case 'PENDING':
-      return 'En attente';
-    case 'SCHEDULED':
-      return 'Programmée';
-    case 'IN_PROGRESS':
-      return 'En cours';
-    case 'COMPLETED':
-      return 'Terminée';
-    case 'CANCELLED':
-      return 'Annulée';
-    default:
-      return 'Statut inconnu';
-  }
-};
 
 function AdministrationPageContent() {
   const { user, loading } = useAuth(['TUTOR', 'ADMIN']);
@@ -554,6 +540,7 @@ function AdministrationPageContent() {
         </p>
       </div>
 
+      <DatabaseHealth />
       {/* Onglets */}
       <div className="mb-6">
         <div className="border-b border-gray-200 dark:border-gray-700">
@@ -874,7 +861,7 @@ function AdministrationPageContent() {
                             payment.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
                             'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
                           }`}>
-                            {payment.status}
+                            {getPaymentStatusLabel(payment.status)}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
