@@ -1,4 +1,7 @@
 "use client";
+import { useId } from 'react';
+import Dialog from '@/components/Common/Dialog';
+import Button from '@/components/Common/Button';
 
 interface AlertModalProps {
   isOpen: boolean;
@@ -15,7 +18,8 @@ export default function AlertModal({
   message,
   type = 'info'
 }: AlertModalProps) {
-  if (!isOpen) return null;
+  const titleId = useId();
+  const messageId = useId();
 
   const getIconAndColor = () => {
     switch (type) {
@@ -55,22 +59,22 @@ export default function AlertModal({
   const { icon, color, bgColor } = getIconAndColor();
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onTouchMove={(e) => e.preventDefault()}>
-      <div className={`${bgColor} rounded-lg p-6 w-full max-w-md mx-4 border max-h-[80vh] overflow-y-auto overscroll-contain`} style={{ WebkitOverflowScrolling: 'touch' }}>
+    <Dialog isOpen={isOpen} onClose={onClose} labelledBy={titleId} describedBy={messageId} className="sika-dialog-compact">
+      <div className={`${bgColor} rounded-lg p-6`}>
         <div className="flex items-center gap-3 mb-4">
-          <span className="text-2xl">{icon}</span>
-          <h3 className={`text-lg font-semibold ${color}`}>{title}</h3>
+          <span className="text-2xl" aria-hidden="true">{icon}</span>
+          <h2 id={titleId} className={`text-lg font-semibold ${color}`}>{title}</h2>
         </div>
-        <p className="text-sm text-waterloo dark:text-manatee mb-6">{message}</p>
+        <p id={messageId} className="text-sm text-waterloo dark:text-manatee mb-6">{message}</p>
         <div className="flex justify-end">
-          <button
+          <Button
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
           >
             Fermer
-          </button>
+          </Button>
         </div>
       </div>
-    </div>
+    </Dialog>
   );
 }

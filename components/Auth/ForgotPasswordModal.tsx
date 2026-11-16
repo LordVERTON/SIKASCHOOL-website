@@ -1,6 +1,8 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
+import Dialog from '@/components/Common/Dialog';
+import Alert from '@/components/Common/Alert';
 import { setStorageItem, STORAGE_KEYS } from "@/lib/storage";
 
 type ForgotPasswordModalProps = {
@@ -10,6 +12,7 @@ type ForgotPasswordModalProps = {
 };
 
 export default function ForgotPasswordModal({ isOpen, onClose, initialEmail = "" }: ForgotPasswordModalProps) {
+  const titleId = useId();
   const [email, setEmail] = useState<string>(initialEmail);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,8 +56,8 @@ export default function ForgotPasswordModal({ isOpen, onClose, initialEmail = ""
       setSubmittedEmail(normalizedEmail);
       setStorageItem(STORAGE_KEYS.LAST_LEAD_EMAIL, normalizedEmail);
       setShowSuccess(true);
-    } catch (err: any) {
-      setError(err.message || "Une erreur est survenue. Merci de réessayer.");
+    } catch {
+      setError("Le lien n’a pas pu être envoyé. Réessayez dans quelques instants.");
     } finally {
       setSubmitting(false);
     }
@@ -67,19 +70,19 @@ export default function ForgotPasswordModal({ isOpen, onClose, initialEmail = ""
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-99999 flex items-center justify-center bg-black/50 p-4" onTouchMove={(e) => e.preventDefault()}>
+    <Dialog isOpen={isOpen} onClose={onClose} labelledBy={titleId} className="sika-dialog-compact">
       <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-2xl dark:bg-blacksection">
         {/* Close */}
-        <button onClick={onClose} className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-          <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <button type="button" aria-label="Fermer" onClick={onClose} className="absolute right-2 top-2 flex h-11 w-11 items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+          <svg aria-hidden="true" className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
 
         {showSuccess ? (
           <div className="py-8 text-center">
-            <h3 className="mb-3 text-2xl font-semibold text-black dark:text-white">E-mail envoyé</h3>
-            <p className="mx-auto max-w-xl text-waterloo dark:text-manatee">
+            <h2 id={titleId} className="mb-3 text-2xl font-semibold text-black dark:text-white">Vérifiez votre messagerie</h2>
+            <p role="status" className="mx-auto max-w-xl text-waterloo dark:text-manatee">
               Si cette adresse existe, vous recevrez un lien de réinitialisation dans quelques instants. Vérifiez aussi le dossier spam/indésirables.
             </p>
             <div className="mt-8 flex flex-col items-center gap-3">
@@ -104,18 +107,18 @@ export default function ForgotPasswordModal({ isOpen, onClose, initialEmail = ""
           </div>
         ) : (
           <>
-            <h3 className="mb-4 text-2xl font-semibold text-black dark:text-white">Mot de passe oublié</h3>
+            <h2 id={titleId} className="mb-4 pr-8 text-2xl font-semibold text-black dark:text-white">Mot de passe oublié</h2>
             <p className="mb-6 text-waterloo dark:text-manatee">
               Entrez votre adresse e-mail et nous vous enverrons un lien de réinitialisation.
             </p>
 
             {error && (
-              <div className="mb-4 rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+              <Alert className="mb-4">
                 {error}
-              </div>
+              </Alert>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4" aria-busy={submitting}>
               <div>
                 <label htmlFor="forgot-email" className="block text-sm font-medium text-black dark:text-white mb-2">
                   Adresse e-mail
@@ -151,7 +154,7 @@ export default function ForgotPasswordModal({ isOpen, onClose, initialEmail = ""
           </>
         )}
       </div>
-    </div>
+    </Dialog>
   );
 }
 

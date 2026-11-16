@@ -461,6 +461,10 @@ pre {
 .sika-dialog::backdrop {
   background: #0c1533b3;
 }
+.sika-dialog.sika-dialog-compact {
+  width: min(28rem, calc(100% - 2rem));
+  padding: 0;
+}
 .sika-mobile-menu {
   width: min(28rem, 100%);
   height: 100dvh;

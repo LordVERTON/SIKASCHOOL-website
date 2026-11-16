@@ -1,4 +1,7 @@
 "use client";
+import { useId } from 'react';
+import Dialog from '@/components/Common/Dialog';
+import Button from '@/components/Common/Button';
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -21,7 +24,8 @@ export default function ConfirmationModal({
   cancelText = 'Annuler',
   type = 'warning'
 }: ConfirmationModalProps) {
-  if (!isOpen) return null;
+  const titleId = useId();
+  const messageId = useId();
 
   const handleConfirm = () => {
     onConfirm();
@@ -42,25 +46,26 @@ export default function ConfirmationModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onTouchMove={(e) => e.preventDefault()}>
-      <div className="bg-white dark:bg-blacksection rounded-lg p-6 w-full max-w-md mx-4 max-h-[80vh] overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
-        <h3 className="text-lg font-semibold text-black dark:text-white mb-4">{title}</h3>
-        <p className="text-sm text-waterloo dark:text-manatee mb-6">{message}</p>
-        <div className="flex gap-3 justify-end">
-          <button
+    <Dialog isOpen={isOpen} onClose={onClose} labelledBy={titleId} describedBy={messageId} className="sika-dialog-compact">
+      <div className="bg-white dark:bg-blacksection rounded-lg p-6">
+        <h2 id={titleId} className="text-lg font-semibold text-black dark:text-white mb-4">{title}</h2>
+        <p id={messageId} className="text-sm text-waterloo dark:text-manatee mb-6">{message}</p>
+        <div className="flex flex-wrap gap-3 justify-end">
+          <Button
+            variant="secondary"
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
           >
             {cancelText}
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleConfirm}
             className={`px-4 py-2 text-sm font-medium rounded-md ${getButtonStyles()}`}
           >
             {confirmText}
-          </button>
+          </Button>
         </div>
       </div>
-    </div>
+    </Dialog>
   );
 }
