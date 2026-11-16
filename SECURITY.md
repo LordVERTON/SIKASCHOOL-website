@@ -1,5 +1,26 @@
 # Security Policy
 
+## Threat model — 16 November 2026
+
+The [documented STRIDE analysis](docs/STRIDE_ANALYSIS.md) reviews revision
+`8c6ccc3`: data flows, trust boundaries, existing controls and 22 open threat
+scenarios (6 P0, 12 P1, 4 P2). The P0 findings concern tutor messaging without
+server authentication, unverified family links, public session-state changes,
+lead-driven profile changes, public booking authorization/concurrency and the
+Credentials provider's missing SMS second-factor check. These findings remain
+open; documenting them does not remediate them.
+
+The existing measures and checklist below describe individual controls, not
+complete coverage of every route. In particular, service-role API calls bypass
+RLS, and protected pages do not authorize their API handlers. The threat model
+records the limits of validation, error handling, logging and session revocation.
+No production configuration or deployed exploitability was verified.
+
+Validation on 16 November: 63 existing tests passed; five isolated probes with
+mocked dependencies exercised vulnerable handler paths. A fresh `npm audit`
+reported 0 critical, 3 high and 7 moderate package alerts. Execution and
+acceptance criteria are tracked in the [canonical roadmap](docs/roadmap.md).
+
 ## Security Measures Implemented
 
 ### 1. Input Validation & Sanitization

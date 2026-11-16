@@ -245,6 +245,7 @@ dans ce premier pipeline.
 - [docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md) — Pointeur Supabase  
 - [supabase/README.md](supabase/README.md) — Migrations, `db reset`, cloud  
 - [SECURITY.md](SECURITY.md)
+- [docs/STRIDE_ANALYSIS.md](docs/STRIDE_ANALYSIS.md) — Modèle de menaces STRIDE : architecture, risques priorisés, preuves et critères de correction (16 novembre 2026)
 
 ---
 

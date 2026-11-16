@@ -6,6 +6,19 @@ _Checklist de mise en œuvre issue de l'audit du 12 septembre 2026. Appliquer l�
 
 Évolution locale sur `feat(UX/UI)`, depuis `799d9dc` : Hero clarifié, sélection de matières issue du catalogue API, bande de réassurance, parcours Hero → réassurance → méthode → tuteurs → avis → signature → tarifs → FAQ → contact → CTA, cartes tuteurs réutilisables et FAQ intégrée aux primitives V2. Les changements et leur recette sont suivis dans UX-004, UX-005, UI-001, A11Y-002, SK-006 et PERF-001 ci-dessous. Le contrôleur de réservation, les tarifs et les mécanismes d’autorisation sont conservés ; aucune fusion ni publication.
 
+## Analyse STRIDE — 16 novembre 2026
+
+Le [modèle de menaces STRIDE](STRIDE_ANALYSIS.md) analyse la révision `8c6ccc3` :
+22 scénarios ouverts, dont 6 P0, 12 P1 et 4 P2. Les preuves, limites et critères
+de recette sont dans ce rapport ; ce document reste le seul backlog d'exécution.
+Aucune correction ni validation de production n'est incluse dans ce lot documentaire.
+
+TECH-006 passe à P0 pour la messagerie tuteur non authentifiée et les liens
+parent-élève sans preuve de relation. TECH-003/SK-011 conservent la réservation
+publique. TECH-013 à TECH-016 ci-dessous portent les écarts supplémentaires ;
+TECH-001 et TECH-002 restent clos sur leur périmètre déjà livré. Les responsables
+et dates de correction sont à attribuer, sans acceptation implicite des risques.
+
 ## Addendum prioritaire — identité officielle V2 (20 octobre 2026)
 
 La référence graphique et éditoriale principale est désormais [BRAND_IDENTITY_V2.md](BRAND_IDENTITY_V2.md). Elle prime sur les anciennes consignes de conservation de palette : **bleu #1E3A8A, orange #FFBC58, blanc, neutre #F0F1F5 ; Sensa Wild Fill en police primaire pour les titres, Poppins en police secondaire pour le corps et les interfaces publiques, Inter dans les espaces connectés** (polices confirmées le 21 octobre 2026). Akaru guide la sophistication, DANEMO les principes techniques, sans remplacement de l’identité SIKASCHOOL. Le bleu historique #006BFF n’est plus la référence par défaut.
@@ -58,6 +71,11 @@ Les campagnes d'été et de rentrée 2026 sont passées au jour de cette mise à
 | TECH-001 | Supprimer la réinitialisation de mot de passe par lead | High | Medium | High | P0 |
 | TECH-002 | Idempotence et transaction des crédits Stripe | High | High | High | P0 |
 | TECH-003 | Sécuriser la réservation publique | High | Medium | High | P0 |
+| TECH-006 | Autoriser chaque ressource et prouver les liens familiaux | High | High | High | P0 |
+| TECH-013 | Isoler le lead des profils existants | High | Medium | High | P0 |
+| TECH-014 | Protéger les transitions globales de séances | High | Medium | High | P0 |
+| TECH-015 | Imposer le second facteur à toute émission de session | High | High | High | P0 |
+| TECH-016 | Borner les abus et protéger les flux IA/médias | High | High | High | P1 |
 | UX-001 | Unifier l'ouverture de la modale de réservation | High | Low | Medium | P0 |
 | A11Y-001 | Landmarks et modales accessibles | High | Medium | Medium | P0 |
 | UX-002 | Tarifs exacts, comparables et conditions | High | Medium | Medium | P0 |
@@ -71,7 +89,6 @@ Les campagnes d'été et de rentrée 2026 sont passées au jour de cette mise à
 | A11Y-002 | États, erreurs et mouvement réduit | Medium | Medium | Low | P1 |
 | TECH-004 | Services et extraction des écrans monolithiques | High | High | Medium | P1 |
 | TECH-005 | Contrats Zod/DTO/erreurs | High | Medium | Medium | P1 |
-| TECH-006 | RBAC cohérent | High | Medium | Medium | P1 |
 | TECH-010 | Tests, CI, env et types DB | High | High | Low | P1 |
 | TECH-009 | Hydratation/fetch/cache | Medium | Medium | Medium | P2 |
 | TECH-011 | Observabilité et funnel | Medium | Medium | Low | P2 |
@@ -135,6 +152,43 @@ prioritaires pour le prochain lot de réservation sécurisée.
   - Critères d'acceptation :
     - [ ] Une personne ne réserve pas pour une autre via son e-mail.
     - [ ] Deux demandes simultanées ne créent jamais deux séances identiques.
+
+- [ ] **[P0][SECURITY][TECH-013] Isoler les leads des modifications de comptes existants**
+  - Impact : élevé ; Effort : moyen ; Risque : élevé
+  - Menace : [TM-04](STRIDE_ANALYSIS.md#tm-04--lead-anonyme-modifiant-un-compte-existant) ; complément de TECH-001, dont la suppression du reset par lead reste acquise.
+  - Fichiers concernés : `app/api/leads/route.ts`, `lib/user-management.ts`, tests lead
+  - Travail : conserver l'intake dans une demande distincte ; exiger preuve de possession et autorisation avant modification du profil ou des données élève ; réponse publique générique.
+  - Critères d'acceptation :
+    - [ ] Un lead anonyme ne modifie aucune donnée d'un compte existant, quel que soit son rôle ou son état actif.
+    - [ ] Création de lead, compte existant et récupération sont testés séparément sans fuite de mot de passe ni régression de TECH-001.
+
+- [ ] **[P0][SECURITY][TECH-014] Authentifier et borner les transitions globales de séances**
+  - Impact : élevé ; Effort : moyen ; Risque : élevé
+  - Menace : [TM-03](STRIDE_ANALYSIS.md#tm-03--tâche-globale-de-séances-accessible-au-public).
+  - Fichiers concernés : `app/api/sessions/update-status/route.ts`, futur service de transitions, tests négatifs et concurrence
+  - Travail : réserver la tâche à un job authentifié ou une action admin définie ; transitions métier explicites, mises à jour conditionnelles, lots bornés et traces serveur.
+  - Critères d'acceptation :
+    - [ ] Appel anonyme ou utilisateur ordinaire : 401/403 et aucun accès métier privilégié ni effet secondaire.
+    - [ ] Une séance en attente ne devient pas acceptée implicitement ; horaire/statut et concurrence de deux workers sont testés.
+
+- [ ] **[P0][SECURITY][TECH-015] Imposer et sécuriser le second facteur à chaque émission de session**
+  - Impact : élevé ; Effort : élevé ; Risque : élevé
+  - Menaces : [TM-06](STRIDE_ANALYSIS.md#tm-06--second-facteur-absent-du-fournisseur-credentials), TM-08 ; coordination TECH-006 pour les deux systèmes de session.
+  - Fichiers concernés : `auth.ts`, `app/api/auth/**`, `lib/sms-2fa.ts`, routes `profile/2fa`, flux navigateur Supabase
+  - Travail : contrôle MFA au point d'émission de session, preuve de challenge non falsifiable et consommation atomique ; OTP cryptographique, secret obligatoire, limite d'essais/envois, réauthentification pour désactiver ou remplacer le facteur.
+  - Critères d'acceptation :
+    - [ ] Callback Auth.js direct et login personnalisé sans OTP valide ne créent aucune session pleinement autorisée si MFA activé ; expiration, replay et concurrence testés.
+    - [ ] Le niveau d'assurance requis est défini et vérifié sur le flux Supabase direct ; changer/désactiver le facteur exige une preuve récente et ne laisse pas un chemin de contournement.
+
+- [ ] **[P1][SECURITY][TECH-016] Limiter les abus et protéger les échanges IA, SMS, e-mail et médias**
+  - Impact : élevé ; Effort : élevé ; Risque : élevé
+  - Menaces : TM-09, TM-12, TM-14 à TM-16, TM-22 dans le [registre STRIDE](STRIDE_ANALYSIS.md#registre-des-menaces) ; coordination TECH-006 pour les droits temps réel/Storage et TECH-010 pour les preuves.
+  - Fichiers concernés : routes publiques/auth/IA/avatar, `lib/ai-tutor/**`, `lib/sms-2fa.ts`, `lib/registration-emails.ts`, configuration plateforme
+  - Travail : limites distribuées par IP/compte/destination, contrôle de possession d'e-mail avant confiance, budgets et concurrence IA, tailles/MIME serveur, annulation propagée ; conservation/suppression et paramètres fournisseurs validés ; quotas et cycle de vie des médias.
+  - Critères d'acceptation :
+    - [ ] Dépassement → 413/429 avant appel externe ; coût, concurrence et timeout sont bornés et vérifiés ; fichiers déguisés refusés.
+    - [ ] Politique de transmission/conservation des copies et médias validée avec produit/données ; effacement, isolation de deux élèves et absence d'accès public aux médias privés prouvés.
+    - [ ] Les injections de prompt ne déclenchent aucun outil privilégié ; le rendu reste échappé et les anciens avatars sont nettoyés selon la règle retenue.
 
 - [x] **[P0][UX][A11Y][UX-001] Donner un unique propriétaire à la modale de réservation**
   - Impact : élevé
@@ -299,15 +353,19 @@ prioritaires pour le prochain lot de réservation sécurisée.
     - [ ] Entrée/sortie des endpoints critiques documentées et validées.
     - [ ] Pas de détail DB envoyé au navigateur.
 
-- [ ] **[P1][SECURITY][ARCH][TECH-006] Centraliser les guards d'autorisation**
-  - Impact : élevé ; Effort : moyen ; Risque : moyen
+- [ ] **[P0][SECURITY][ARCH][TECH-006] Centraliser les guards et vérifier les droits sur chaque ressource**
+  - Impact : élevé ; Effort : élevé ; Risque : élevé
   - Dépendances : matrice permissions validée
   - Fichiers concernés : `auth.ts`, `lib/{auth,admin-permissions,student-access}.ts`, `app/api/**`
   - Travail : supprimer liste e-mails admin, guards cohérents, ownership au niveau service.
   - Lot du 14 novembre : suppression des deux exceptions d'e-mail administrateur ; contrôle du rôle `ADMIN` persisté et du profil actif à chaque session serveur, lecture bornée à 5 s. Matrice négative des guards/Checkout/sonde et révocation immédiate vérifiées au navigateur. Aucun compte existant n'a été promu ; les anciens tuteurs admis par e-mail doivent recevoir un rôle explicite s'ils doivent administrer. L'inventaire d'ownership de tous les services reste ouvert.
+  - Analyse STRIDE du 16 novembre : TM-01/TM-02 justifient P0. Les routes de messagerie tuteur prennent l'identité du client sans session ; le rattachement parent-élève repose sur l'e-mail seul. Étendre le traitement aux risques TM-07/TM-10/TM-11/TM-12/TM-13/TM-22 : révocation Auth.js et Supabase, séparation serveur/service role, CSRF, topics privés et droits de salle/médias. Les constats et recettes sont dans [STRIDE_ANALYSIS.md](STRIDE_ANALYSIS.md).
   - Critères d'acceptation :
     - [x] Privilèges administrateur uniquement issus du rôle persisté ; exceptions d'e-mail supprimées et révocation d'un JWT ADMIN existant vérifiée.
     - [ ] Matrice rôle × action couverte par tests négatifs.
+    - [ ] Chaque méthode de messagerie refuse visiteur et tiers avant tout effet ; identité d'expéditeur issue de la session, participation prouvée et aucune mutation dans GET.
+    - [ ] Rattachement familial approuvé par preuve ou validation autorisée, atomique, non usurpable par connaissance d'e-mail et sans effacement d'un ancien lien sur échec.
+    - [ ] Reset/désactivation révoquent les accès sensibles dans les deux systèmes de session ; Origin/CSRF, SSE tiers, grants/RLS et accès LiveKit hors statut/horaire sont recettés.
 
 ## Phase 4 — Workflows
 
@@ -379,6 +437,7 @@ prioritaires pour le prochain lot de réservation sécurisée.
   - Dépendances : politique consentement/RGPD, événements validés
   - Fichiers concernés : `lib/logger.ts`, `lib/{registration-emails,mercure}.ts`, providers à choisir
   - Travail : correlation id, logs sûrs, alertes webhook, funnel minimal sans PII et taux d'échec des effets secondaires.
+  - Complément STRIDE TM-18 : journal d'audit serveur protégé pour actions admin, liens familiaux, suppression de fils et changements de sécurité ; acteur réel/élève effectif, cible, résultat, date et corrélation, avec rétention et accès définis. Le suivi marketing et ses consentements restent distincts de ces preuves de sécurité.
   - Critères d'acceptation :
     - [ ] Une réservation/paiement défaillant est diagnostiquable sans secret/PII dans les logs.
     - [ ] Funnel homepage_view → booking_completed visible avec consentement adapté.
