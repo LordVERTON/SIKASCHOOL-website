@@ -42,7 +42,7 @@ const AboutPage = () => {
       id: 2,
       title: "Challenger les meilleurs !",
       description: "Développer une compréhension approfondie des concepts scientifiques, tout en s'appuyant sur des exercices d'application rigoureux pour ancrer solidement les connaissances.",
-      author: "Dan"
+      author: "Alix"
     }
   ];
 
