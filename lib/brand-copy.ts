@@ -109,8 +109,6 @@ export const brandCopy = {
     testimonials: {
       eyebrow: 'Leurs mots, leur expérience',
       title: 'La progression se raconte aussi.',
-      description:
-        'Retours d’expérience publiés sur SIKASCHOOL. Chaque parcours est personnel ; ces témoignages ne garantissent pas un résultat scolaire.',
     },
     cta: {
       eyebrow: 'La suite commence avec vous',
@@ -226,8 +224,6 @@ export const brandCopy = {
     testimonials: {
       eyebrow: 'Their words, their experience',
       title: 'Progress has a story.',
-      description:
-        'Experiences published on SIKASCHOOL, in their original language. Every journey is personal; these testimonials do not guarantee academic results.',
     },
     cta: {
       eyebrow: 'Your next step starts here',
