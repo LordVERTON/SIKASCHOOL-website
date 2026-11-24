@@ -36,9 +36,6 @@ export default function Testimonial() {
             </figure>
           ))}
         </div>
-        <p className="mt-10 max-w-3xl text-sm leading-relaxed">
-          {copy.description}
-        </p>
       </div>
     </section>
   );
