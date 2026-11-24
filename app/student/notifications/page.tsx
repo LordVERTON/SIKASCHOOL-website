@@ -324,10 +324,17 @@ export default function StudentNotifications() {
             {notifications.map((notification) => {
               const actionUrl = getActionUrl(notification);
               return (
-                <button
+                <div
                   key={notification.id}
-                  type="button"
+                  role="button"
+                  tabIndex={0}
                   onClick={() => handleOpenNotification(notification)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      handleOpenNotification(notification);
+                    }
+                  }}
                   className={`block w-full cursor-pointer p-6 text-left transition hover:bg-gray-50 dark:hover:bg-gray-800/40 ${
                     !notification.isRead ? "bg-primary/5 border-l-4 border-l-primary" : ""
                   }`}
@@ -360,13 +367,42 @@ export default function StudentNotifications() {
 
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <p className="text-xs text-waterloo dark:text-manatee">{formatDate(notification.createdAt)}</p>
-                        {actionUrl && (
-                          <span className="text-xs text-primary">Voir →</span>
-                        )}
+                        <div className="flex flex-col items-end gap-2">
+                          {!notification.isRead && (
+                            <button
+                              type="button"
+                              title="Marquer comme lu"
+                              aria-label="Marquer comme lu"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handleMarkRead(notification.id);
+                              }}
+                              className="relative rounded-md border border-stroke p-1.5 text-waterloo transition hover:border-primary hover:text-primary dark:border-strokedark dark:text-manatee"
+                            >
+                              <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 16 16"
+                                fill="currentColor"
+                                aria-hidden="true"
+                                focusable="false"
+                              >
+                                <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4Zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2Zm13 2.383-4.708 2.825L15 11.105V5.383Zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741ZM1 11.105l4.708-2.897L1 5.383v5.722Z" />
+                              </svg>
+                              <span
+                                aria-hidden="true"
+                                className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-primary ring-2 ring-white dark:ring-blacksection"
+                              />
+                            </button>
+                          )}
+                          {actionUrl && (
+                            <span className="text-xs text-primary">Voir →</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>
