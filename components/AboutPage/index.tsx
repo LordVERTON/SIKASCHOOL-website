@@ -66,13 +66,6 @@ const AboutPage = () => {
         </div>
 
         <div className="mx-auto mt-15 max-w-[1200px] px-4 md:px-8 xl:mt-20 xl:px-0">
-          {/* Introduction */}
-          <div className="mb-16 text-center">
-            <p className="text-lg text-waterloo dark:text-manatee">
-              Ingénieurs passionnés par l'enseignement et soucieux de transmettre, nous mettons les nouvelles technologies au service d'une pédagogie humaine, moderne et efficace.
-            </p>
-          </div>
-
           {/* Pedagogy Section */}
           <div className="mb-16">
             <h2 className="mb-12 text-center text-3xl font-bold text-black dark:text-white">
