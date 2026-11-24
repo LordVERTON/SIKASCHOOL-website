@@ -42,6 +42,9 @@ Comptes principaux :
 | Tuteur | `karim@sikaschool.com` | `tutor123` | Informatique, algorithmique, économie |
 | Tuteur | `ana@sikaschool.com` | `tutor123` | Anglais, espagnol |
 | Tuteur | `hugo@sikaschool.com` | `tutor123` | SVT, chimie ; marqué indisponible |
+| Tuteur | `alix.tarrade@sikaschool.com` | `tutor123` | Français, méthodologie, droits, anglais |
+| Tuteur | `daniel.verton@sikaschool.com` | `tutor123` | Mathématiques, physique, informatique, sciences de l'ingénieur, anglais |
+| Tuteur | `ruudy.mbouza-bayonne@sikaschool.com` | `tutor123` | Mécanique des fluides, physique, mathématiques, anglais |
 | Élève | `student@sikaschool.com` | `student123` | Terminale, historique pédagogique et financier complet |
 | Élève | `camille@sikaschool.com` | `student123` | Seconde, abonnement en essai |
 | Élève | `ines@sikaschool.com` | `student123` | Licence 1, parcours supérieur |

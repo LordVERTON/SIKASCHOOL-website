@@ -12,6 +12,9 @@
 --   karim@sikaschool.com    / tutor123   (informatique / economie)
 --   ana@sikaschool.com      / tutor123   (anglais / espagnol)
 --   hugo@sikaschool.com     / tutor123   (SVT / chimie, indisponible)
+--   alix.tarrade@sikaschool.com / tutor123 (francais / methodologie / droits / anglais)
+--   daniel.verton@sikaschool.com / tutor123 (sciences / informatique / anglais)
+--   ruudy.mbouza-bayonne@sikaschool.com / tutor123 (mecanique / physique / maths / anglais)
 --   student@sikaschool.com  / student123
 --   camille@sikaschool.com  / student123
 --   thomas@sikaschool.com   / student123
@@ -177,6 +180,22 @@ INSERT INTO seed_users (
     'France', 'Europe/Paris', 'fr', false, false, NULL, NOW() - INTERVAL '1 year'
   );
 
+-- Copies locales de demonstration des trois tuteurs proposant l'anglais.
+-- Le hash est remplace ci-dessous par celui du mot de passe de demonstration.
+INSERT INTO seed_users (
+  id, email, password_hash, first_name, last_name, role,
+  country, timezone, language, is_active, email_verified, created_at
+) VALUES
+  ('00000000-0000-4000-8000-000000000012', 'alix.tarrade@sikaschool.com',
+   'set-by-role-below', 'Alix', 'Tarrade', 'TUTOR',
+   'France', 'Europe/Paris', 'fr', true, true, NOW() - INTERVAL '1 year'),
+  ('00000000-0000-4000-8000-000000000013', 'daniel.verton@sikaschool.com',
+   'set-by-role-below', 'Daniel', 'Verton', 'TUTOR',
+   'France', 'Europe/Paris', 'fr', true, true, NOW() - INTERVAL '1 year'),
+  ('00000000-0000-4000-8000-000000000014', 'ruudy.mbouza-bayonne@sikaschool.com',
+   'set-by-role-below', 'Ruudy', 'Mbouza-Bayonne', 'TUTOR',
+   'France', 'Europe/Paris', 'fr', true, true, NOW() - INTERVAL '1 year');
+
 -- Hashes verifies avec bcryptjs (cost 12). Un mot de passe commun par role
 -- rend les comptes de demo faciles a utiliser sans exposer de secret reel.
 UPDATE seed_users
@@ -276,7 +295,16 @@ INSERT INTO tutors (
    ARRAY['Anglais', 'Espagnol'], 9, 3100, true, 5.00, 2, NOW() - INTERVAL '8 months'),
   ('20000000-0000-4000-8000-000000000010', '00000000-0000-4000-8000-000000000010',
    'Docteur en biologie, actuellement indisponible pour de nouvelles affectations.',
-   ARRAY['SVT', 'Chimie'], 10, 3400, false, 0.00, 0, NOW() - INTERVAL '2 months');
+   ARRAY['SVT', 'Chimie'], 10, 3400, false, 0.00, 0, NOW() - INTERVAL '2 months'),
+  ('20000000-0000-4000-8000-000000000012', '00000000-0000-4000-8000-000000000012',
+   'Accompagnement en français, méthodologie, droits et anglais.',
+   ARRAY['Français', 'Méthodologie', 'Droits', 'Anglais'], 5, 3000, true, 0.00, 0, NOW() - INTERVAL '1 year'),
+  ('20000000-0000-4000-8000-000000000013', '00000000-0000-4000-8000-000000000013',
+   'Accompagnement en mathématiques, physique, informatique, sciences de l''ingénieur et anglais.',
+   ARRAY['Mathématiques', 'Physique', 'Informatique', 'Sciences de l''ingénieur', 'Anglais'], 5, 3200, true, 0.00, 0, NOW() - INTERVAL '1 year'),
+  ('20000000-0000-4000-8000-000000000014', '00000000-0000-4000-8000-000000000014',
+   'Accompagnement en mécanique des fluides, physique, mathématiques et anglais.',
+   ARRAY['Mécanique des fluides', 'Physique', 'Mathématiques', 'Anglais'], 5, 3200, true, 0.00, 0, NOW() - INTERVAL '1 year');
 
 INSERT INTO students (
   id, user_id, grade_level, school_name, academic_goals, learning_style,
