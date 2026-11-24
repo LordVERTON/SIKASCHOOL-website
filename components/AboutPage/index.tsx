@@ -7,25 +7,25 @@ const AboutPage = () => {
   const teamMembers = [
     {
       id: 1,
-      name: "Ruudy Mbouza-Bayonne",
+      name: "Ruudy",
       image: "/images/team/ruudy.jpg",
       role: "Tuteur"
     },
     {
       id: 2,
-      name: "Daniel Verton",
+      name: "Daniel",
       image: danielPortrait.src,
       role: "Tuteur"
     },
     {
       id: 4,
-      name: "Alix Tarrade",
+      name: "Alix",
       image: "/images/team/alix.jpg",
       role: "Tutrice"
     },
     {
       id: 5,
-      name: "Nolwen Verton",
+      name: "Nolwen",
       image: "/images/team/nolwen.jpg",
       role: "Tutrice"
     },
