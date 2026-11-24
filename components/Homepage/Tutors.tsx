@@ -9,8 +9,8 @@ import TutorCard from './TutorCard';
 // Identities and Daniel's quote: components/AboutPage/index.tsx.
 // Daniel's portrait selected by the owner for the homepage.
 const members = [
-  { name: 'Ruudy Mbouza-Bayonne', image: '/images/team/ruudy.jpg' },
-  { name: 'Daniel Verton', image: danielPortrait.src },
+  { name: 'Ruudy', image: '/images/team/ruudy.jpg' },
+  { name: 'Daniel', image: danielPortrait.src },
 ];
 
 export default function Tutors() {
@@ -56,7 +56,7 @@ export default function Tutors() {
                   {...member}
                   role={copy.role}
                   quote={
-                    member.name === 'Daniel Verton'
+                    member.name === 'Daniel'
                       ? {
                           title:
                             language === 'fr'
