@@ -19,6 +19,7 @@ function mergeSubjects(...groups: Array<Array<string | null | undefined> | undef
       const subject = item?.trim();
       if (!subject) continue;
       const key = normalizeSubjectKey(subject);
+      if (['administration', 'support', 'administration et support'].includes(key)) continue;
       if (!subjects.has(key)) {
         subjects.set(key, subject);
       }

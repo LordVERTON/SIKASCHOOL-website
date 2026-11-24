@@ -84,6 +84,19 @@ test('No active tutors retains the existing catalog fallback', async () => {
   assert.deepEqual(await response.json(), { subjects: catalog });
 });
 
+test('English is offered while administration and support are excluded in both catalog modes', async () => {
+  for (const query of ['', '?includeCatalog=true']) {
+    const api = setup({ rows: [{ subjects: ['Anglais', ' Administration ', 'SUPPORT', 'Administration et support', 'Gestion'] }] });
+    const response = await api.get(query);
+    const { subjects } = await response.json();
+    assert.equal(response.status, 200);
+    assert.ok(subjects.includes('Anglais'));
+    assert.ok(subjects.includes('Gestion'));
+    assert.ok(!subjects.some(subject => /administration|support/i.test(subject)));
+  }
+  assert.ok(catalog.includes('Anglais'));
+});
+
 test('Network failures retain the existing catalog fallback', async () => {
   const api = setup({ networkFailure: true });
   const response = await api.get();

@@ -3,6 +3,7 @@ export const TUTOR_SUBJECTS = [
   "Physiques",
   "Sciences de l'ingénieur",
   "Français",
+  "Anglais",
   "Histoire",
   "Géographie",
   "Méthodologie",
