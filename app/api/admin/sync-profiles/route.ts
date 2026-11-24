@@ -22,7 +22,10 @@ export async function POST() {
       return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });
     }
 
-    const tutors = (users as any)?.filter((u: any) => u.role === 'TUTOR') || [];
+    const tutors = (users as any)?.filter((u: any) =>
+      u.role === 'TUTOR' ||
+      (u.role === 'ADMIN' && ['daniel.verton@sikaschool.com', 'ruudy.mbouza-bayonne@sikaschool.com'].includes(u.email))
+    ) || [];
     const students = (users as any)?.filter((u: any) => u.role === 'STUDENT') || [];
 
     let createdTutorProfiles = 0;
@@ -118,10 +121,11 @@ export async function POST() {
 // Fonction pour déterminer les matières d'un tuteur basées sur son email
 function getTutorSubjects(email: string): string[] {
   const subjectsMap: Record<string, string[]> = {
-    'alix.tarrade@sikaschool.com': ['Français', 'Méthodologie', 'Droits'],
+    'alix.tarrade@sikaschool.com': ['Français', 'Méthodologie', 'Droits', 'Anglais'],
     'nolwen.verton@sikaschool.com': ['Mathématiques', 'Mécanique'],
-    'ruudy.mbouza-bayonne@sikaschool.com': ['Mécanique des fluides', 'Physique', 'Mathématiques'],
-    'daniel.verton@sikaschool.com': ['Mathématiques', 'Physique', 'Informatique', 'Sciences de l\'ingénieur'],
+    'ruudy.mbouza-bayonne@sikaschool.com': ['Mécanique des fluides', 'Physique', 'Mathématiques', 'Anglais'],
+    'daniel.verton@sikaschool.com': ['Mathématiques', 'Physique', 'Informatique', 'Sciences de l\'ingénieur', 'Anglais'],
+    'vertondan@gmail.com': ['Mathématiques', 'Physique', 'Informatique', 'Sciences de l\'ingénieur', 'Anglais'],
   };
   
   return subjectsMap[email] || ['Mathématiques', 'Physique'];
